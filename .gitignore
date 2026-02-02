@@ -6,6 +6,9 @@ pwa/node_modules/
 dist/
 pwa/dist/
 
+# Generated files (copied during install)
+pwa/public/sql-wasm.wasm
+
 # Environment files
 .env
 .env.local

@@ -55,6 +55,11 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+# Copy sql.js WASM file to public folder
+echo ""
+echo "📋 Setting up database files..."
+cp node_modules/sql.js/dist/sql-wasm.wasm public/
+
 cd ..
 
 echo ""

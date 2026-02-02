@@ -55,6 +55,11 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
+# Copy sql.js WASM file to public folder
+Write-Host ""
+Write-Host "📋 Setting up database files..." -ForegroundColor Yellow
+Copy-Item "node_modules/sql.js/dist/sql-wasm.wasm" -Destination "public/"
+
 Set-Location ..
 
 Write-Host ""

@@ -41,8 +41,8 @@ export class BrowserDatabase {
 
     // Initialize sql.js with WASM
     const SQL = await initSqlJs({
-      // Load WASM from CDN or local path
-      locateFile: (file) => `https://sql.js.org/dist/${file}`,
+      // Load WASM from local public folder
+      locateFile: (file) => `/${file}`,
     });
 
     // Open IndexedDB for persistence
@@ -315,7 +315,7 @@ export class BrowserDatabase {
 
     // Initialize sql.js
     const SQL = await initSqlJs({
-      locateFile: (file) => `https://sql.js.org/dist/${file}`,
+      locateFile: (file) => `/${file}`,
     });
 
     // Create new database from imported data

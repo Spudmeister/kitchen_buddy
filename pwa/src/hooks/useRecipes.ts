@@ -9,8 +9,8 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { getDatabase } from '@db/browser-database';
 import { RecipeService } from '@services/recipe-service';
-import type { Recipe, RecipeInput, RecipeVersion, RecipeHeritage } from '@types/recipe';
-import type { RecipeFilters, RecipeSort, RecipeSearchParams } from '@types/search';
+import type { Recipe, RecipeInput, RecipeVersion, RecipeHeritage } from '@app-types/recipe';
+import type { RecipeFilters, RecipeSort, RecipeSearchParams } from '@app-types/search';
 
 /**
  * Get the recipe service instance
@@ -182,9 +182,9 @@ export function useCreateRecipe() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (input: RecipeInput) => {
+    mutationFn: async (input: RecipeInput) => {
       const service = getRecipeService();
-      return service.createRecipe(input);
+      return await service.createRecipe(input);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: recipeKeys.lists() });
@@ -199,11 +199,11 @@ export function useUpdateRecipe() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, input }: { id: string; input: RecipeInput }) => {
+    mutationFn: async ({ id, input }: { id: string; input: RecipeInput }) => {
       const service = getRecipeService();
-      return service.updateRecipe(id, input);
+      return await service.updateRecipe(id, input);
     },
-    onSuccess: (recipe) => {
+    onSuccess: (recipe: any) => {
       queryClient.invalidateQueries({ queryKey: recipeKeys.detail(recipe.id) });
       queryClient.invalidateQueries({ queryKey: recipeKeys.lists() });
       queryClient.invalidateQueries({ queryKey: recipeKeys.history(recipe.id) });
@@ -218,11 +218,11 @@ export function useDuplicateRecipe() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => {
+    mutationFn: async (id: string) => {
       const service = getRecipeService();
-      return service.duplicateRecipe(id);
+      return await service.duplicateRecipe(id);
     },
-    onSuccess: (recipe) => {
+    onSuccess: (recipe: any) => {
       queryClient.invalidateQueries({ queryKey: recipeKeys.lists() });
       queryClient.invalidateQueries({ queryKey: recipeKeys.heritage(recipe.parentRecipeId ?? '') });
     },
@@ -236,9 +236,9 @@ export function useArchiveRecipe() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => {
+    mutationFn: async (id: string) => {
       const service = getRecipeService();
-      service.archiveRecipe(id);
+      await service.archiveRecipe(id);
       return id;
     },
     onSuccess: (id) => {
@@ -255,9 +255,9 @@ export function useUnarchiveRecipe() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => {
+    mutationFn: async (id: string) => {
       const service = getRecipeService();
-      service.unarchiveRecipe(id);
+      await service.unarchiveRecipe(id);
       return id;
     },
     onSuccess: (id) => {

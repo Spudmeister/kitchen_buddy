@@ -17,8 +17,8 @@ import type {
   MenuAssignmentInput,
   MealSlot,
   AvailableLeftover,
-} from '@types/menu';
-import type { Duration } from '@types/units';
+} from '@app-types/menu';
+import type { Duration } from '@app-types/units';
 
 /** Default leftover duration in days if not specified */
 const DEFAULT_LEFTOVER_DURATION_DAYS = 3;

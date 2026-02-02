@@ -18,7 +18,7 @@ import type {
   TagCount,
   MonthlyStats,
   StatisticsDateRange,
-} from '@types/statistics';
+} from '@app-types/statistics';
 
 /**
  * Service for managing cook session statistics

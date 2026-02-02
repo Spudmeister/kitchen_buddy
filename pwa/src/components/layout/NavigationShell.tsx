@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { CalendarIcon, ShoppingCartIcon, ChefHatIcon, SettingsIcon, SearchIcon } from '../icons';
+import { CalendarIcon, ShoppingCartIcon, ChefHatIcon, SettingsIcon, SearchIcon, BookOpenIcon } from '../icons';
 import { useUIStore } from '@stores/ui-store';
 
 interface NavigationShellProps {
@@ -7,7 +7,7 @@ interface NavigationShellProps {
 }
 
 interface NavItem {
-  id: 'plan' | 'shop' | 'cook';
+  id: 'plan' | 'shop' | 'cook' | 'recipes';
   label: string;
   path: string;
   icon: React.ComponentType<{ className?: string }>;
@@ -15,6 +15,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { id: 'plan', label: 'Plan', path: '/plan', icon: CalendarIcon },
+  { id: 'recipes', label: 'Recipes', path: '/recipes', icon: BookOpenIcon },
   { id: 'shop', label: 'Shop', path: '/shop', icon: ShoppingCartIcon },
   { id: 'cook', label: 'Cook', path: '/cook', icon: ChefHatIcon },
 ];

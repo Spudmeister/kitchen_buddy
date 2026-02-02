@@ -2,13 +2,16 @@ import { Suspense, lazy, useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AppShell } from '@components/layout/AppShell';
 import { LoadingSpinner } from '@components/ui/LoadingSpinner';
-import { initializeDatabase } from '@db/browser-database';
+import { initializeDatabase, getDatabase } from '@db/browser-database';
+import { RecipeService } from '@services/recipe-service';
+import { getSampleRecipes } from '@services/seed-data';
 
 // Lazy load route components for code splitting
 // Main flow views
 const PlanningView = lazy(() => import('@routes/PlanningView'));
 const ShoppingView = lazy(() => import('@routes/ShoppingView'));
 const CookingView = lazy(() => import('@routes/CookingView'));
+const RecipeLibraryView = lazy(() => import('@routes/RecipeLibraryView'));
 
 // Planning sub-views
 const BrainstormView = lazy(() => import('@routes/BrainstormView'));
@@ -61,7 +64,23 @@ function App() {
 
   useEffect(() => {
     initializeDatabase()
-      .then(() => setDbReady(true))
+      .then(async () => {
+        // Seed sample recipes if database is empty
+        const db = getDatabase();
+        const recipeService = new RecipeService(db);
+        const existingRecipes = recipeService.getAllRecipes();
+        
+        if (existingRecipes.length === 0) {
+          console.log('[App] Seeding database with sample recipes...');
+          const sampleRecipes = getSampleRecipes();
+          for (const recipe of sampleRecipes) {
+            recipeService.createRecipe(recipe);
+          }
+          console.log(`[App] Added ${sampleRecipes.length} sample recipes`);
+        }
+        
+        setDbReady(true);
+      })
       .catch((err) => {
         console.error('Failed to initialize database:', err);
         setDbError(err instanceof Error ? err.message : 'Unknown error');
@@ -99,6 +118,9 @@ function App() {
           <Route path="/plan/brainstorm" element={<BrainstormView />} />
           <Route path="/plan/sue" element={<SueChatView />} />
           <Route path="/plan/recommendations" element={<RecommendationsView />} />
+          
+          {/* Recipe Library - direct access to all recipes */}
+          <Route path="/recipes" element={<RecipeLibraryView />} />
           
           {/* Shopping flow */}
           <Route path="/shop" element={<ShoppingView />} />

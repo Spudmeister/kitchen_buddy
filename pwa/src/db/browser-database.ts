@@ -7,9 +7,79 @@
  * Requirements: 1.3, 1.4
  */
 
-import initSqlJs, { Database as SqlJsDatabase } from 'sql.js';
 import { openDB, IDBPDatabase } from 'idb';
 import { CREATE_TABLES_SQL, CREATE_INDEXES_SQL, SCHEMA_VERSION } from './schema';
+
+// sql.js types
+type SqlJsDatabase = {
+  run: (sql: string, params?: unknown[]) => void;
+  exec: (sql: string) => { columns: string[]; values: unknown[][] }[];
+  prepare: (sql: string) => {
+    bind: (params?: unknown[]) => void;
+    step: () => boolean;
+    get: () => unknown[];
+    free: () => void;
+  };
+  export: () => Uint8Array;
+  close: () => void;
+};
+
+type SqlJsStatic = {
+  Database: new (data?: ArrayLike<number>) => SqlJsDatabase;
+};
+
+type SqlJsInitFn = (config: { locateFile: (file: string) => string }) => Promise<SqlJsStatic>;
+
+// Declare the global initSqlJs that sql.js creates when loaded via script tag
+declare global {
+  interface Window {
+    initSqlJs?: SqlJsInitFn;
+  }
+}
+
+// Load sql.js by injecting a script tag
+// This is more reliable than trying to use ES module imports with sql.js
+// because sql.js uses a non-standard module format
+async function loadSqlJsScript(): Promise<void> {
+  // Check if already loaded
+  if (window.initSqlJs) {
+    return;
+  }
+  
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    // Load from public folder (works in both dev and production)
+    script.src = '/sql-wasm.js';
+    script.async = true;
+    
+    script.onload = () => {
+      if (window.initSqlJs) {
+        resolve();
+      } else {
+        reject(new Error('sql.js loaded but initSqlJs not found on window'));
+      }
+    };
+    
+    script.onerror = () => {
+      reject(new Error('Failed to load sql.js script'));
+    };
+    
+    document.head.appendChild(script);
+  });
+}
+
+// Load sql.js and initialize it
+async function loadSqlJs(config: { locateFile: (file: string) => string }): Promise<SqlJsStatic> {
+  console.log('[DB] Loading sql.js via script tag...');
+  await loadSqlJsScript();
+  
+  if (!window.initSqlJs) {
+    throw new Error('initSqlJs not available after loading script');
+  }
+  
+  console.log('[DB] Calling initSqlJs with config...');
+  return window.initSqlJs(config);
+}
 
 const DB_NAME = 'sous-chef-db';
 const DB_STORE = 'database';
@@ -39,13 +109,18 @@ export class BrowserDatabase {
       return;
     }
 
+    console.log('[DB] Starting database initialization...');
+
     // Initialize sql.js with WASM
-    const SQL = await initSqlJs({
+    console.log('[DB] Loading sql.js WASM...');
+    const SQL = await loadSqlJs({
       // Load WASM from local public folder
       locateFile: (file) => `/${file}`,
     });
+    console.log('[DB] sql.js loaded successfully');
 
     // Open IndexedDB for persistence
+    console.log('[DB] Opening IndexedDB...');
     this.idb = await openDB(DB_NAME, IDB_VERSION, {
       upgrade(db) {
         if (!db.objectStoreNames.contains(DB_STORE)) {
@@ -53,17 +128,22 @@ export class BrowserDatabase {
         }
       },
     });
+    console.log('[DB] IndexedDB opened');
 
     // Try to load existing database from IndexedDB
+    console.log('[DB] Checking for existing database...');
     const savedData = await this.loadFromIndexedDB();
     if (savedData) {
+      console.log('[DB] Loading existing database from IndexedDB');
       this.db = new SQL.Database(savedData);
     } else {
+      console.log('[DB] Creating new database');
       this.db = new SQL.Database();
       await this.applySchema();
     }
 
     this.initialized = true;
+    console.log('[DB] Database initialization complete');
   }
 
   /**
@@ -314,7 +394,7 @@ export class BrowserDatabase {
     }
 
     // Initialize sql.js
-    const SQL = await initSqlJs({
+    const SQL = await loadSqlJs({
       locateFile: (file) => `/${file}`,
     });
 

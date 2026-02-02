@@ -59,6 +59,7 @@ fi
 echo ""
 echo "📋 Setting up database files..."
 cp node_modules/sql.js/dist/sql-wasm.wasm public/
+cp node_modules/sql.js/dist/sql-wasm.js public/
 
 cd ..
 

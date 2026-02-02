@@ -158,7 +158,15 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    exclude: ['sql.js'],
+    // sql.js is loaded via script tag, not as an ES module
+    // so we don't need to exclude it from optimization
+  },
+  // Handle CommonJS modules that don't have proper ES module exports
+  esbuild: {
+    // Ensure sql.js is handled correctly
+    supported: {
+      'top-level-await': true,
+    },
   },
   build: {
     target: 'ES2022',
@@ -182,7 +190,7 @@ export default defineConfig({
           // Vendor chunks - rarely change, cache well
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
           'vendor-state': ['zustand', '@tanstack/react-query'],
-          'vendor-db': ['sql.js', 'idb'],
+          'vendor-db': ['idb'],  // sql.js is loaded via script tag
           // Feature chunks - group related functionality
           'feature-planning': [
             './src/routes/PlanningView.tsx',

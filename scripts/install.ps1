@@ -59,6 +59,7 @@ if ($LASTEXITCODE -ne 0) {
 Write-Host ""
 Write-Host "📋 Setting up database files..." -ForegroundColor Yellow
 Copy-Item "node_modules/sql.js/dist/sql-wasm.wasm" -Destination "public/"
+Copy-Item "node_modules/sql.js/dist/sql-wasm.js" -Destination "public/"
 
 Set-Location ..
 

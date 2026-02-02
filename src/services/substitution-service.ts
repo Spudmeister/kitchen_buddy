@@ -13,9 +13,9 @@ import type { Unit } from '../types/units.js';
 import { RecipeService } from './recipe-service.js';
 
 /**
- * A substitution suggestion for an ingredient
+ * A substitution suggestion for an ingredient (extended with category)
  */
-export interface Substitution {
+export interface SubstitutionWithCategory {
   /** Original ingredient name */
   original: string;
   /** Substitute ingredient name */
@@ -46,9 +46,9 @@ export type SubstitutionCategory =
   | 'other';
 
 /**
- * A recipe suggestion with missing ingredient info
+ * A recipe suggestion with missing ingredient info (for substitution service)
  */
-export interface RecipeSuggestion {
+export interface SubstitutionRecipeSuggestion {
   /** The suggested recipe */
   recipe: Recipe;
   /** Ingredients that are available */
@@ -65,7 +65,7 @@ export interface RecipeSuggestion {
  * Built-in substitution database
  * Maps ingredient names to their possible substitutions
  */
-const SUBSTITUTION_DATABASE: Map<string, Substitution[]> = new Map([
+const SUBSTITUTION_DATABASE: Map<string, SubstitutionWithCategory[]> = new Map([
   // Dairy substitutions
   ['butter', [
     { original: 'butter', substitute: 'coconut oil', ratio: 1, category: 'dairy', notes: 'May add slight coconut flavor' },
@@ -229,7 +229,7 @@ export class SubstitutionService {
    * Requirements: 7.1 - Provide alternative ingredients with conversion ratios
    * Requirements: 7.3 - Note expected differences
    */
-  getSubstitutions(ingredientName: string): Substitution[] {
+  getSubstitutions(ingredientName: string): SubstitutionWithCategory[] {
     const normalizedName = this.normalizeIngredientName(ingredientName);
     
     // Try exact match first
@@ -283,7 +283,7 @@ export class SubstitutionService {
   suggestRecipesByIngredients(
     availableIngredients: string[],
     limit: number = 10
-  ): RecipeSuggestion[] {
+  ): SubstitutionRecipeSuggestion[] {
     // Normalize available ingredients for matching
     const normalizedAvailable = availableIngredients.map(i => 
       this.normalizeIngredientName(i)
@@ -294,7 +294,7 @@ export class SubstitutionService {
       `SELECT id FROM recipes WHERE archived_at IS NULL`
     );
 
-    const suggestions: RecipeSuggestion[] = [];
+    const suggestions: SubstitutionRecipeSuggestion[] = [];
 
     for (const row of recipeRows) {
       const recipeId = row[0] as string;
@@ -369,7 +369,7 @@ export class SubstitutionService {
     availableIngredients: string[],
     maxMissing: number,
     limit: number = 10
-  ): RecipeSuggestion[] {
+  ): SubstitutionRecipeSuggestion[] {
     const suggestions = this.suggestRecipesByIngredients(
       availableIngredients,
       100 // Get more to filter
@@ -386,7 +386,7 @@ export class SubstitutionService {
   getSubstitutionsForRecipe(
     recipeId: string,
     availableIngredients: string[]
-  ): Map<string, Substitution[]> {
+  ): Map<string, SubstitutionWithCategory[]> {
     const recipe = this.recipeService.getRecipe(recipeId);
     if (!recipe) {
       return new Map();
@@ -396,7 +396,7 @@ export class SubstitutionService {
       this.normalizeIngredientName(i)
     );
 
-    const result = new Map<string, Substitution[]>();
+    const result = new Map<string, SubstitutionWithCategory[]>();
 
     for (const ingredient of recipe.ingredients) {
       const normalizedIngredient = this.normalizeIngredientName(ingredient.name);

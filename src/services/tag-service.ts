@@ -10,9 +10,9 @@ import type { Database } from '../db/database.js';
 import type { Recipe, Ingredient } from '../types/recipe.js';
 
 /**
- * Tag count information
+ * Tag count information (for tag service)
  */
-export interface TagCount {
+export interface TagServiceCount {
   /** Tag name */
   name: string;
   /** Number of recipes with this tag */
@@ -211,7 +211,7 @@ export class TagService {
    * Get all tags with their recipe counts
    * Requirements: 3.4 - Support tag-based search
    */
-  getAllTags(): TagCount[] {
+  getAllTags(): TagServiceCount[] {
     const rows = this.db.exec(
       `SELECT t.name, COUNT(rt.recipe_id) as count
        FROM tags t
@@ -434,10 +434,10 @@ export class TagService {
 
 
 /**
- * Tag suggestion from AI
+ * Tag suggestion from AI (for tag service)
  * Requirements: 3.2, 3.3 - AI-powered tag suggestions with confidence
  */
-export interface TagSuggestion {
+export interface TagServiceSuggestion {
   /** Suggested tag name */
   tag: string;
   /** Confidence score (0-1) */
@@ -451,7 +451,7 @@ export interface TagSuggestion {
  */
 export interface AITagService {
   isEnabled(): boolean;
-  suggestTags(recipe: Recipe): Promise<TagSuggestion[]>;
+  suggestTags(recipe: Recipe): Promise<TagServiceSuggestion[]>;
 }
 
 /**
@@ -481,7 +481,7 @@ export class AITagService extends TagService {
    * @param recipe - Recipe to suggest tags for
    * @returns Array of tag suggestions with confidence scores
    */
-  async suggestTags(recipe: Recipe): Promise<TagSuggestion[]> {
+  async suggestTags(recipe: Recipe): Promise<TagServiceSuggestion[]> {
     if (!this.aiService?.isEnabled()) {
       // Fall back to dietary tag detection when AI is not available
       const dietaryTags = this.detectDietaryTags(recipe.ingredients);
@@ -515,7 +515,7 @@ export class AITagService extends TagService {
    */
   applySuggestedTags(
     recipeId: string,
-    suggestions: TagSuggestion[],
+    suggestions: TagServiceSuggestion[],
     minConfidence: number = 0.7
   ): void {
     for (const suggestion of suggestions) {

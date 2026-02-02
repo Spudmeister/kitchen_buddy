@@ -16,14 +16,14 @@ import type {
   RecipeHeritage,
   Ingredient,
   Instruction,
-} from '@types/recipe';
-import type { Unit } from '@types/units';
+} from '@app-types/recipe';
+import type { Unit } from '@app-types/units';
 import type {
   RecipeFilters,
   RecipeSort,
   RecipeSearchParams,
   RecipeSearchResult,
-} from '@types/search';
+} from '@app-types/search';
 
 /**
  * Service for managing recipes with versioning support
@@ -34,7 +34,7 @@ export class RecipeService {
   /**
    * Create a new recipe
    */
-  createRecipe(input: RecipeInput): Recipe {
+  async createRecipe(input: RecipeInput): Promise<Recipe> {
     const recipeId = uuidv4();
     const versionId = uuidv4();
     const now = new Date().toISOString();
@@ -154,7 +154,7 @@ export class RecipeService {
   /**
    * Update a recipe - creates a new version while preserving history
    */
-  updateRecipe(id: string, input: RecipeInput): Recipe {
+  async updateRecipe(id: string, input: RecipeInput): Promise<Recipe> {
     return this.db.transaction(() => {
       const recipeRow = this.db.get<[number]>(
         'SELECT current_version FROM recipes WHERE id = ?',
@@ -198,7 +198,7 @@ export class RecipeService {
   /**
    * Archive (soft delete) a recipe
    */
-  archiveRecipe(id: string): void {
+  async archiveRecipe(id: string): Promise<void> {
     const now = new Date().toISOString();
     const result = this.db.run('UPDATE recipes SET archived_at = ? WHERE id = ?', [now, id]);
     if (result.changes === 0) {
@@ -209,7 +209,7 @@ export class RecipeService {
   /**
    * Restore an archived recipe
    */
-  unarchiveRecipe(id: string): void {
+  async unarchiveRecipe(id: string): Promise<void> {
     const result = this.db.run('UPDATE recipes SET archived_at = NULL WHERE id = ?', [id]);
     if (result.changes === 0) {
       throw new Error(`Recipe not found: ${id}`);
@@ -252,7 +252,7 @@ export class RecipeService {
    * Restore a previous version - creates a new version with that content
    * Requirements: 6.4, 6.5
    */
-  restoreVersion(id: string, versionNumber: number): Recipe {
+  async restoreVersion(id: string, versionNumber: number): Promise<Recipe> {
     const versionToRestore = this.getRecipe(id, versionNumber);
     if (!versionToRestore) {
       throw new Error(`Version ${versionNumber} not found for recipe ${id}`);
@@ -286,7 +286,7 @@ export class RecipeService {
   /**
    * Duplicate a recipe with heritage tracking
    */
-  duplicateRecipe(id: string): Recipe {
+  async duplicateRecipe(id: string): Promise<Recipe> {
     const original = this.getRecipe(id);
     if (!original) {
       throw new Error(`Recipe not found: ${id}`);

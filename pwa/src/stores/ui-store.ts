@@ -12,7 +12,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { UnitSystem } from '@types/units';
+import type { UnitSystem } from '@app-types/units';
 
 /**
  * Toast notification

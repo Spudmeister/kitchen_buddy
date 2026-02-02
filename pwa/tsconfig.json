@@ -34,9 +34,9 @@
       "@routes/*": ["src/routes/*"],
       "@services/*": ["src/services/*"],
       "@db/*": ["src/db/*"],
-      "@types/*": ["src/types/*"]
+      "@app-types/*": ["src/types/*"]
     }
   },
-  "include": ["src", "tests"],
+  "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

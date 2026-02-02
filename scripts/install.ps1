@@ -1,5 +1,5 @@
 # Sous Chef Installation Script
-# For Windows users (PowerShell)
+# For Windows users
 
 Write-Host "🍳 Sous Chef Installer" -ForegroundColor Cyan
 Write-Host "======================" -ForegroundColor Cyan
@@ -12,9 +12,9 @@ try {
     
     if ($versionNumber -lt 18) {
         Write-Host "❌ Node.js version 18 or higher is required." -ForegroundColor Red
-        Write-Host "   Current version: $nodeVersion" -ForegroundColor Yellow
+        Write-Host "   Current version: $nodeVersion"
         Write-Host ""
-        Write-Host "Please update Node.js from https://nodejs.org/" -ForegroundColor Yellow
+        Write-Host "Please update Node.js from https://nodejs.org/"
         exit 1
     }
     
@@ -22,7 +22,7 @@ try {
 } catch {
     Write-Host "❌ Node.js is not installed!" -ForegroundColor Red
     Write-Host ""
-    Write-Host "Please install Node.js first:" -ForegroundColor Yellow
+    Write-Host "Please install Node.js first:"
     Write-Host "  1. Go to https://nodejs.org/"
     Write-Host "  2. Download the LTS version"
     Write-Host "  3. Run the installer"
@@ -33,31 +33,35 @@ try {
 
 Write-Host ""
 
-# Install dependencies
-Write-Host "📦 Installing dependencies..." -ForegroundColor Cyan
+# Install root dependencies
+Write-Host "📦 Installing dependencies..." -ForegroundColor Yellow
 npm install
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host ""
-    Write-Host "❌ Installation failed. Please check your internet connection and try again." -ForegroundColor Red
+    Write-Host "❌ Root installation failed. Please check your internet connection and try again." -ForegroundColor Red
     exit 1
 }
 
+# Install PWA dependencies
 Write-Host ""
-
-# Build the project
-Write-Host "🔨 Building Sous Chef..." -ForegroundColor Cyan
-npm run build
+Write-Host "📦 Installing app dependencies..." -ForegroundColor Yellow
+Set-Location pwa
+npm install
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host ""
-    Write-Host "❌ Build failed. Please report this issue." -ForegroundColor Red
+    Write-Host "❌ App installation failed. Please check your internet connection and try again." -ForegroundColor Red
     exit 1
 }
+
+Set-Location ..
 
 Write-Host ""
 Write-Host "✅ Installation complete!" -ForegroundColor Green
 Write-Host ""
-Write-Host "To start Sous Chef, run:" -ForegroundColor Cyan
+Write-Host "To start Sous Chef, run:"
 Write-Host "  .\scripts\start.ps1"
+Write-Host ""
+Write-Host "The app will open in your browser at http://localhost:5173"
 Write-Host ""

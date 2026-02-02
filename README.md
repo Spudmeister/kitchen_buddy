@@ -2,27 +2,27 @@
 
 A local-first recipe and grocery management application for your kitchen.
 
-## Quick Start (Non-Technical Users)
+## Quick Start
 
 ### macOS / Linux
 
-1. Open Terminal
-2. Navigate to this folder: `cd path/to/sous-chef`
-3. Run: `./scripts/install.sh`
-4. Run: `./scripts/start.sh`
+```bash
+./scripts/install.sh
+./scripts/start.sh
+```
 
-### Windows
+### Windows (PowerShell)
 
-1. Open PowerShell
-2. Navigate to this folder: `cd path\to\sous-chef`
-3. Run: `.\scripts\install.ps1`
-4. Run: `.\scripts\start.ps1`
+```powershell
+.\scripts\install.ps1
+.\scripts\start.ps1
+```
 
-## What You Need First
+Then open **http://localhost:5173** in your browser.
 
-- **Node.js** (version 18 or higher) - [Download here](https://nodejs.org/)
-  - Choose the "LTS" version (recommended for most users)
-  - Run the installer and follow the prompts
+## Requirements
+
+- **Node.js 18+** - [Download here](https://nodejs.org/) (choose the LTS version)
 
 ## Features
 
@@ -33,6 +33,7 @@ A local-first recipe and grocery management application for your kitchen.
 - 📊 Cooking statistics and recommendations
 - 💾 Local-first data storage (your data stays on your device)
 - 📤 Export/import recipes in JSON format
+- 📱 Works offline as a Progressive Web App
 
 ## Troubleshooting
 
@@ -48,17 +49,23 @@ Run: `chmod +x scripts/*.sh` then try again.
 ## For Developers
 
 ```bash
-# Install dependencies
-npm install
+# Install all dependencies
+npm run install:all
 
-# Build the project
+# Start development server
+npm run dev
+
+# Build for production
 npm run build
 
-# Run tests
+# Run all tests
 npm test
 
-# Development mode (watch for changes)
-npm run dev
+# Run only library tests
+npm run test:lib
+
+# Run only app tests
+npm run test:app
 ```
 
 ## License

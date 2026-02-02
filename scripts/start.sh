@@ -5,12 +5,19 @@
 echo "🍳 Starting Sous Chef..."
 echo ""
 
-# Check if built
-if [ ! -d "dist" ]; then
-    echo "❌ Sous Chef hasn't been built yet."
+# Check if pwa/node_modules exists
+if [ ! -d "pwa/node_modules" ]; then
+    echo "❌ Sous Chef hasn't been installed yet."
     echo "   Please run ./scripts/install.sh first."
     exit 1
 fi
 
-# Run the application
-node dist/index.js "$@"
+echo "Starting development server..."
+echo "The app will be available at: http://localhost:5173"
+echo ""
+echo "Press Ctrl+C to stop the server."
+echo ""
+
+# Run the PWA dev server
+cd pwa
+npm run dev

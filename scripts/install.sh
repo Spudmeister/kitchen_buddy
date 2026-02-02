@@ -33,31 +33,35 @@ fi
 echo "✅ Node.js $(node -v) detected"
 echo ""
 
-# Install dependencies
+# Install root dependencies
 echo "📦 Installing dependencies..."
 npm install
 
 if [ $? -ne 0 ]; then
     echo ""
-    echo "❌ Installation failed. Please check your internet connection and try again."
+    echo "❌ Root installation failed. Please check your internet connection and try again."
     exit 1
 fi
 
+# Install PWA dependencies
 echo ""
-
-# Build the project
-echo "🔨 Building Sous Chef..."
-npm run build
+echo "📦 Installing app dependencies..."
+cd pwa
+npm install
 
 if [ $? -ne 0 ]; then
     echo ""
-    echo "❌ Build failed. Please report this issue."
+    echo "❌ App installation failed. Please check your internet connection and try again."
     exit 1
 fi
+
+cd ..
 
 echo ""
 echo "✅ Installation complete!"
 echo ""
 echo "To start Sous Chef, run:"
 echo "  ./scripts/start.sh"
+echo ""
+echo "The app will open in your browser at http://localhost:5173"
 echo ""

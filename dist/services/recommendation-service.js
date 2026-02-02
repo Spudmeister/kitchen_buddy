@@ -1,0 +1,277 @@
+/**
+ * Recommendation Service - Rule-based recipe recommendations
+ *
+ * Provides functionality for recommending recipes based on ratings,
+ * cook frequency, and various filters.
+ *
+ * Requirements: 15.1, 15.2, 15.3, 15.5
+ */
+import { RecipeService } from './recipe-service.js';
+import { StatisticsService } from './statistics-service.js';
+/**
+ * Service for generating recipe recommendations
+ */
+export class RecommendationService {
+    db;
+    recipeService;
+    statsService;
+    constructor(db) {
+        this.db = db;
+        this.recipeService = new RecipeService(db);
+        this.statsService = new StatisticsService(db);
+    }
+    /**
+     * Get favorite recipes - highly rated AND frequently cooked
+     * Requirements: 13.4, 15.2
+     *
+     * Property 27: For any request for favorites, the returned recipes SHALL have
+     * high ratings (≥4 stars) AND high cook frequency (above median), sorted by
+     * a combination of both factors.
+     */
+    getFavorites(limit = 10) {
+        // Get all recipes with ratings >= 4
+        const highRatedIds = this.statsService.getRecipeIdsByMinRating(4);
+        if (highRatedIds.length === 0) {
+            return [];
+        }
+        // Get cook counts for all recipes
+        const cookCounts = this.getCookCountsForRecipes(highRatedIds);
+        // Calculate median cook count
+        const counts = Array.from(cookCounts.values()).sort((a, b) => a - b);
+        const medianCookCount = counts.length > 0
+            ? counts[Math.floor(counts.length / 2)]
+            : 0;
+        // Filter to recipes with cook count above median
+        const favoriteIds = highRatedIds.filter(id => {
+            const count = cookCounts.get(id) ?? 0;
+            return count > medianCookCount;
+        });
+        // Get ratings for sorting
+        const ratings = this.statsService.getAllRecipeRatings();
+        // Sort by combined score (rating * cook_count)
+        const sortedIds = favoriteIds.sort((a, b) => {
+            const ratingA = ratings.get(a) ?? 0;
+            const ratingB = ratings.get(b) ?? 0;
+            const countA = cookCounts.get(a) ?? 0;
+            const countB = cookCounts.get(b) ?? 0;
+            const scoreA = ratingA * countA;
+            const scoreB = ratingB * countB;
+            return scoreB - scoreA; // Descending
+        });
+        // Get recipes
+        return this.getRecipesByIds(sortedIds.slice(0, limit));
+    }
+    /**
+     * Get deep cuts - good ratings but rarely cooked
+     * Requirements: 15.3
+     *
+     * Property 28: For any request for deep cuts, the returned recipes SHALL have
+     * good ratings (≥3 stars) AND low cook frequency (below median or never cooked),
+     * sorted by rating.
+     */
+    getDeepCuts(limit = 10) {
+        // Get all recipes with ratings >= 3
+        const goodRatedIds = this.statsService.getRecipeIdsByMinRating(3);
+        if (goodRatedIds.length === 0) {
+            return [];
+        }
+        // Get cook counts for all rated recipes
+        const cookCounts = this.getCookCountsForRecipes(goodRatedIds);
+        // Calculate median cook count
+        const counts = Array.from(cookCounts.values()).sort((a, b) => a - b);
+        const medianCookCount = counts.length > 0
+            ? counts[Math.floor(counts.length / 2)]
+            : 0;
+        // Filter to recipes with cook count below or equal to median (including never cooked = 0)
+        const deepCutIds = goodRatedIds.filter(id => {
+            const count = cookCounts.get(id) ?? 0;
+            return count <= medianCookCount;
+        });
+        // Get ratings for sorting
+        const ratings = this.statsService.getAllRecipeRatings();
+        // Sort by rating descending
+        const sortedIds = deepCutIds.sort((a, b) => {
+            const ratingA = ratings.get(a) ?? 0;
+            const ratingB = ratings.get(b) ?? 0;
+            return ratingB - ratingA;
+        });
+        // Get recipes
+        return this.getRecipesByIds(sortedIds.slice(0, limit));
+    }
+    /**
+     * Get recently added recipes
+     * Requirements: 15.5
+     */
+    getRecentlyAdded(limit = 10) {
+        const rows = this.db.exec(`SELECT id FROM recipes
+       WHERE archived_at IS NULL
+       ORDER BY created_at DESC
+       LIMIT ?`, [limit]);
+        const ids = rows.map(row => row[0]);
+        return this.getRecipesByIds(ids);
+    }
+    /**
+     * Get recipes not cooked recently
+     * Requirements: 15.5
+     */
+    getNotCookedRecently(limit = 10, daysSinceLastCook = 30) {
+        const cutoffDate = new Date();
+        cutoffDate.setDate(cutoffDate.getDate() - daysSinceLastCook);
+        const cutoffStr = cutoffDate.toISOString();
+        // Get recipes that either:
+        // 1. Have never been cooked, OR
+        // 2. Were last cooked before the cutoff date
+        const rows = this.db.exec(`SELECT r.id FROM recipes r
+       LEFT JOIN (
+         SELECT recipe_id, MAX(date) as last_cooked
+         FROM cook_sessions
+         GROUP BY recipe_id
+       ) cs ON r.id = cs.recipe_id
+       WHERE r.archived_at IS NULL
+       AND (cs.last_cooked IS NULL OR cs.last_cooked < ?)
+       ORDER BY cs.last_cooked ASC NULLS FIRST
+       LIMIT ?`, [cutoffStr, limit]);
+        const ids = rows.map(row => row[0]);
+        return this.getRecipesByIds(ids);
+    }
+    /**
+     * Get recommendations with filters
+     * Requirements: 15.1
+     */
+    getRecommendations(filters, limit = 10) {
+        let sql = `
+      SELECT DISTINCT r.id
+      FROM recipes r
+      JOIN recipe_versions rv ON r.id = rv.recipe_id AND rv.version = r.current_version
+    `;
+        const params = [];
+        const conditions = ['r.archived_at IS NULL'];
+        // Join for tags if needed
+        if (filters.tags && filters.tags.length > 0) {
+            sql += `
+        JOIN recipe_tags rt ON r.id = rt.recipe_id
+        JOIN tags t ON rt.tag_id = t.id
+      `;
+        }
+        // Filter by max prep time
+        if (filters.maxPrepTime) {
+            conditions.push('rv.prep_time_minutes <= ?');
+            params.push(filters.maxPrepTime.minutes);
+        }
+        // Filter by max cook time
+        if (filters.maxCookTime) {
+            conditions.push('rv.cook_time_minutes <= ?');
+            params.push(filters.maxCookTime.minutes);
+        }
+        // Filter by tags (include)
+        if (filters.tags && filters.tags.length > 0) {
+            const placeholders = filters.tags.map(() => '?').join(', ');
+            conditions.push(`t.name IN (${placeholders})`);
+            params.push(...filters.tags);
+        }
+        // Filter by tags (exclude)
+        if (filters.excludeTags && filters.excludeTags.length > 0) {
+            const placeholders = filters.excludeTags.map(() => '?').join(', ');
+            conditions.push(`r.id NOT IN (
+        SELECT rt2.recipe_id FROM recipe_tags rt2
+        JOIN tags t2 ON rt2.tag_id = t2.id
+        WHERE t2.name IN (${placeholders})
+      )`);
+            params.push(...filters.excludeTags);
+        }
+        // Build WHERE clause
+        if (conditions.length > 0) {
+            sql += ` WHERE ${conditions.join(' AND ')}`;
+        }
+        // Order by created_at for consistent results
+        sql += ` ORDER BY r.created_at DESC LIMIT ?`;
+        params.push(limit * 2); // Get more than needed for post-filtering
+        const rows = this.db.exec(sql, params);
+        let ids = rows.map(row => row[0]);
+        // Post-filter by minimum rating if specified
+        if (filters.minRating !== undefined) {
+            const ratings = this.statsService.getAllRecipeRatings();
+            ids = ids.filter(id => {
+                const rating = ratings.get(id);
+                return rating !== undefined && rating >= filters.minRating;
+            });
+        }
+        // Post-filter by ingredients if specified
+        if (filters.ingredients && filters.ingredients.length > 0) {
+            ids = this.filterByIngredients(ids, filters.ingredients);
+        }
+        return this.getRecipesByIds(ids.slice(0, limit));
+    }
+    // Private helper methods
+    /**
+     * Get cook counts for a list of recipe IDs
+     */
+    getCookCountsForRecipes(recipeIds) {
+        const counts = new Map();
+        if (recipeIds.length === 0) {
+            return counts;
+        }
+        // SQLite has a limit on the number of variables in a query
+        // Batch the queries to avoid "too many SQL variables" error
+        const BATCH_SIZE = 100;
+        for (let i = 0; i < recipeIds.length; i += BATCH_SIZE) {
+            const batch = recipeIds.slice(i, i + BATCH_SIZE);
+            const placeholders = batch.map(() => '?').join(', ');
+            const rows = this.db.exec(`SELECT recipe_id, COUNT(*) as count
+         FROM cook_sessions
+         WHERE recipe_id IN (${placeholders})
+         GROUP BY recipe_id`, batch);
+            for (const row of rows) {
+                counts.set(row[0], row[1]);
+            }
+        }
+        // Set 0 for recipes with no cook sessions
+        for (const id of recipeIds) {
+            if (!counts.has(id)) {
+                counts.set(id, 0);
+            }
+        }
+        return counts;
+    }
+    /**
+     * Get recipes by IDs, preserving order
+     */
+    getRecipesByIds(ids) {
+        const recipes = [];
+        for (const id of ids) {
+            const recipe = this.recipeService.getRecipe(id);
+            if (recipe && !recipe.archivedAt) {
+                recipes.push(recipe);
+            }
+        }
+        return recipes;
+    }
+    /**
+     * Filter recipe IDs by available ingredients
+     * Returns recipes that can be made with the given ingredients
+     * (ordered by number of missing ingredients)
+     */
+    filterByIngredients(recipeIds, availableIngredients) {
+        const normalizedAvailable = availableIngredients.map(i => i.toLowerCase().trim());
+        const recipesWithMissing = [];
+        for (const id of recipeIds) {
+            const recipe = this.recipeService.getRecipe(id);
+            if (!recipe)
+                continue;
+            // Count missing ingredients
+            let missingCount = 0;
+            for (const ingredient of recipe.ingredients) {
+                const ingredientName = ingredient.name.toLowerCase().trim();
+                const hasIngredient = normalizedAvailable.some(avail => ingredientName.includes(avail) || avail.includes(ingredientName));
+                if (!hasIngredient) {
+                    missingCount++;
+                }
+            }
+            recipesWithMissing.push({ id, missing: missingCount });
+        }
+        // Sort by missing count ascending
+        recipesWithMissing.sort((a, b) => a.missing - b.missing);
+        return recipesWithMissing.map(r => r.id);
+    }
+}
+//# sourceMappingURL=recommendation-service.js.map

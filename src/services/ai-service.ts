@@ -281,6 +281,32 @@ export class AIService {
   }
 
   /**
+   * Analyze an image using AI vision capabilities
+   */
+  async analyzeImage(prompt: string, base64Image: string): Promise<string> {
+    if (!this.isEnabled()) {
+      throw new Error('AI features are not enabled');
+    }
+
+    if (!this.config) {
+      throw new Error('AI service not configured');
+    }
+
+    switch (this.config.provider) {
+      case 'openai':
+        return this.sendOpenAIVisionRequest(prompt, base64Image);
+      case 'anthropic':
+        return this.sendAnthropicVisionRequest(prompt, base64Image);
+      case 'ollama':
+        return this.sendOllamaVisionRequest(prompt, base64Image);
+      case 'custom':
+        return this.sendCustomVisionRequest(prompt, base64Image);
+      default:
+        throw new Error(`Unsupported provider for vision: ${this.config.provider}`);
+    }
+  }
+
+  /**
    * Send request to AI provider
    */
   private async sendRequest(prompt: string): Promise<string> {
@@ -331,6 +357,163 @@ export class AIService {
     if (!response.ok) {
       const error = await response.text();
       throw new Error(`OpenAI API error: ${response.status} - ${error}`);
+    }
+
+    const data = (await response.json()) as OpenAIResponse;
+    return data.choices?.[0]?.message?.content || '';
+  }
+
+  /**
+   * Send vision request to OpenAI
+   */
+  private async sendOpenAIVisionRequest(prompt: string, base64Image: string): Promise<string> {
+    const endpoint = this.getEndpoint();
+    const model = this.getModel();
+
+    const response = await fetch(`${endpoint}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.config!.apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: prompt },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: `data:image/jpeg;base64,${base64Image}`,
+                },
+              },
+            ],
+          },
+        ],
+        max_tokens: 4096,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`OpenAI Vision API error: ${response.status} - ${error}`);
+    }
+
+    const data = (await response.json()) as OpenAIResponse;
+    return data.choices?.[0]?.message?.content || '';
+  }
+
+  /**
+   * Send vision request to Anthropic
+   */
+  private async sendAnthropicVisionRequest(prompt: string, base64Image: string): Promise<string> {
+    const endpoint = this.getEndpoint();
+    const model = this.getModel();
+
+    const response = await fetch(`${endpoint}/messages`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': this.config!.apiKey!,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: 4096,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'image',
+                source: {
+                  type: 'base64',
+                  media_type: 'image/jpeg',
+                  data: base64Image,
+                },
+              },
+              { type: 'text', text: prompt },
+            ],
+          },
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Anthropic Vision API error: ${response.status} - ${error}`);
+    }
+
+    const data = (await response.json()) as AnthropicResponse;
+    return data.content?.[0]?.text || '';
+  }
+
+  /**
+   * Send vision request to Ollama
+   */
+  private async sendOllamaVisionRequest(prompt: string, base64Image: string): Promise<string> {
+    const endpoint = this.getEndpoint();
+    const model = this.getModel();
+
+    const response = await fetch(`${endpoint}/api/generate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model,
+        prompt,
+        images: [base64Image],
+        stream: false,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Ollama Vision API error: ${response.status} - ${error}`);
+    }
+
+    const data = (await response.json()) as OllamaResponse;
+    return data.response || '';
+  }
+
+  /**
+   * Send vision request to custom API
+   */
+  private async sendCustomVisionRequest(prompt: string, base64Image: string): Promise<string> {
+    const endpoint = this.getEndpoint();
+    const model = this.getModel();
+
+    const response = await fetch(`${endpoint}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(this.config!.apiKey && { Authorization: `Bearer ${this.config!.apiKey}` }),
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: prompt },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: `data:image/jpeg;base64,${base64Image}`,
+                },
+              },
+            ],
+          },
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Custom Vision API error: ${response.status} - ${error}`);
     }
 
     const data = (await response.json()) as OpenAIResponse;

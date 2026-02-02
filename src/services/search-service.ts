@@ -8,6 +8,7 @@
 import { v4 as _uuidv4 } from 'uuid';
 import type { Database } from '../db/database.js';
 import type { Recipe } from '../types/recipe.js';
+import { RecipeRepository } from '../repositories/recipe-repository.js';
 
 /**
  * Search result with relevance score
@@ -24,9 +25,11 @@ export interface SearchResult {
  */
 export class SearchService {
   private ftsAvailable: boolean = false;
+  private repository: RecipeRepository;
 
   constructor(private db: Database) {
     this.checkFtsAvailability();
+    this.repository = new RecipeRepository(db);
   }
 
   /**
@@ -259,116 +262,7 @@ export class SearchService {
    */
   private loadRecipes(ids: string[]): Recipe[] {
     return ids
-      .map((id) => this.loadRecipe(id))
+      .map((id) => this.repository.getRecipe(id))
       .filter((r): r is Recipe => r !== undefined);
-  }
-
-  /**
-   * Load a single recipe by ID
-   */
-  private loadRecipe(id: string): Recipe | undefined {
-    // Get recipe metadata
-    const recipeRow = this.db.get<
-      [string, number, string | null, string | null, string | null, string]
-    >(
-      'SELECT id, current_version, folder_id, parent_recipe_id, archived_at, created_at FROM recipes WHERE id = ?',
-      [id]
-    );
-
-    if (!recipeRow) {
-      return undefined;
-    }
-
-    const [recipeId, currentVersion, folderId, parentRecipeId, archivedAt, createdAt] = recipeRow;
-
-    // Get version data
-    const versionRow = this.db.get<
-      [string, string, string | null, number | null, number | null, number, string | null, string]
-    >(
-      `SELECT id, title, description, prep_time_minutes, cook_time_minutes, servings, source_url, created_at
-       FROM recipe_versions WHERE recipe_id = ? AND version = ?`,
-      [recipeId, currentVersion]
-    );
-
-    if (!versionRow) {
-      return undefined;
-    }
-
-    const [
-      versionId,
-      title,
-      description,
-      prepTimeMinutes,
-      cookTimeMinutes,
-      servings,
-      sourceUrl,
-      versionCreatedAt,
-    ] = versionRow;
-
-    // Get ingredients
-    const ingredientRows = this.db.exec(
-      `SELECT id, name, quantity, unit, notes, category
-       FROM ingredients WHERE recipe_version_id = ? ORDER BY sort_order`,
-      [versionId]
-    );
-
-    const ingredients = ingredientRows.map((row) => ({
-      id: row[0] as string,
-      name: row[1] as string,
-      quantity: row[2] as number,
-      unit: row[3] as Recipe['ingredients'][0]['unit'],
-      notes: (row[4] as string | null) ?? undefined,
-      category: (row[5] as Recipe['ingredients'][0]['category'] | null) ?? undefined,
-    }));
-
-    // Get instructions
-    const instructionRows = this.db.exec(
-      `SELECT id, step_number, text, duration_minutes, notes
-       FROM instructions WHERE recipe_version_id = ? ORDER BY step_number`,
-      [versionId]
-    );
-
-    const instructions = instructionRows.map((row) => ({
-      id: row[0] as string,
-      step: row[1] as number,
-      text: row[2] as string,
-      duration: row[3] != null ? { minutes: row[3] as number } : undefined,
-      notes: (row[4] as string | null) ?? undefined,
-    }));
-
-    // Get tags
-    const tagRows = this.db.exec(
-      `SELECT t.name FROM tags t
-       JOIN recipe_tags rt ON t.id = rt.tag_id
-       WHERE rt.recipe_id = ?`,
-      [recipeId]
-    );
-    const tags = tagRows.map((row) => row[0] as string);
-
-    // Get rating (latest)
-    const ratingRow = this.db.get<[number]>(
-      'SELECT rating FROM ratings WHERE recipe_id = ? ORDER BY rated_at DESC LIMIT 1',
-      [recipeId]
-    );
-
-    return {
-      id: recipeId,
-      currentVersion,
-      title,
-      description: description ?? undefined,
-      ingredients,
-      instructions,
-      prepTime: { minutes: prepTimeMinutes ?? 0 },
-      cookTime: { minutes: cookTimeMinutes ?? 0 },
-      servings,
-      tags,
-      rating: ratingRow?.[0],
-      sourceUrl: sourceUrl ?? undefined,
-      folderId: folderId ?? undefined,
-      parentRecipeId: parentRecipeId ?? undefined,
-      createdAt: new Date(createdAt),
-      updatedAt: new Date(versionCreatedAt),
-      archivedAt: archivedAt ? new Date(archivedAt) : undefined,
-    };
   }
 }

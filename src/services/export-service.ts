@@ -7,6 +7,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import type { Database } from '../db/database.js';
 import type { Recipe, Folder } from '../types/recipe.js';
+import { RecipeRepository } from '../repositories/recipe-repository.js';
 import type {
   RecipeExport,
   FolderExport,
@@ -22,7 +23,6 @@ import type {
   ImportValidationError,
 } from '../types/export.js';
 import { EXPORT_FORMAT_VERSION } from '../types/export.js';
-import { RecipeService } from './recipe-service.js';
 import { PhotoService } from './photo-service.js';
 import { StatisticsService } from './statistics-service.js';
 import { RecipeInstanceService } from './instance-service.js';
@@ -32,14 +32,14 @@ import { TagService } from './tag-service.js';
  * Service for exporting and importing recipe data
  */
 export class ExportService {
-  private recipeService: RecipeService;
+  private repository: RecipeRepository;
   private photoService: PhotoService;
   private statisticsService: StatisticsService;
   private instanceService: RecipeInstanceService;
   private tagService: TagService;
 
   constructor(private db: Database) {
-    this.recipeService = new RecipeService(db);
+    this.repository = new RecipeRepository(db);
     this.photoService = new PhotoService(db);
     this.statisticsService = new StatisticsService(db);
     this.instanceService = new RecipeInstanceService(db);
@@ -51,7 +51,7 @@ export class ExportService {
    * Requirements: 8.2 - Generate portable data file in app's format
    */
   exportRecipe(recipeId: string, options: ExportOptions = {}): RecipeExport {
-    const recipe = this.recipeService.getRecipe(recipeId);
+    const recipe = this.repository.getRecipe(recipeId);
     if (!recipe) {
       throw new Error(`Recipe not found: ${recipeId}`);
     }
@@ -117,7 +117,7 @@ export class ExportService {
 
     const recipeIds = recipeRows.map(row => row[0] as string);
     const exportedRecipes = recipeIds
-      .map(rid => this.recipeService.getRecipe(rid))
+      .map(rid => this.repository.getRecipe(rid))
       .filter((r): r is Recipe => r !== undefined)
       .map(r => this.recipeToExported(r));
 
@@ -162,7 +162,7 @@ export class ExportService {
 
     const recipeIds = recipeRows.map(row => row[0] as string);
     const exportedRecipes = recipeIds
-      .map(rid => this.recipeService.getRecipe(rid))
+      .map(rid => this.repository.getRecipe(rid))
       .filter((r): r is Recipe => r !== undefined)
       .map(r => this.recipeToExported(r));
 
@@ -767,13 +767,7 @@ export class ExportService {
    * Get all recipes (for testing purposes)
    */
   getAllRecipes(): Recipe[] {
-    const recipeRows = this.db.exec(
-      'SELECT id FROM recipes WHERE archived_at IS NULL'
-    );
-
-    return recipeRows
-      .map(row => this.recipeService.getRecipe(row[0] as string))
-      .filter((r): r is Recipe => r !== undefined);
+    return this.repository.listRecipes();
   }
 
   /**
@@ -841,7 +835,7 @@ export class ExportService {
     );
 
     return recipeRows
-      .map(row => this.recipeService.getRecipe(row[0] as string))
+      .map(row => this.repository.getRecipe(row[0] as string))
       .filter((r): r is Recipe => r !== undefined);
   }
 }

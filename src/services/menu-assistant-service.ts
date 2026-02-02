@@ -712,6 +712,12 @@ export class MenuAssistantService {
       if (constraints.maxCookTime) {
         filters.maxCookTime = { minutes: constraints.maxCookTime };
       }
+      if (constraints.maxTotalTime) {
+        // Apply to both prep and cook time as approximation
+        const halfTime = Math.floor(constraints.maxTotalTime / 2);
+        filters.maxPrepTime = filters.maxPrepTime || { minutes: halfTime };
+        filters.maxCookTime = filters.maxCookTime || { minutes: halfTime };
+      }
       if (constraints.includeTags && constraints.includeTags.length > 0) {
         filters.tags = constraints.includeTags;
       }

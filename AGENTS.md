@@ -318,6 +318,84 @@ npm run lint             # ESLint
 npm run format           # Prettier
 ```
 
+## Git Workflow
+
+This project uses **GitFlow** branching strategy to support multiple AI agents working in tandem and stable releases for distribution.
+
+### Branch Structure
+
+```
+main                    # Production-ready code, tagged releases only
+├── hotfix/*            # Emergency fixes (branch from main, merge to main + develop)
+│
+develop                 # Integration branch, all features merge here
+├── feature/*           # Feature branches (branch from develop, merge to develop)
+└── release/*           # Release prep (branch from develop, merge to main + develop)
+```
+
+### Branch Types
+
+| Branch | Purpose | Branch From | Merge To |
+|--------|---------|-------------|----------|
+| `main` | Production releases | - | - |
+| `develop` | Integration & testing | `main` (initial) | - |
+| `feature/*` | New features & tasks | `develop` | `develop` |
+| `release/*` | Release preparation | `develop` | `main` + `develop` |
+| `hotfix/*` | Emergency production fixes | `main` | `main` + `develop` |
+
+### Branch Naming
+
+- `feature/add-recipe-scaling` - New feature
+- `feature/fix-unit-conversion` - Bug fix (non-urgent)
+- `feature/refactor-shopping-service` - Refactoring
+- `release/v1.2.0` - Release preparation
+- `hotfix/critical-data-loss` - Emergency fix
+
+### AI Agent Rules
+
+1. **Always create a feature branch** for any code changes
+2. **Never commit directly** to `main` or `develop`
+3. **Run tests before pushing** - `npm test` must pass
+4. **Keep branches focused** - one feature/task per branch
+5. **Keep branches short-lived** - merge promptly after review
+6. **Use descriptive branch names** - include ticket/task reference if available
+
+### Workflow for AI Agents
+
+```bash
+# 1. Start a new feature
+git checkout develop
+git pull origin develop
+git checkout -b feature/my-feature-name
+
+# 2. Make changes and commit
+git add .
+git commit -m "feat: description of changes"
+
+# 3. Run tests before pushing
+npm test
+
+# 4. Push and create PR
+git push -u origin feature/my-feature-name
+```
+
+### Commit Message Format
+
+Use conventional commits:
+
+- `feat:` - New feature
+- `fix:` - Bug fix
+- `refactor:` - Code refactoring
+- `test:` - Adding/updating tests
+- `docs:` - Documentation changes
+- `chore:` - Maintenance tasks
+
+```bash
+git commit -m "feat: add ingredient scaling to recipe service"
+git commit -m "fix: correct unit conversion for tablespoons"
+git commit -m "test: add property tests for shopping consolidation"
+```
+
 ## Spec-Driven Development
 
 Features are developed using specs in `.kiro/specs/`:

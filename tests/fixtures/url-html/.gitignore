@@ -1,0 +1,9 @@
+# HTML fixtures are large — ignore them from the repo.
+# Regenerate locally with: npm run generate-fixtures
+*.html
+
+# Metadata files are small and useful to commit — track them.
+!*.meta.json
+
+# Always track this file itself.
+!.gitignore

@@ -1,0 +1,60 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd /home/user/kitchen_buddy && echo \"$CLAUDE_TOOL_INPUT\" | grep -q \"git commit\" && (npm run lint && npm run format:check) || true",
+            "description": "Lint and format check before git commit"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd /home/user/kitchen_buddy && echo \"$CLAUDE_TOOL_INPUT\" | grep -q \"git push\" && npm test || true",
+            "description": "Run full test suite before git push"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd /home/user/kitchen_buddy && npm run format:check --silent 2>/dev/null || echo '[hook] Format drift detected — run npm run format'",
+            "description": "Warn on format drift after file edits"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd /home/user/kitchen_buddy && echo \"$CLAUDE_TOOL_INPUT\" | grep -q \"git commit\" && git branch --show-current | grep -q \"feature/\" && echo \"[hook] Remember to check off completed tasks in .kiro/specs/*/tasks.md\" || true",
+            "description": "Remind to update spec tasks.md after commits on feature branches"
+          }
+        ]
+      }
+    ]
+  },
+  "mcpServers": {
+    "filesystem": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/home/user/kitchen_buddy"]
+    },
+    "sqlite": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sqlite", "--db-path", "/tmp/sous-chef-dev.db"]
+    }
+  }
+}

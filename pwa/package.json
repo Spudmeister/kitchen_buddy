@@ -9,7 +9,9 @@
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "lhci": "lhci autorun",
+    "lhci:build": "npm run build && lhci autorun"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.17.0",

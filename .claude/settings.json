@@ -1,4 +1,22 @@
 {
+  "permissions": {
+    "allow": [
+      "Read", "Grep", "Glob",
+      "Bash(swift build:*)", "Bash(swift test:*)", "Bash(swift package:*)",
+      "Bash(xcodegen generate:*)",
+      "Bash(xcodebuild -version:*)", "Bash(xcodebuild build:*)", "Bash(xcodebuild test:*)",
+      "Bash(xcrun simctl list:*)",
+      "Bash(git status:*)", "Bash(git diff:*)", "Bash(git log:*)", "Bash(git show:*)",
+      "Bash(git branch:*)", "Bash(git rev-list:*)", "Bash(git describe:*)",
+      "Bash(gh run list:*)", "Bash(gh run view:*)", "Bash(gh run watch:*)", "Bash(gh pr view:*)",
+      "Bash(scripts/screenshots.sh:*)"
+    ],
+    "deny": [
+      "Bash(git push:*)",
+      "Bash(scripts/ship.sh:*)",
+      "Bash(gh secret:*)"
+    ]
+  },
   "hooks": {
     "PreToolUse": [
       {
@@ -6,55 +24,22 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cd /home/user/kitchen_buddy && echo \"$CLAUDE_TOOL_INPUT\" | grep -q \"git commit\" && (npm run lint && npm run format:check) || true",
-            "description": "Lint and format check before git commit"
-          }
-        ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "cd /home/user/kitchen_buddy && echo \"$CLAUDE_TOOL_INPUT\" | grep -q \"git push\" && npm test || true",
-            "description": "Run full test suite before git push"
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/pre-push.sh",
+            "timeout": 600
           }
         ]
       }
     ],
     "PostToolUse": [
       {
-        "matcher": "Write|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "cd /home/user/kitchen_buddy && npm run format:check --silent 2>/dev/null || echo '[hook] Format drift detected — run npm run format'",
-            "description": "Warn on format drift after file edits"
-          }
-        ]
-      },
-      {
         "matcher": "Bash",
         "hooks": [
           {
             "type": "command",
-            "command": "cd /home/user/kitchen_buddy && echo \"$CLAUDE_TOOL_INPUT\" | grep -q \"git commit\" && git branch --show-current | grep -q \"feature/\" && echo \"[hook] Remember to check off completed tasks in .kiro/specs/*/tasks.md\" || true",
-            "description": "Remind to update spec tasks.md after commits on feature branches"
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/post-commit-reminder.sh"
           }
         ]
       }
     ]
-  },
-  "mcpServers": {
-    "filesystem": {
-      "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/home/user/kitchen_buddy"]
-    },
-    "sqlite": {
-      "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-sqlite", "--db-path", "/tmp/sous-chef-dev.db"]
-    }
   }
 }

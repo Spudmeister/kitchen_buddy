@@ -1,0 +1,108 @@
+# Implementation Plan — Kitchen Buddy iOS
+
+Tags: **v0.1.0 at M2** (first usable recipe book), **v0.2.0 at M4**,
+**v0.3.0 at M7**, **v0.4.0 at M9**. Every push to `main` uploads to TestFlight;
+each milestone ends with a "What to test" note for the TestFlight build.
+
+## M0 — Bootstrap: repo migration, CI green, empty app on TestFlight
+
+- [x] 0.1 Freeze the recipe fixtures as JSON; remove `src/`, `pwa/`, `tests/`, npm config, stale Claude commands; new `.gitignore`
+- [x] 0.2 Scaffold `App/` (XcodeGen, `net.puddleglum.kitchenbuddy`, entitlements, document type, URL scheme, Share Extension stub, UITests) and `KitchenBuddyKit/` (four targets, GRDB 7, `Fraction`, `DatabaseStack`, `Gen`, smoke tests)
+- [x] 0.3 `.github/workflows/release.yml` (test, build-app on PRs, testflight with CI cert import and tag-derived version, release)
+- [x] 0.4 `CLAUDE.md`, `README.md`, `docs/ROADMAP.md`, ADR-001…006, this spec, `.claude/` hooks and settings
+- [ ] 0.5 Human setup (portal, ASC app record, `CI_CERT_*` then `ASC_*` secrets), merge, first TestFlight build installs
+- **What to test:** app installs, launches, shows the placeholder.
+
+## M1 — Domain + persistence + tests
+
+- [ ] 1.1 KitchenCore types: `Tagged` IDs, `Unit`, `IngredientCategory`, `DietaryTag`, `Ingredient`, `Instruction`, `RecipeVersion`, `Recipe`, `Folder`, `Tag`, `Photo`, `Rating`, `RecipeNote`, `Preferences`, `RecipeDraft`, projections — _Req 1.1_
+- [ ] 1.2 `Scaler`, `PracticalRounding`, `QuantityParser` ("1 1/2", "¾", "0.75"), `QuantityFormatter` — _Req 1.3, 8.1, 8.2_
+- [ ] 1.3 `UnitConverter` (base factors, best-unit thresholds, pass-through units) — _Req 9.1, 9.2, 9.5_
+- [ ] 1.4 `TagDetector` ported from `tag-service.ts` keyword tables — _Req 5.2, 5.3_
+- [ ] 1.5 `Migrations.v1-initial` (schema, guard triggers, `recipe_search` + FTS5 + sync triggers, indexes), `SearchIndex` (refresh, rebuildAll, query builder), `RecipeStore`, `FolderStore`, `TagStore`, `PreferencesStore` — _Req 1.6, 2.1, 2.2, 2.5, 3.1, 3.2, 4.1, 4.2, 4.5, 6.1–6.3, 7.1–7.5, 15.1–15.3, 16.1, 16.2, 16.4, 17.1, 17.8, 18.3_
+- [ ] 1.6 `KitchenTesting`: `RecipeGen` (fractions, units, ingredients, versions, drafts, folder trees, edit sequences), temp-DB helper, v1 fixture loader
+- [ ] 1.7 Property tests P1–P8, P10–P20, P25, P30, P32; `NoHardDeleteTests`; `SearchPerformanceTests` (5,000 recipes) — _Req 6.5_
+- [ ] 1.8 `kb-schema-v1.sqlite` fixture + `MigrationFixtureTests`; `MigratorConfigTests`
+- [ ] 1.9 Demo seed (`--seed demo` imports `DemoRecipes.json` through the real importer path; Settings "Load sample recipes" in Debug/TestFlight)
+- **What to test:** no user-visible change.
+
+## M2 — Library + Detail + Editor (usable recipe book) → tag `v0.1.0`
+
+- [ ] 2.1 `Router`, `Route`, `AppEnvironment`, app wiring, `@SceneStorage` path
+- [ ] 2.2 Library screen (list, rows, `.searchable` tokens, sort menu, folder sections, swipe/context actions, empty states) — _Req 6.1–6.4, 6.6, 3.2_
+- [ ] 2.3 Recipe Detail (header, meta, tags, ingredients tap-to-check, steps, version badge, toolbar menu) — _Req 10.1–10.4, 3.1_
+- [ ] 2.4 Recipe Editor (form, reorder, fraction entry, validation, discard confirmation, version-on-content-change) — _Req 1.1–1.6, 2.1, 2.2_
+- [ ] 2.5 Tag Picker and Move-to-Folder sheets; folder picker in editor — _Req 5.1, 5.5, 16.1_
+- [ ] 2.6 Archived screen and archived-mode Detail — _Req 3.2–3.4_
+- [ ] 2.7 Dynamic Type + VoiceOver baseline; XCUITest create → edit → search → archive → unarchive — _Req 19.1, 19.2_
+- [ ] 2.8 Release: tag `v0.1.0`
+- **What to test:** create 10 recipes by hand, edit, reorder ingredients, search, sort, archive/unarchive, largest text size. Report anything that loses data.
+
+## M3 — Scaling, units, tags, search polish
+
+- [ ] 3.1 Servings stepper with live scaling, factor label, reset, long-press numeric entry — _Req 8.1–8.5_
+- [ ] 3.2 Unit control, preference default, best-unit display — _Req 9.3, 9.4_
+- [ ] 3.3 Dietary suggestions in the editor with accept flow — _Req 5.3, 5.4_
+- [ ] 3.4 Search: bm25 weights, prefix matching, `#tag` / `in:folder` shorthand, suggested tokens, include-archived token — _Req 6.1, 6.2_
+- [ ] 3.5 Rating and time filters; count pill — _Req 6.2_
+- [ ] 3.6 P9, P11, P13, P14 at view-model level; `QuantityFormatter` table snapshot test
+- **What to test:** scale to 1, 3, 7 servings and check fractions look like a cookbook; flip US/Metric; try `#vegetarian` and `in:Desserts`.
+
+## M4 — Versions, lineage, notes, ratings, folders → tag `v0.2.0`
+
+- [ ] 4.1 Version History + Viewer + restore — _Req 2.3–2.5_
+- [ ] 4.2 Duplicate + Lineage screen + lineage section — _Req 4.1–4.4_
+- [ ] 4.3 Notes section, Notes screen, Note Editor, pin, soft delete with undo — _Req 7.1–7.5_
+- [ ] 4.4 Ratings: star control with haptics, history, Library filter/sort — _Req 15.1–15.5_
+- [ ] 4.5 Folder browser: nested, create/rename/move/delete, multi-select move, counts — _Req 16.1–16.6, 18.1_
+- [ ] 4.6 P2–P4, P17–P20, P25 end-to-end; UI tests for restore and folder cycle rejection
+- [ ] 4.7 Release: tag `v0.2.0`
+- **What to test:** edit a recipe three times, restore v1, confirm v4 appears; duplicate and follow lineage; nest folders three deep and try to move a folder into its own child.
+
+## M5 — Photos
+
+- [ ] 5.1 `PhotoStore`: ingest (downsample, JPEG, thumbnail, EXIF), file layout, soft remove, trash purge — _Req 11.1, 11.2, 11.4_
+- [ ] 5.2 `PhotosPicker` + camera wrapper; Add Photo from Detail and Editor — _Req 11.1_
+- [ ] 5.3 Photo header, cover thumbnails in Library, gallery with Set as Cover / caption — _Req 11.3_
+- [ ] 5.4 Full-screen viewer with paging and pinch zoom — _Req 11.5_
+- [ ] 5.5 P26; 50-photo memory test
+- **What to test:** add HEIC photos from camera and library, set cover, zoom, check Library thumbnails and storage growth.
+
+## M6 — URL import + Share Extension
+
+- [ ] 6.1 `SchemaOrgExtractor` (JSON-LD incl. `@graph`, arrays, `HowToSection`; microdata fallback), ISO-8601 durations, yield parsing — _Req 12.1, 12.2_
+- [ ] 6.2 `IngredientNormalizer` (unit aliases, fractions, category keywords) and multi-line paste splitter — _Req 12.2, 1.3_
+- [ ] 6.3 Import-from-URL sheet (`PasteButton`, progress, failure states, manual-entry fallback); Editor review mode — _Req 12.3, 12.4_
+- [ ] 6.4 Share Extension queue drain (`InboxWatcher`), `kitchenbuddy://import?url=` — _Req 12.5, 19.4_
+- [ ] 6.5 P31 over hand-written fixtures (JSON-LD, `@graph`, microdata); `scripts/fetch-url-fixtures.sh` for live checks
+- **What to test:** share five recipe pages from Safari (a big site, a paywall, a blog, a non-recipe page) and report what each did; import one by pasting.
+
+## M7 — Export / import / PDF → tag `v0.3.0`
+
+- [ ] 7.1 `ExportDocumentV2` + `LegacyV1Reader` + ADR-006 finalized — _Req 13.4, 14.1_
+- [ ] 7.2 `Exporter` scopes/presets, photo embedding, `Transferable` file; Share screen — _Req 13.1, 13.3, 13.5_
+- [ ] 7.3 `PDFRenderer` (ImageRenderer + paginated CGContext PDF) — _Req 13.2_
+- [ ] 7.4 `.kbrecipes` handling: `fileImporter`, `.onOpenURL`, Import Review sheet, skip/copy policy, pre-import snapshot — _Req 14.1–14.5, 19.4_
+- [ ] 7.5 P21–P24; PDF golden test (page count, text extraction)
+- [ ] 7.6 Release: tag `v0.3.0`
+- **What to test:** AirDrop a `.kbrecipes` between two phones, print a PDF from Files, export a full backup, delete-and-reinstall (TestFlight only), import the backup.
+
+## M8 — Backups, iCloud, Settings
+
+- [ ] 8.1 `BackupManager`: `VACUUM INTO`, verification, retention, triggers (background/daily/migration/import/restore/manual) — _Req 17.2–17.4_
+- [ ] 8.2 Launch integrity check, damaged-file rename, Recovery screen, restore with pre-restore snapshot — _Req 17.5, 17.7_
+- [ ] 8.3 `CloudMirror`: iCloud Drive container copy of newest verified snapshot + photos, status, Restore from iCloud — _Req 17.6_
+- [ ] 8.4 Settings and Backups screens; share damaged DB — _Req 18.1–18.4_
+- [ ] 8.5 P6 (full operation sequences), P27–P29 with fuzzed corrupt fixtures; retention test over 60 simulated days
+- **What to test:** Settings › Backups shows verified snapshots after use; iCloud on → file visible in Files › iCloud Drive › Kitchen Buddy; restore a snapshot and verify counts.
+
+## M9 — Polish, accessibility, Spotlight, beta → tag `v0.4.0`
+
+- [ ] 9.1 Spotlight indexing + continuation; reindex action — _Req 19.3_
+- [ ] 9.2 Accessibility audit (VoiceOver, largest text, Reduce Motion) on every screen — _Req 19.1, 19.2, 19.5_
+- [ ] 9.3 Quick Actions ("New Recipe", "Import from Clipboard"); state restoration — _Req 19.4_
+- [ ] 9.4 On-device performance pass with 5,000 seeded recipes; `os_signpost` around search and snapshot — _Req 6.5_
+- [ ] 9.5 App icon, launch screen, TestFlight "What to Test" template, feedback link, screenshot script states
+- [ ] 9.6 Beta feedback triage (one sub-task per accepted item)
+- [ ] 9.7 Release: tag `v0.4.0`
+- **What to test:** search from the iPhone home screen for a recipe title; VoiceOver for a full create flow; send feedback through the link.

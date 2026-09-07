@@ -1,0 +1,231 @@
+name: Release
+
+# CI here:
+#   - `test`: KitchenBuddyKit's suite headlessly on macOS (`swift test`, no
+#     xcodegen needed) — every PR and every push to main.
+#   - `build-app`: compiles the iOS app + share extension for the simulator
+#     with signing off — PRs only. `swift test` on macOS cannot see the app
+#     target, so this is what catches UIKit-only APIs and manifest typos.
+#   - `testflight`: archives and uploads to TestFlight on every push to main
+#     (needs the ASC_* + CI_CERT_* secrets; see README.md "Ship it").
+#   - `release`: cuts a GitHub release from any v* tag.
+#
+# Version (ADR-002): MARKETING_VERSION = latest v* tag reachable from HEAD
+# (fallback: App/project.yml); build number = `git rev-list --count HEAD`.
+# Push a tag together with main (`git push --atomic origin main vX.Y.Z`) so
+# one run sees both. `[skip ci]` in a commit subject skips everything.
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - ".kiro/**"
+      - ".claude/**"
+  pull_request:
+    branches: [main]
+  workflow_dispatch: # rerun the TestFlight upload without a new commit
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash # -eo pipefail, so `xcodebuild | tee` fails the step
+
+jobs:
+  test:
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+      - name: swift test
+        working-directory: KitchenBuddyKit
+        run: swift test 2>&1 | tee "$RUNNER_TEMP/swift-test.log"
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: swift-test-log-${{ github.run_number }}
+          path: ${{ runner.temp }}/swift-test.log
+          if-no-files-found: ignore
+          retention-days: 7
+
+  build-app:
+    if: github.event_name == 'pull_request'
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain
+        run: xcodebuild -version
+      - name: Install xcodegen
+        run: brew install xcodegen
+      - name: Generate Xcode project
+        working-directory: App
+        run: xcodegen generate
+      - name: Build for simulator (no signing)
+        working-directory: App
+        run: |
+          xcodebuild build \
+            -project KitchenBuddy.xcodeproj \
+            -scheme KitchenBuddy \
+            -destination 'generic/platform=iOS Simulator' \
+            -clonedSourcePackagesDirPath "$RUNNER_TEMP/spm" \
+            CODE_SIGNING_ALLOWED=NO \
+            2>&1 | tee "$RUNNER_TEMP/xcodebuild-sim.log" | grep -E 'error:|BUILD' || true
+          grep -q 'BUILD SUCCEEDED' "$RUNNER_TEMP/xcodebuild-sim.log"
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sim-build-log-${{ github.run_number }}
+          path: ${{ runner.temp }}/xcodebuild-sim.log
+          if-no-files-found: ignore
+          retention-days: 7
+
+  testflight:
+    needs: test
+    if: >-
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+      && github.ref == 'refs/heads/main'
+    runs-on: macos-26
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history — the build number is the commit count; tags give the version
+
+      # Lets the workflow stay green (with a loud notice) until the App Store
+      # Connect API key secrets are configured on the repo.
+      - name: Check for App Store Connect credentials
+        id: creds
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+        run: |
+          if [[ -z "$ASC_KEY_ID" ]]; then
+            echo "have=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::ASC_KEY_ID / ASC_ISSUER_ID / ASC_KEY_P8 secrets are not set — skipping the TestFlight upload. See README.md."
+          else
+            echo "have=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Toolchain
+        if: steps.creds.outputs.have == 'true'
+        run: xcodebuild -version
+
+      - name: Install xcodegen
+        if: steps.creds.outputs.have == 'true'
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        if: steps.creds.outputs.have == 'true'
+        working-directory: App
+        run: xcodegen generate
+
+      - name: Write App Store Connect API key
+        if: steps.creds.outputs.have == 'true'
+        env:
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/asc"
+          printf '%s' "$ASC_KEY_P8" > "$RUNNER_TEMP/asc/AuthKey.p8"
+
+      # Import the dedicated CI signing certificate so automatic signing
+      # finds an existing identity instead of minting a fresh DEVELOPMENT
+      # cert on every clean runner (which caps out the Apple account —
+      # ADR-004; cardplay 2026-08-03 and backgammon 2026-09-03 incidents).
+      - name: Import CI signing certificate
+        if: steps.creds.outputs.have == 'true'
+        env:
+          CI_CERT_P12: ${{ secrets.CI_CERT_P12 }}
+          CI_CERT_PASSWORD: ${{ secrets.CI_CERT_PASSWORD }}
+        run: |
+          if [[ -z "$CI_CERT_P12" ]]; then
+            echo "::warning::CI_CERT_P12 not set — archive will mint a throwaway dev cert (account cert cap risk)."
+            exit 0
+          fi
+          KEYCHAIN="$RUNNER_TEMP/build.keychain-db"
+          KEYCHAIN_PASS="$(openssl rand -hex 16)"
+          security create-keychain -p "$KEYCHAIN_PASS" "$KEYCHAIN"
+          security set-keychain-settings -lut 3600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASS" "$KEYCHAIN"
+          security default-keychain -s "$KEYCHAIN"
+          printf '%s' "$CI_CERT_P12" | base64 -d > "$RUNNER_TEMP/ci_cert.p12"
+          security import "$RUNNER_TEMP/ci_cert.p12" -k "$KEYCHAIN" -P "$CI_CERT_PASSWORD" -T /usr/bin/codesign
+          rm -f "$RUNNER_TEMP/ci_cert.p12"
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASS" "$KEYCHAIN" > /dev/null
+
+      - name: Archive
+        if: steps.creds.outputs.have == 'true'
+        working-directory: App
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          BUILD_NUMBER="$(git rev-list --count HEAD)"
+          MARKETING_VERSION="$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null | sed 's/^v//')"
+          : "${MARKETING_VERSION:=$(grep -m1 'MARKETING_VERSION:' project.yml | sed -E 's/.*"([^"]+)".*/\1/')}"
+          echo "Archiving Kitchen Buddy $MARKETING_VERSION ($BUILD_NUMBER)"
+          xcodebuild archive \
+            -project KitchenBuddy.xcodeproj \
+            -scheme KitchenBuddy \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/KitchenBuddy.xcarchive" \
+            -clonedSourcePackagesDirPath "$RUNNER_TEMP/spm" \
+            MARKETING_VERSION="$MARKETING_VERSION" \
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/asc/AuthKey.p8" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            2>&1 | tee "$RUNNER_TEMP/xcodebuild-archive.log" | grep -E 'error:|warning: (No|Provisioning)|ARCHIVE' || true
+          grep -q 'ARCHIVE SUCCEEDED' "$RUNNER_TEMP/xcodebuild-archive.log"
+
+      - name: Upload to TestFlight
+        if: steps.creds.outputs.have == 'true'
+        working-directory: App
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/KitchenBuddy.xcarchive" \
+            -exportOptionsPlist ExportOptions.plist \
+            -exportPath "$RUNNER_TEMP/export" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/asc/AuthKey.p8" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            2>&1 | tee "$RUNNER_TEMP/xcodebuild-export.log"
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: testflight-logs-${{ github.run_number }}
+          path: |
+            ${{ runner.temp }}/xcodebuild-archive.log
+            ${{ runner.temp }}/xcodebuild-export.log
+            ${{ runner.temp }}/export
+            ${{ runner.temp }}/KitchenBuddy.xcarchive/Info.plist
+          if-no-files-found: ignore
+          retention-days: 7
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true

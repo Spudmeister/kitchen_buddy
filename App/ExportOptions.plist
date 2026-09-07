@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Used by CI and scripts/ship.sh alike:
+	     xcodebuild -exportArchive -exportOptionsPlist ExportOptions.plist
+	     uploads straight to App Store Connect / TestFlight. -->
+	<key>method</key>
+	<string>app-store-connect</string>
+	<key>destination</key>
+	<string>upload</string>
+	<key>teamID</key>
+	<string>7Y22MT85Z6</string>
+	<!-- Version = latest v* tag, build = `git rev-list --count HEAD` (ADR-002);
+	     don't let Xcode invent its own. -->
+	<key>manageAppVersionAndBuildNumber</key>
+	<false/>
+	<key>uploadSymbols</key>
+	<true/>
+</dict>
+</plist>

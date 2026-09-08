@@ -26,7 +26,7 @@ v0.1.0 at M3 (usable recipe book), v0.2.0 at M5, v0.3.0 at M8, v0.4.0 at M9.
 
 ## Human steps remaining (Andrew)
 
-- **2.6.1** On the TestFlight build after M2 merges: open Settings › Backups on a phone signed into iCloud; confirm "iCloud Drive: Available", tap "Copy Newest Snapshot to iCloud", and find the file in Files › iCloud Drive › Kitchen Buddy › Backups. If it says unavailable, the container is not assigned to the App ID (ADR-004 "Portal capabilities").
+- **2.6.1** On the TestFlight build after M2 merges: open Settings › Backups on a phone signed into iCloud; confirm "iCloud Drive: Available", tap "Copy Newest Snapshot to iCloud", and find the file in Files › iCloud Drive › Kitchen Buddy › Backups. If it says unavailable on a signed-in phone, the container is not assigned to the App ID (ADR-004 "Portal capabilities"). The simulator always says unavailable — it has no iCloud Drive support (checked 2026-09-08 with a signed-in account).
 - Try "Load Sample Recipes" in Settings, then Back Up Now, then Restore to see the round trip.
 
 ## Open items

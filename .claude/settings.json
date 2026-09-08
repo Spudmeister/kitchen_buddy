@@ -24,11 +24,6 @@
       "Bash(gh run watch:*)",
       "Bash(gh pr view:*)",
       "Bash(scripts/screenshots.sh:*)"
-    ],
-    "ask": [
-      "Bash(git push:*)",
-      "Bash(scripts/ship.sh:*)",
-      "Bash(gh secret:*)"
     ]
   },
   "hooks": {

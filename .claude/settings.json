@@ -1,17 +1,31 @@
 {
   "permissions": {
     "allow": [
-      "Read", "Grep", "Glob",
-      "Bash(swift build:*)", "Bash(swift test:*)", "Bash(swift package:*)",
+      "Read",
+      "Grep",
+      "Glob",
+      "Bash(swift build:*)",
+      "Bash(swift test:*)",
+      "Bash(swift package:*)",
       "Bash(xcodegen generate:*)",
-      "Bash(xcodebuild -version:*)", "Bash(xcodebuild build:*)", "Bash(xcodebuild test:*)",
+      "Bash(xcodebuild -version:*)",
+      "Bash(xcodebuild build:*)",
+      "Bash(xcodebuild test:*)",
       "Bash(xcrun simctl list:*)",
-      "Bash(git status:*)", "Bash(git diff:*)", "Bash(git log:*)", "Bash(git show:*)",
-      "Bash(git branch:*)", "Bash(git rev-list:*)", "Bash(git describe:*)",
-      "Bash(gh run list:*)", "Bash(gh run view:*)", "Bash(gh run watch:*)", "Bash(gh pr view:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git branch:*)",
+      "Bash(git rev-list:*)",
+      "Bash(git describe:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run view:*)",
+      "Bash(gh run watch:*)",
+      "Bash(gh pr view:*)",
       "Bash(scripts/screenshots.sh:*)"
     ],
-    "deny": [
+    "ask": [
       "Bash(git push:*)",
       "Bash(scripts/ship.sh:*)",
       "Bash(gh secret:*)"

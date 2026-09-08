@@ -5,7 +5,7 @@
 	<!-- iCloud Documents (container iCloud.net.puddleglum.kitchenbuddy) is
 	     added back in M8 with the backup mirror. Assigning the container to
 	     the App ID is a one-time click in the developer portal that neither
-	     CI's API key nor xcodebuild can do; see tasks.md 8.3. -->
+	     CI's API key nor xcodebuild can do; see tasks.md 2.3.1. -->
 	<key>com.apple.security.application-groups</key>
 	<array>
 		<string>group.net.puddleglum.kitchenbuddy</string>

@@ -38,9 +38,8 @@ public final class SettingsViewModel {
         recipeCount = (try? environment.book.recipes.count(includeArchived: true)) ?? 0
         lastBackup = try? environment.book.backups.snapshots().first { $0.isVerified }
         let cloud = environment.cloud
-        Task.detached(priority: .utility) { [weak self] in
-            let status = cloud.status()
-            await MainActor.run { self?.cloudStatus = status }
+        Task {
+            cloudStatus = await Task.detached(priority: .utility) { cloud.status() }.value
         }
     }
 

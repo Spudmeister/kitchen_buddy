@@ -86,18 +86,19 @@ public final class AppEnvironment {
         let book = book
         let cloud = cloud
         let mirrorEnabled = preferences.iCloudBackupEnabled
-        Task.detached(priority: .utility) { [weak self] in
-            var failure: String?
-            do {
-                try book.backups.snapshotIfDue(trigger)
-                if mirrorEnabled, let newest = try book.backups.newestVerified() {
-                    try cloud.mirror(newest)
+        Task {
+            let failure: String? = await Task.detached(priority: .utility) {
+                do {
+                    try book.backups.snapshotIfDue(trigger)
+                    if mirrorEnabled, let newest = try book.backups.newestVerified() {
+                        try cloud.mirror(newest)
+                    }
+                    return nil
+                } catch {
+                    return "\(error)"
                 }
-            } catch {
-                failure = "\(error)"
-            }
-            let message = failure
-            await MainActor.run { self?.maintenanceError = message }
+            }.value
+            maintenanceError = failure
         }
     }
 }

@@ -15,15 +15,17 @@ each milestone ends with a "What to test" note for the TestFlight build.
 
 ## M1 — Domain + persistence + tests
 
-- [ ] 1.1 KitchenCore types: `Tagged` IDs, `Unit`, `IngredientCategory`, `DietaryTag`, `Ingredient`, `Instruction`, `RecipeVersion`, `Recipe`, `Folder`, `Tag`, `Photo`, `Rating`, `RecipeNote`, `Preferences`, `RecipeDraft`, projections — _Req 1.1_
-- [ ] 1.2 `Scaler`, `PracticalRounding`, `QuantityParser` ("1 1/2", "¾", "0.75"), `QuantityFormatter` — _Req 1.3, 8.1, 8.2_
-- [ ] 1.3 `UnitConverter` (base factors, best-unit thresholds, pass-through units) — _Req 9.1, 9.2, 9.5_
-- [ ] 1.4 `TagDetector` ported from `tag-service.ts` keyword tables — _Req 5.2, 5.3_
-- [ ] 1.5 `Migrations.v1-initial` (schema, guard triggers, `recipe_search` + FTS5 + sync triggers, indexes), `SearchIndex` (refresh, rebuildAll, query builder), `RecipeStore`, `FolderStore`, `TagStore`, `PreferencesStore` — _Req 1.6, 2.1, 2.2, 2.5, 3.1, 3.2, 4.1, 4.2, 4.5, 6.1–6.3, 7.1–7.5, 15.1–15.3, 16.1, 16.2, 16.4, 17.1, 17.8, 18.3_
-- [ ] 1.6 `KitchenTesting`: `RecipeGen` (fractions, units, ingredients, versions, drafts, folder trees, edit sequences), temp-DB helper, v1 fixture loader
-- [ ] 1.7 Property tests P1–P8, P10–P20, P25, P30, P32; `NoHardDeleteTests`; `SearchPerformanceTests` (5,000 recipes) — _Req 6.5_
-- [ ] 1.8 `kb-schema-v1.sqlite` fixture + `MigrationFixtureTests`; `MigratorConfigTests`
-- [ ] 1.9 Demo seed (`--seed demo` imports `DemoRecipes.json` through the real importer path; Settings "Load sample recipes" in Debug/TestFlight)
+- [x] 1.1 KitchenCore types: `Tagged` IDs, `Unit`, `IngredientCategory`, `DietaryTag`, `Ingredient`, `Instruction`, `RecipeVersion`, `Recipe`, `Folder`, `Tag`, `Photo`, `Rating`, `RecipeNote`, `Preferences`, `RecipeDraft`, projections — _Req 1.1_
+- [x] 1.2 `Scaler`, `PracticalRounding`, `QuantityParser` ("1 1/2", "¾", "0.75"), `QuantityFormatter` — _Req 1.3, 8.1, 8.2_
+- [x] 1.3 `UnitConverter` (base factors, best-unit thresholds, pass-through units) — _Req 9.1, 9.2, 9.5_
+- [x] 1.4 `TagDetector` ported from `tag-service.ts` keyword tables — _Req 5.2, 5.3_
+- [x] 1.5 `Migrations.v1-initial` (schema, guard triggers, `recipe_search` + FTS5 + sync triggers, indexes), `SearchIndex` (refresh, rebuildAll, query builder), `RecipeStore`, `FolderStore`, `TagStore`, `PreferencesStore` — _Req 1.6, 2.1, 2.2, 2.5, 3.1, 3.2, 4.1, 4.2, 4.5, 6.1–6.3, 7.1–7.5, 15.1–15.3, 16.1, 16.2, 16.4, 17.1, 17.8, 18.3_
+- [x] 1.6 `KitchenTesting`: `RecipeGen` (fractions, units, ingredients, versions, drafts, folder trees, edit sequences), temp-DB helper, v1 fixture loader
+- [x] 1.7 Property tests P1–P8, P10–P20, P25, P30, P32; `NoHardDeleteTests`; `SearchPerformanceTests` (5,000 recipes) — _Req 6.5_
+- [x] 1.8 `kb-schema-v1.sqlite` fixture + `MigrationFixtureTests`; `MigratorConfigTests`
+- [x] 1.9 Demo seed (`--seed demo` imports `DemoRecipes.json` through the real importer path; Settings "Load sample recipes" in Debug/TestFlight)
+  - [ ] 1.9.1 Settings "Load sample recipes" button — needs the Settings screen, lands with 2.4
+- **Notes (2026-09-08):** `Unit` is named `IngredientUnit` (Foundation exports a `Unit` class); stores are reached through the `RecipeBook` facade (`RecipeBook.open(layout)`), the only public way to open the database; `LegacyV1Reader` landed here (not 8.1) because the demo seed needs it — 8.1 extends it; P9 is covered too. ADR-007 records the storage conventions.
 - **What to test:** no user-visible change.
 
 ## M2 — Data safety: backups, iCloud, Settings (before any build can hold a recipe)

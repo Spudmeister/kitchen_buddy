@@ -11,8 +11,8 @@ storage layer (ADR-003). CI/CD is the cardplay pipeline (ADR-002, ADR-004).
 
 | Target | Contents | May import |
 |---|---|---|
-| `KitchenCore` | `Fraction`, `Unit`, `IngredientCategory`, `DietaryTag`, `Recipe`, `RecipeVersion`, `Ingredient`, `Instruction`, `Tag`, `Folder`, `Photo`, `Rating`, `RecipeNote`, `Preferences`, `RecipeDraft`, `RecipeQuery`, `RecipeSummary`, `RecipeDetail`, `RecipeHeritage`; `Scaler`, `UnitConverter`, `PracticalRounding`, `QuantityParser`, `TagDetector`, `SchemaOrgExtractor`, `IngredientNormalizer`, `ExportDocumentV2`, `LegacyV1Reader` | Foundation |
-| `KitchenPersistence` | `DatabaseStack`, `Migrations`, `SearchIndex`, `RecipeStore`, `FolderStore`, `TagStore`, `PreferencesStore`, `PhotoStore`, `BackupManager`, `CloudMirror`, `RecipeURLImporter`, `Exporter`, `Importer` | KitchenCore, GRDB (only here) |
+| `KitchenCore` | `Fraction`, `IngredientUnit` (not `Unit`: Foundation exports one), `IngredientCategory`, `DietaryTag`, `Recipe`, `RecipeVersion`, `Ingredient`, `Instruction`, `Tag`, `Folder`, `Photo`, `Rating`, `RecipeNote`, `Preferences`, `RecipeDraft`, `RecipeQuery`, `RecipeSummary`, `RecipeDetail`, `RecipeHeritage`; `Scaler`, `UnitConverter`, `PracticalRounding`, `QuantityParser`, `TagDetector`, `SchemaOrgExtractor`, `IngredientNormalizer`, `ExportDocumentV2`, `LegacyV1Reader` | Foundation |
+| `KitchenPersistence` | `DatabaseStack`, `RecipeBook` (facade: opens the database, owns the stores), `Migrations`, `SearchIndex`, `RecipeStore`, `FolderStore`, `TagStore`, `PreferencesStore`, `PhotoStore`, `BackupManager`, `CloudMirror`, `RecipeURLImporter`, `Exporter`, `Importer` | KitchenCore, GRDB (only here) |
 | `KitchenUI` | `Router`/`Route`, screens, `@MainActor @Observable` view models, `PDFRenderer`, `SpotlightIndexer` | KitchenCore, KitchenPersistence, SwiftUI |
 | `KitchenTesting` | `Gen`, `SeededRandomSource`, `RecipeGen`, temp-DB helpers | KitchenCore, KitchenPersistence |
 | App `KitchenBuddy` | composition root, launch args, `.onOpenURL`, share inbox drain | KitchenUI, KitchenPersistence |
@@ -31,9 +31,17 @@ minimal, types Sendable-clean.
   `Fraction(approximating:maxDenominator: 64)` (v1's 0.333 → 1/3). Unit
   conversion goes through Double and re-rationalizes (max denominator 1000)
   before practical rounding.
-- `Unit`: tsp, tbsp, cup, fl_oz, pint, quart, gallon | ml, l | oz, lb | g, kg
+- `IngredientUnit`: tsp, tbsp, cup, fl_oz, pint, quart, gallon | ml, l | oz, lb | g, kg
   | piece, dozen | pinch, dash, to_taste; `category` volume/weight/count/other,
-  `system` us/metric/nil.
+  `system` us/metric/nil. Ingredient quantity and unit are both optional
+  ("salt", "pepper to taste").
+- Drafts vs rows: `RecipeDraft { content: RecipeContent, tags, folderID }` is what
+  the editor and importers hand to the store; `RecipeContent` holds the
+  versioned fields (`IngredientDraft`/`InstructionDraft`, no ids). Stored rows
+  (`Ingredient`, `Instruction`) get fresh ids per version. Saving compares
+  normalized content to decide whether a version is created.
+- Timestamps are ISO-8601 UTC text with milliseconds (`Timestamp`), normalized
+  at the store boundary so returned values equal fetched ones (ADR-007).
 - `RecipeVersion` is immutable; `Recipe` points at `currentVersion`.
 - `RecipeNote {id, recipeID, body, cookedOn, pinned, versionAtCreation, createdAt, updatedAt, deletedAt}`.
 - `Rating` rows are append-only; current = latest `ratedAt`.
@@ -63,15 +71,19 @@ ingredients_text, instructions_text, tags_text, folder_id, archived_at,
 latest_rating, total_minutes, thumbnail_photo_id, timestamps), and
 `recipes_fts` = FTS5 external-content over `recipe_search`
 (`tokenize='unicode61 remove_diacritics 2'`, `prefix='2 3'`) with AI/AD/AU
-sync triggers.
+sync triggers. `recipe_search` has an explicit `rowid INTEGER PRIMARY KEY` so
+`VACUUM INTO` snapshots cannot renumber the rows the FTS index points at;
+`rebuildAll` upserts in place and then runs the FTS `rebuild` command.
 
 Guard triggers: `BEFORE DELETE` → `RAISE(ABORT)` on recipes, recipe_versions,
 ingredients, instructions, recipe_notes, photos, ratings, folders, tags;
 `BEFORE UPDATE` → `RAISE(ABORT)` on recipe_versions, ingredients, instructions.
 
 Search: `FTS5Pattern(matchingAllPrefixesIn:)` for safe query building;
-`bm25(recipes_fts, 10, 3, 5, 1, 6)` ranking; tag filters via `EXISTS` on
-`recipe_tags`; `LIMIT 500`; browse without text reads `recipe_search` alone.
+`bm25(recipes_fts, 10, 3, 5, 1, 6)` ranking whenever the query has text (the
+sort applies to browsing only); tag filters via `EXISTS` on `recipe_tags`;
+unrated/untimed rows sort last in either direction; `LIMIT 500`; browse
+without text reads `recipe_search` alone.
 `SearchIndex.refresh(recipeID, db)` runs inside every write transaction;
 `rebuildAll` when `preferences.search_index_version` is stale.
 
@@ -124,7 +136,7 @@ tags, ratings, notes, photos (base64 optional), lineage, archive state.
 5. **Archive reversible and invisible** — rows kept; absent from default lists; unarchive restores everything. *Req 3.1–3.4*
 6. **Monotonic non-destruction** — under any public-API sequence, counts of recipes/versions/ratings/notes never decrease; raw DELETE aborts. *Req 3.5, 17.1*
 7. **Scaling exact** — every scaled quantity == q × t/b as a Fraction. *Req 8.1*
-8. **Practical rounding** — result in the allowed set for the unit; error ≤ 1/16 (≤ 1/4 for piece/dozen). *Req 8.2*
+8. **Practical rounding** — result in the allowed set for the unit; error ≤ 1/8 (the table's widest gap is ¾ → 1; ≤ 1/4 for piece/dozen, ≤ 1/2 for pinch/dash/to taste). *Req 8.2*
 9. **Conversion round-trip** — US→metric→US within 1%. *Req 9.5*
 10. **Best-unit selection** — chosen unit is the largest whose threshold is met. *Req 9.2*
 11. **Unit preference consistency** — all convertible ingredients display in the preferred system; others pass through. *Req 9.4*

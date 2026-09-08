@@ -149,3 +149,14 @@ extension Fraction: Codable {
         try container.encode(description)
     }
 }
+
+extension Fraction {
+    /// Absolute value.
+    public var magnitude: Fraction { isNegative ? -self : self }
+
+    /// Nearest fraction with a denominator no larger than `maxDenominator`
+    /// (never nil for finite input; zero for non-finite).
+    public static func rationalizing(_ value: Double, maxDenominator: Int) -> Fraction {
+        Fraction(approximating: value, maxDenominator: maxDenominator) ?? .zero
+    }
+}

@@ -7,13 +7,15 @@ import KitchenCore
 ///
 /// Requirements: kitchen-buddy-ios 5.1, 5.5
 public final class TagStore: TagStoring {
-    let writer: any DatabaseWriter
+    let handle: DatabaseHandle
     let clock: Clock
 
-    init(writer: any DatabaseWriter, clock: Clock) {
-        self.writer = writer
+    init(handle: DatabaseHandle, clock: Clock) {
+        self.handle = handle
         self.clock = clock
     }
+
+    var writer: any DatabaseWriter { handle.writer }
 
     public func all() throws -> [TagCount] {
         try suggestions(prefix: "")

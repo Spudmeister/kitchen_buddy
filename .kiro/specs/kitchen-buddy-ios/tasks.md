@@ -24,19 +24,21 @@ each milestone ends with a "What to test" note for the TestFlight build.
 - [x] 1.7 Property tests P1–P8, P10–P20, P25, P30, P32; `NoHardDeleteTests`; `SearchPerformanceTests` (5,000 recipes) — _Req 6.5_
 - [x] 1.8 `kb-schema-v1.sqlite` fixture + `MigrationFixtureTests`; `MigratorConfigTests`
 - [x] 1.9 Demo seed (`--seed demo` imports `DemoRecipes.json` through the real importer path; Settings "Load sample recipes" in Debug/TestFlight)
-  - [ ] 1.9.1 Settings "Load sample recipes" button — needs the Settings screen, lands with 2.4
+  - [x] 1.9.1 Settings "Load sample recipes" button — landed with 2.4
 - **Notes (2026-09-08):** `Unit` is named `IngredientUnit` (Foundation exports a `Unit` class); stores are reached through the `RecipeBook` facade (`RecipeBook.open(layout)`), the only public way to open the database; `LegacyV1Reader` landed here (not 8.1) because the demo seed needs it — 8.1 extends it; P9 is covered too. ADR-007 records the storage conventions.
 - **What to test:** no user-visible change.
 
 ## M2 — Data safety: backups, iCloud, Settings (before any build can hold a recipe)
 
-- [ ] 2.1 `BackupManager`: `VACUUM INTO`, verification, retention, triggers (background/daily/migration/import/restore/manual) — _Req 17.2–17.4_
-- [ ] 2.2 Launch integrity check, damaged-file rename, Recovery screen, restore with pre-restore snapshot — _Req 17.5, 17.7_
-- [ ] 2.3 `CloudMirror`: iCloud Drive container copy of newest verified snapshot + photos, status, Restore from iCloud — _Req 17.6_
+- [x] 2.1 `BackupManager`: `VACUUM INTO`, verification, retention, triggers (background/daily/migration/import/restore/manual) — _Req 17.2–17.4_
+- [x] 2.2 Launch integrity check, damaged-file rename, Recovery screen, restore with pre-restore snapshot — _Req 17.5, 17.7_
+- [x] 2.3 `CloudMirror`: iCloud Drive container copy of newest verified snapshot + photos, status, Restore from iCloud — _Req 17.6_
   - [x] 2.3.1 iCloud entitlements restored (2026-09-08); the App ID's iCloud capability had to be in Xcode 6 mode ("Include CloudKit support" ticked) — fixed via the API, see ADR-004 "Portal capabilities"
-- [ ] 2.4 Settings and Backups screens; share damaged DB — _Req 18.1–18.4_
-- [ ] 2.5 P6 (full operation sequences), P27–P29 with fuzzed corrupt fixtures; retention test over 60 simulated days
+- [x] 2.4 Settings and Backups screens; share damaged DB — _Req 18.1–18.4_ (includes 1.9.1 "Load sample recipes"; Archived / Import / Export / Spotlight rows arrive with their milestones)
+- [x] 2.5 P6 (full operation sequences), P27–P29 with fuzzed corrupt fixtures; retention test over 60 simulated days
 - [ ] 2.6 Gate: no build reaches TestFlight with a recipe editor until 2.1–2.5 are done and the iCloud container is assigned
+  - [ ] 2.6.1 Andrew: on a device signed into iCloud, Settings › Backups must show "iCloud Drive: Available" and a copied snapshot must appear in Files › iCloud Drive › Kitchen Buddy › Backups (the simulator has no iCloud account)
+- **Notes (2026-09-08):** stores reach the database through a swappable `DatabaseHandle` so restore can close, swap, and reopen the file under them; weekly retention anchors use fixed epoch-aligned weeks (sliding windows dropped a week — caught by the 60-day simulation); verifying an existing snapshot checks integrity only, the recipe-count-vs-live rule guards fresh snapshots; `AppEnvironment` (3.1) landed here because Settings needed it. ADR-003 addendum records the mechanics.
 - **What to test:** Settings › Backups shows verified snapshots after use; iCloud on → file visible in Files › iCloud Drive › Kitchen Buddy; restore a snapshot and verify counts.
 
 ## M3 — Library + Detail + Editor (usable recipe book) → tag `v0.1.0`

@@ -25,7 +25,10 @@ DERIVED="$REPO_ROOT/build/DerivedData"
 # Launch arguments are owned by KitchenBuddyApp; add shots as screens land.
 SHOTS=(
   "placeholder|3|"
-  # M2+: "library|3|--seed demo"
+  "settings|3|--seed demo --open settings"
+  "backups|4|--seed demo --open backups"
+  "recovery|4|--corrupt-db"
+  # M3+: "library|3|--seed demo"
   #      "recipe|3|--seed demo --open-recipe largeRecipe"
   #      "search|3|--seed demo --search chocolate"
   #      "editor|3|--seed demo --open-recipe largeRecipe --edit"

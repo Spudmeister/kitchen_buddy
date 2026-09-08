@@ -31,12 +31,14 @@ public enum BookOperation: Hashable, Sendable {
     case deleteFolder(folder: Int)
     case moveRecipe(recipe: Int, folder: Int?)
     case savePreferences(Preferences)
+    case snapshot(Snapshot.Reason)
+    case prune
 
     public static var gen: Gen<BookOperation> {
         Gen<BookOperation> { rng in
             let index = Gen<Int>.int(in: 0...1_000)
             let maybeIndex = index.optional(probability: 0.8)
-            switch Int.random(in: 0..<22, using: &rng) {
+            switch Int.random(in: 0..<24, using: &rng) {
             case 0, 1, 2: return .create(RecipeGen.draft.run(&rng))
             case 3: return .editContent(recipe: index.run(&rng))
             case 4: return .saveUnchanged(recipe: index.run(&rng))
@@ -56,6 +58,10 @@ public enum BookOperation: Hashable, Sendable {
             case 18: return .renameFolder(folder: index.run(&rng), name: RecipeGen.word.run(&rng).capitalized)
             case 19: return Bool.random(using: &rng) ? .moveFolder(folder: index.run(&rng), parent: maybeIndex.run(&rng)) : .deleteFolder(folder: index.run(&rng))
             case 20: return .moveRecipe(recipe: index.run(&rng), folder: maybeIndex.run(&rng))
+            case 22:
+                return .snapshot(Gen<Snapshot.Reason>.element(of: [.manual, .background, .daily, .preImport]).run(&rng))
+            case 23:
+                return .prune
             default:
                 return .savePreferences(Preferences(
                     unitPreference: Gen<UnitPreference>.element(of: UnitPreference.allCases).run(&rng),
@@ -160,6 +166,10 @@ public final class BookDriver {
             try book.recipes.move(id, toFolder: folderID)
         case .savePreferences(let preferences):
             try book.preferences.save(preferences)
+        case .snapshot(let reason):
+            try book.backups.snapshot(reason: reason)
+        case .prune:
+            try book.backups.prune()
         }
     }
 

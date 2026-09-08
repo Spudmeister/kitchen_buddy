@@ -7,13 +7,15 @@ import KitchenCore
 ///
 /// Requirements: kitchen-buddy-ios 16.1–16.6
 public final class FolderStore: FolderStoring {
-    let writer: any DatabaseWriter
+    let handle: DatabaseHandle
     let clock: Clock
 
-    init(writer: any DatabaseWriter, clock: Clock) {
-        self.writer = writer
+    init(handle: DatabaseHandle, clock: Clock) {
+        self.handle = handle
         self.clock = clock
     }
+
+    var writer: any DatabaseWriter { handle.writer }
 
     public func create(name: String, parentID: Folder.ID?) throws -> Folder {
         guard let name = cleaned(name) else { throw StoreError.emptyFolderName }

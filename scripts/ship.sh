@@ -12,7 +12,8 @@ cd "$REPO_ROOT/App"
 xcodegen generate >/dev/null
 
 BUILD_NUMBER="$(git rev-list --count HEAD)"
-MARKETING_VERSION="$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null | sed 's/^v//')"
+LATEST_TAG="$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || true)"  # empty until the first tag
+MARKETING_VERSION="${LATEST_TAG#v}"
 : "${MARKETING_VERSION:=$(grep -m1 'MARKETING_VERSION:' project.yml | sed -E 's/.*"([^"]+)".*/\1/')}"
 ARCHIVE="$REPO_ROOT/build/KitchenBuddy.xcarchive"
 

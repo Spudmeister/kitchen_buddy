@@ -41,7 +41,11 @@ let package = Package(
 
         // Seeded generators and temp-database helpers shared by every test
         // target. Never linked by the app.
-        .target(name: "KitchenTesting", dependencies: ["KitchenCore", "KitchenPersistence"]),
+        .target(
+            name: "KitchenTesting",
+            dependencies: ["KitchenCore", "KitchenPersistence"],
+            resources: [.copy("Resources")]
+        ),
 
         .testTarget(
             name: "KitchenCoreTests",

@@ -51,6 +51,15 @@ gh secret set CI_CERT_PASSWORD --body "$P12_PASS"
 Check the account first (`backgammon/scripts/asc.py certs`); if no
 DEVELOPMENT slot is free, revoke the stale "Created via API" ones.
 
+## Current certificate
+
+Created 2026-09-07 through the API: certificate ID **NQKL4TJQ4B**, expires
+2027-09-08, key and p12 at `~/.appstoreconnect/ci-cert/` (see its README).
+Apple names every API-created certificate "Apple Development: Created via
+API", so a stale-cert cleanup must keep NQKL4TJQ4B — pass `--keep` / check the
+ID, never revoke by name alone. The Issuer ID is now stored at
+`~/.appstoreconnect/issuer_id` (owner-only) for local tooling.
+
 ## Consequences
 
 - Certificate count stays flat run over run; verify after the first green run.

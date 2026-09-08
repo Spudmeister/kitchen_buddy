@@ -43,8 +43,9 @@ create the app record in App Store Connect (the API refuses that call).
 From this Mac instead: `scripts/ship.sh` (same commands CI runs).
 
 **When the job fails at code signing** with "maximum number of certificates":
-CI ran without `CI_CERT_P12`. List and revoke the "Created via API" certs with
-`backgammon/scripts/asc.py certs` / `revoke-stale`, set the secrets, rerun.
+CI ran without `CI_CERT_P12`. List the certs with `backgammon/scripts/asc.py certs`,
+revoke the runner-minted ones (never the CI cert NQKL4TJQ4B, see ADR-004), set
+the secrets, rerun.
 
 ## Versioning
 

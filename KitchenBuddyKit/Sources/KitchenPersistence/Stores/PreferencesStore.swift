@@ -18,11 +18,13 @@ public final class PreferencesStore: PreferencesStoring {
         static let iCloudBackup = "icloud_backup_enabled"
     }
 
-    let writer: any DatabaseWriter
+    let handle: DatabaseHandle
 
-    init(writer: any DatabaseWriter) {
-        self.writer = writer
+    init(handle: DatabaseHandle) {
+        self.handle = handle
     }
+
+    var writer: any DatabaseWriter { handle.writer }
 
     public func load() throws -> Preferences {
         try writer.read { db in

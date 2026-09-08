@@ -7,13 +7,15 @@ import KitchenCore
 ///
 /// Requirements: kitchen-buddy-ios 1.6, 2.1–2.5, 3.1–3.5, 4.1–4.4, 6.1–6.3, 7.1–7.5, 15.1–15.4, 16.1, 17.1
 public final class RecipeStore: RecipeStoring {
-    let writer: any DatabaseWriter
+    let handle: DatabaseHandle
     let clock: Clock
 
-    init(writer: any DatabaseWriter, clock: Clock) {
-        self.writer = writer
+    init(handle: DatabaseHandle, clock: Clock) {
+        self.handle = handle
         self.clock = clock
     }
+
+    var writer: any DatabaseWriter { handle.writer }
 
     // MARK: Create and edit
 
@@ -116,7 +118,7 @@ public final class RecipeStore: RecipeStoring {
 
     public func observeSummaries(_ query: RecipeQuery) -> AsyncThrowingStream<[RecipeSummary], Error> {
         let observation = ValueObservation.tracking { db in try SearchIndex.summaries(query, db) }
-        let writer = self.writer
+        let writer = handle.writer
         return AsyncThrowingStream { continuation in
             let task = Task {
                 do {

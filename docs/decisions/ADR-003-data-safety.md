@@ -64,3 +64,43 @@ code path that deletes photo bytes.
   public operation (property P6); this is tested with fuzzed sequences.
 - Storage grows monotonically; at recipe-book scale that is megabytes.
 - "Delete" in the UI is always "archive", and the UI says so.
+
+## Addendum (2026-09-08, M2 implementation)
+
+- **Files.** `Backups/kb-<UTC stamp>-<reason>.sqlite`; reasons `background`,
+  `daily`, `pre-migration`, `pre-import`, `pre-restore`, `manual`, `recovery`
+  (fetched from iCloud). Verification results live in `Backups/manifest.json`;
+  losing it only means re-verifying. A failed snapshot is renamed `.bad` and
+  never pruned. `VACUUM INTO` does not fsync, so the manager fsyncs the file
+  before verifying it.
+- **Verification.** A *fresh* snapshot must pass `integrity_check` and hold at
+  least as many recipes as the live database. An *existing* snapshot (before
+  restore, or fetched from iCloud) is checked for integrity only — an older
+  snapshot legitimately holds fewer recipes.
+- **Retention.** Last 7 automatic; the oldest automatic snapshot of each of
+  the last 4 *fixed, epoch-aligned* weeks (sliding windows lose a week as the
+  anchor crosses the boundary — the 60-day simulation caught it); every
+  pre-migration; newest 3 of each other reason plus anything under 7 days;
+  never the newest verified one; never anything unverified.
+- **Change detection.** `sqlite3_total_changes` on the writer connection
+  versus a baseline taken after open-time housekeeping; the background
+  trigger fires only when that moved and an hour passed since the last
+  snapshot. The daily trigger fires on becoming active when no snapshot is
+  younger than 24 h.
+- **Restore.** Verify candidate → `pre-restore` snapshot → close the pool →
+  copy candidate to `kitchenbuddy.sqlite.restoring` → `replaceItemAt`
+  (atomic) → stray `-wal`/`-shm` moved into `Damaged/` → reopen through the
+  shared `DatabaseHandle`, so the stores keep working. Any failure before the
+  swap leaves the live file untouched.
+- **Recovery.** `quick_check` on a throwaway connection before the pool
+  opens; on failure the file *and its journals* move to
+  `Damaged/kb-<stamp>-damaged.sqlite[-wal|-shm]`, the newest verified snapshot
+  is copied into place, and the launch report drives a non-dismissable notice
+  with an export button. No verified snapshot → the book starts empty and the
+  notice says so. Note for test hooks: a WAL still holding page 1 masks a
+  damaged header, so a corruption fixture must drop the journals too.
+- **iCloud.** `CloudMirror` copies the newest verified snapshot into
+  `<container>/Documents/Backups/` (keeping 2) and photo files into
+  `Documents/Photos/` through `NSFileCoordinator`; status is a JSON file next
+  to the database. Restore from iCloud = download → copy into local `Backups/`
+  as `recovery` → verify → the normal restore path.

@@ -32,9 +32,8 @@ public final class BackupsViewModel {
         snapshots = (try? environment.book.backups.snapshots()) ?? []
         damagedFiles = (try? environment.book.backups.damagedFiles()) ?? []
         let cloud = environment.cloud
-        Task.detached(priority: .utility) { [weak self] in
-            let status = cloud.status()
-            await MainActor.run { self?.cloudStatus = status }
+        Task {
+            cloudStatus = await Task.detached(priority: .utility) { cloud.status() }.value
         }
     }
 

@@ -2,8 +2,8 @@
 
 **Status (2026-09-07):** M0 complete. PR #4 merged; first TestFlight build
 **0.1.0 (32)** uploaded from `main` (placeholder screen, no data). 9 package
-tests + 1 UI test green. Secrets set; CI cert NQKL4TJQ4B. iCloud entitlement
-off until M2 (needs the container assigned in the portal — Andrew). Next: M1.
+tests + 1 UI test green. Secrets set; CI cert NQKL4TJQ4B. iCloud entitlements
+on and signing verified. Next: M1.
 
 Milestones and tasks: `.kiro/specs/kitchen-buddy-ios/tasks.md`. Tags:
 v0.1.0 at M3 (usable recipe book), v0.2.0 at M5, v0.3.0 at M8, v0.4.0 at M9.
@@ -23,13 +23,11 @@ v0.1.0 at M3 (usable recipe book), v0.2.0 at M5, v0.3.0 at M8, v0.4.0 at M9.
 
 ## Human steps remaining (Andrew)
 
-1. TestFlight → Kitchen Buddy → Internal Testing → add yourself (build 32 processes in 5–15 min).
-2. Before M2: developer portal → Identifiers → Kitchen Buddy → iCloud → Configure → tick
-   `iCloud.net.puddleglum.kitchenbuddy` → Save (task 2.3.1).
+None for M0/M1. Portal, App Store Connect record, secrets, and tester are done.
 
 ## Open items
 
-- iCloud entitlement is off until M2 (task 2.3.1): **Andrew** must assign the container to the App ID in the portal (Identifiers → Kitchen Buddy → iCloud → Configure → tick → Save) before it goes back on. Nothing that can store a recipe ships before M2 is complete.
+- Nothing that can store a recipe ships before M2 (data safety) is complete.
 
 ## Standing constraints
 

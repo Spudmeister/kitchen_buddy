@@ -60,6 +60,19 @@ API", so a stale-cert cleanup must keep NQKL4TJQ4B — pass `--keep` / check the
 ID, never revoke by name alone. The Issuer ID is now stored at
 `~/.appstoreconnect/issuer_id` (owner-only) for local tooling.
 
+## Portal capabilities (learned 2026-09-08)
+
+For iCloud Documents the App ID's iCloud capability must be in **Xcode 6
+mode** — in the portal that is the checkbox labelled "Include CloudKit
+support", which really means "modern iCloud entitlements", not "use
+CloudKit". Unticked (Xcode 5 mode) Apple issues profiles with legacy
+`ubiquity-*` wildcard entitlements and the archive fails with "doesn't
+include icloud-container-identifiers / icloud-services". Fix via the API:
+`PATCH /v1/bundleIdCapabilities/<id>` with `ICLOUD_VERSION = XCODE_6`
+(App Groups and container assignment were fine). App Groups and iCloud
+containers themselves must be created and assigned in the portal by hand;
+`-allowProvisioningUpdates` registers bundle IDs and profiles only.
+
 ## Consequences
 
 - Certificate count stays flat run over run; verify after the first green run.

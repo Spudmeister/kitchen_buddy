@@ -92,6 +92,7 @@ each milestone ends with a "What to test" note for the TestFlight build.
 - [ ] 8.1 `BackupManager`: `VACUUM INTO`, verification, retention, triggers (background/daily/migration/import/restore/manual) — _Req 17.2–17.4_
 - [ ] 8.2 Launch integrity check, damaged-file rename, Recovery screen, restore with pre-restore snapshot — _Req 17.5, 17.7_
 - [ ] 8.3 `CloudMirror`: iCloud Drive container copy of newest verified snapshot + photos, status, Restore from iCloud — _Req 17.6_
+  - [ ] 8.3.1 Re-add the iCloud entitlements (`icloud-container-identifiers`, `icloud-services` CloudDocuments, `ubiquity-container-identifiers`) to `App/Sources/KitchenBuddy.entitlements`; **Andrew:** in the developer portal open App ID `net.puddleglum.kitchenbuddy` → iCloud → Configure → tick `iCloud.net.puddleglum.kitchenbuddy` → Save (removed from M0 because the container was not assigned and CI cannot assign it)
 - [ ] 8.4 Settings and Backups screens; share damaged DB — _Req 18.1–18.4_
 - [ ] 8.5 P6 (full operation sequences), P27–P29 with fuzzed corrupt fixtures; retention test over 60 simulated days
 - **What to test:** Settings › Backups shows verified snapshots after use; iCloud on → file visible in Files › iCloud Drive › Kitchen Buddy; restore a snapshot and verify counts.

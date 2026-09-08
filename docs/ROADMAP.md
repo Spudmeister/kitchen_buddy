@@ -32,6 +32,10 @@ v0.1.0 at M2 (usable recipe book), v0.2.0 at M4, v0.3.0 at M7, v0.4.0 at M9.
 3. CI cert first (ADR-004), then `ASC_*` secrets (README "Ship it").
 4. Merge the PR / push main, `gh run watch`, then TestFlight → Internal Testing → add yourself.
 
+## Open items
+
+- iCloud entitlement is off until M8 (task 8.3.1): the container must be assigned to the App ID in the portal by hand before it goes back on.
+
 ## Standing constraints
 
 - Losing the recipe database is unacceptable (CLAUDE.md iron rules 1–4).

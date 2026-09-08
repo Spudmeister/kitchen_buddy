@@ -8,10 +8,10 @@ Steps:
    - Parse every line that starts with `- [ ]` (unchecked) and `- [x]` (checked).
 3. For each **unchecked** task (`- [ ]`):
    - Extract keywords from the task description (service names, component names, file name hints).
-   - Search `src/` and `pwa/src/` for files or symbols that could correspond to the task.
+   - Search `KitchenBuddyKit/Sources/` and `App/` for files or symbols that could correspond to the task.
    - Report whether related code was **found** or **not found**.
 4. For each **checked** task (`- [x]`):
-   - Do a quick sanity check: search `src/` and `pwa/src/` for the most obvious related symbol or file.
+   - Do a quick sanity check: search `KitchenBuddyKit/Sources/` and `App/` for the most obvious related symbol or file.
    - Flag it as **possibly missing** if no matching code can be found — these may have been marked done prematurely.
 5. Print a grouped summary:
 
@@ -26,7 +26,7 @@ Unchecked tasks:
   ...
 
 Checked tasks with possibly absent code:
-  [x] <task text>  →  no matching code found in src/ or pwa/src/
+  [x] <task text>  →  no matching code found in KitchenBuddyKit/Sources/ or App/
   ...
 ```
 

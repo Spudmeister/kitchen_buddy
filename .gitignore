@@ -1,39 +1,14 @@
-# Dependencies
-node_modules/
-pwa/node_modules/
-
-# Build outputs
-dist/
-pwa/dist/
-
-# Generated files (copied during install)
-pwa/public/sql-wasm.wasm
-
-# Environment files
-.env
-.env.local
-.env.*.local
-
-# IDE
-.idea/
-
-# OS files
+.build/
 .DS_Store
-Thumbs.db
-
-# Logs
-*.log
-npm-debug.log*
-
-# Test coverage
-coverage/
-
-# Database files (local data)
-*.db
-*.sqlite
-*.sqlite3
-
-# Temporary files
-*.tmp
-*.temp
-.cache/
+DerivedData/
+# scripts/screenshots.sh + scripts/ship.sh output
+build/
+*.xcodeproj
+.swiftpm/
+xcuserdata/
+# Real-site HTML captured by scripts/fetch-url-fixtures.sh (ad hoc, never committed)
+KitchenBuddyKit/Tests/KitchenCoreTests/fixtures/url-html/live/
+# Agent worktrees (Claude Code isolation) live under the repo root.
+.claude/worktrees/
+# Local-only Claude settings
+.claude/settings.local.json

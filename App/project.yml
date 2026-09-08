@@ -1,0 +1,146 @@
+# XcodeGen manifest — run `xcodegen generate` in this directory to (re)create
+# KitchenBuddy.xcodeproj. The project file is generated, not committed.
+name: KitchenBuddy
+options:
+  bundleIdPrefix: net.puddleglum
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+
+packages:
+  KitchenBuddyKit:
+    path: ../KitchenBuddyKit
+
+schemes:
+  KitchenBuddy:
+    build:
+      targets:
+        KitchenBuddy: all
+        KitchenBuddyShare: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - KitchenBuddyUITests
+    archive:
+      config: Release
+
+settingGroups:
+  signing:
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: 7Y22MT85Z6   # ANDREW CHRISTOPHER EVANS (Apple Developer)
+    # Fallbacks for local/simulator builds only — release builds (CI and
+    # scripts/ship.sh) stamp the latest v* tag and `git rev-list --count HEAD`
+    # over these (ADR-002). App and extension must carry identical values or
+    # App Store Connect rejects the upload; the shared group guarantees it.
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: 1
+    GENERATE_INFOPLIST_FILE: NO
+    SWIFT_STRICT_CONCURRENCY: minimal
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+
+targets:
+  KitchenBuddy:
+    type: application
+    platform: iOS
+    sources:
+      - Sources
+      - Resources
+    dependencies:
+      - package: KitchenBuddyKit
+        product: KitchenUI
+      - package: KitchenBuddyKit
+        product: KitchenPersistence
+      - target: KitchenBuddyShare   # embedded share extension
+    settings:
+      groups: [signing]
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: net.puddleglum.kitchenbuddy
+        TARGETED_DEVICE_FAMILY: "1"          # iPhone only
+        CODE_SIGN_ENTITLEMENTS: Sources/KitchenBuddy.entitlements
+    info:
+      path: Sources/Info.plist
+      properties:
+        CFBundleDisplayName: Kitchen Buddy
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UIRequiresFullScreen: true
+        ITSAppUsesNonExemptEncryption: false
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        NSCameraUsageDescription: Kitchen Buddy uses the camera to photograph your dishes and attach the photos to recipes.
+        NSPhotoLibraryUsageDescription: Kitchen Buddy lets you attach photos from your library to recipes.
+        NSPhotoLibraryAddUsageDescription: Kitchen Buddy can save recipe photos to your library.
+        CFBundleURLTypes:
+          - CFBundleURLName: net.puddleglum.kitchenbuddy
+            CFBundleURLSchemes: [kitchenbuddy]
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: Kitchen Buddy Recipes
+            CFBundleTypeRole: Editor
+            LSHandlerRank: Owner
+            LSItemContentTypes: [net.puddleglum.kitchenbuddy.recipes]
+          - CFBundleTypeName: JSON
+            CFBundleTypeRole: Viewer
+            LSHandlerRank: Alternate
+            LSItemContentTypes: [public.json]
+        UTExportedTypeDeclarations:
+          - UTTypeIdentifier: net.puddleglum.kitchenbuddy.recipes
+            UTTypeDescription: Kitchen Buddy Recipes
+            UTTypeConformsTo: [public.json]
+            UTTypeTagSpecification:
+              public.filename-extension: [kbrecipes]
+              public.mime-type: [application/json]
+        LSSupportsOpeningDocumentsInPlace: false
+        # The iCloud Drive backup mirror is visible in the Files app so the
+        # owner can see their backups exist (ADR-003).
+        NSUbiquitousContainers:
+          iCloud.net.puddleglum.kitchenbuddy:
+            NSUbiquitousContainerIsDocumentScopePublic: true
+            NSUbiquitousContainerName: Kitchen Buddy
+            NSUbiquitousContainerSupportedFolderLevels: Any
+
+  # Share-sheet target: receives a web URL from Safari & co. and hands it to
+  # the app through the App Group queue (ADR-005). Deliberately links nothing
+  # from KitchenBuddyKit — no database access from a second process.
+  KitchenBuddyShare:
+    type: app-extension
+    platform: iOS
+    sources:
+      - ShareExtension
+    settings:
+      groups: [signing]
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: net.puddleglum.kitchenbuddy.share
+        TARGETED_DEVICE_FAMILY: "1"
+        CODE_SIGN_ENTITLEMENTS: ShareExtension/KitchenBuddyShare.entitlements
+    info:
+      path: ShareExtension/Info.plist
+      properties:
+        CFBundleDisplayName: Kitchen Buddy
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        ITSAppUsesNonExemptEncryption: false
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.share-services
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShareViewController
+          NSExtensionAttributes:
+            NSExtensionActivationRule:
+              NSExtensionActivationSupportsWebURLWithMaxCount: 1
+
+  # Drives the simulator end to end — the on-device check behind
+  # `xcodebuild test`. Mirrors cardplay's UITests target.
+  KitchenBuddyUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - UITests
+    dependencies:
+      - target: KitchenBuddy
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: KitchenBuddy

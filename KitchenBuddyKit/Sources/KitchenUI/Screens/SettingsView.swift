@@ -72,6 +72,7 @@ public struct SettingsView: View {
         .navigationTitle("Settings")
         .onChange(of: model.preferences) { model.save() }
         .task { model.refresh() }
+        .onChange(of: model.environment.maintenanceGeneration) { model.refresh() }
         .overlay {
             if model.isBusy { ProgressView().controlSize(.large) }
         }

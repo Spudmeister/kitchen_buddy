@@ -20,6 +20,13 @@ public final class AppEnvironment {
     public var sampleRecipes: Data?
     /// Last error from background maintenance, for Settings to surface.
     public private(set) var maintenanceError: String?
+    /// Bumped when background maintenance finishes so screens re-read
+    /// backup and iCloud status.
+    public private(set) var maintenanceGeneration = 0
+    /// Navigation state shared by every screen.
+    public let router = Router()
+    /// Search text to start the Library with (screenshots, UI tests).
+    public var initialSearchText: String?
 
     public init(book: RecipeBook, cloud: CloudMirror, sampleRecipes: Data? = nil) {
         self.book = book
@@ -99,6 +106,7 @@ public final class AppEnvironment {
                 }
             }.value
             maintenanceError = failure
+            maintenanceGeneration += 1
         }
     }
 }

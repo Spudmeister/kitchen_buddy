@@ -95,6 +95,7 @@ public struct BackupsView: View {
         }
         .navigationTitle("Backups")
         .task { model.refresh() }
+        .onChange(of: model.environment.maintenanceGeneration) { model.refresh() }
         .refreshable { model.refresh() }
         .overlay {
             if model.isBusy {

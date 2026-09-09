@@ -34,6 +34,17 @@ public final class AppEnvironment {
     /// Set by the Detail overflow "Share…" item; the Detail view presents
     /// the share sheet with its current scale and units.
     public var detailShareRequest: Recipe.ID?
+    /// A mailto: or web link for beta feedback (Settings › Send Feedback).
+    public var feedbackURL: URL?
+    /// Home-screen search (19.3).
+    public let spotlight: SpotlightIndexer
+    /// A quick action or Spotlight hit waiting to be handled by the root view.
+    public var pendingQuickAction: QuickAction?
+
+    public enum QuickAction: String, Hashable, Sendable {
+        case newRecipe = "net.puddleglum.kitchenbuddy.new"
+        case importClipboard = "net.puddleglum.kitchenbuddy.import-clipboard"
+    }
 
     public init(book: RecipeBook, cloud: CloudMirror, sampleRecipes: Data? = nil) {
         self.book = book
@@ -42,6 +53,27 @@ public final class AppEnvironment {
         preferences = (try? book.preferences.load()) ?? .default
         launchReport = book.launchReport
         isRecoveryPresented = book.launchReport.needsAttention
+        spotlight = SpotlightIndexer(book: book)
+    }
+
+    /// Runs a quick action: New Recipe, or Import from Clipboard (a URL on
+    /// the pasteboard opens the import sheet prefilled; otherwise empty).
+    public func perform(_ action: QuickAction, clipboardURL: URL?) {
+        switch action {
+        case .newRecipe: router.present(.newRecipe(folderID: nil))
+        case .importClipboard: router.present(.importURL(clipboardURL))
+        }
+    }
+
+    /// Spotlight result → the recipe (19.3).
+    public func continueActivity(_ activity: NSUserActivity) {
+        if let id = SpotlightIndexer.recipeID(from: activity) { router.showRecipe(id) }
+    }
+
+    /// Keeps Spotlight current for one recipe after a change.
+    public func spotlightUpdate(_ id: Recipe.ID) {
+        let spotlight = spotlight
+        Task.detached(priority: .utility) { await spotlight.update(id) }
     }
 
     /// The production environment over the Application Support layout.
@@ -92,6 +124,8 @@ public final class AppEnvironment {
     public func sceneDidBecomeActive() {
         runMaintenance(.daily)
         drainShareInbox()
+        let spotlight = spotlight
+        Task.detached(priority: .utility) { _ = try? await spotlight.reindexAll() }
     }
 
     /// Opens the import sheet for the next URL the Share Extension queued (12.5).

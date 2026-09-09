@@ -95,6 +95,15 @@ targets:
               public.filename-extension: [kbrecipes]
               public.mime-type: [application/json]
         LSSupportsOpeningDocumentsInPlace: false
+        NSUserActivityTypes: [com.apple.corespotlightitem]
+        UIApplicationShortcutItems:
+          - UIApplicationShortcutItemType: net.puddleglum.kitchenbuddy.new
+            UIApplicationShortcutItemTitle: New Recipe
+            UIApplicationShortcutItemIconSymbolName: doc.badge.plus
+          - UIApplicationShortcutItemType: net.puddleglum.kitchenbuddy.import-clipboard
+            UIApplicationShortcutItemTitle: Import from Clipboard
+            UIApplicationShortcutItemSubtitle: Uses the link you copied
+            UIApplicationShortcutItemIconSymbolName: link
         # The iCloud Drive backup mirror is visible in the Files app so the
         # owner can see their backups exist (ADR-003).
         NSUbiquitousContainers:

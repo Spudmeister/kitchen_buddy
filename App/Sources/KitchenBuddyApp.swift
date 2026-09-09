@@ -22,6 +22,7 @@ import SwiftUI
 ///   recovery runs (UI test for the recovery notice)
 @main
 struct KitchenBuddyApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @Environment(\.scenePhase) private var scenePhase
     @State private var environment: AppEnvironment?
     @State private var openError: String?
@@ -66,6 +67,13 @@ struct KitchenBuddyApp: App {
             if arguments.contains("--open-share") {
                 environment.router.present(.share(.all, backup: true))
             }
+            if arguments.contains("--seed-perf") {
+                Self.seedPerformanceRecipes(into: environment)
+            }
+            if let action = Self.argumentValue("--quick-action", in: arguments).flatMap(AppEnvironment.QuickAction.init(rawValue:)) {
+                environment.pendingQuickAction = action
+            }
+            environment.feedbackURL = URL(string: "mailto:ace@puddleglum.net?subject=Kitchen%20Buddy%20feedback")
             environment.initialSearchText = Self.argumentValue("--search", in: arguments)
             let units = Self.argumentValue("--units", in: arguments).flatMap(UnitPreference.init(rawValue:))
             let servings = Self.argumentValue("--default-servings", in: arguments).flatMap(Int.init)
@@ -108,10 +116,26 @@ struct KitchenBuddyApp: App {
         .onChange(of: scenePhase) { _, phase in
             switch phase {
             case .background: environment?.sceneDidEnterBackground()
-            case .active: environment?.sceneDidBecomeActive()
+            case .active:
+                environment?.sceneDidBecomeActive()
+                handlePendingQuickAction()
             default: break
             }
         }
+        .onChange(of: appDelegate.shortcutType) { handlePendingQuickAction() }
+    }
+
+    /// Quick actions arrive through the app delegate (cold launch or while
+    /// running) or a launch argument; hand them to the environment once.
+    private func handlePendingQuickAction() {
+        guard let environment else { return }
+        if let type = appDelegate.shortcutType, let action = AppEnvironment.QuickAction(rawValue: type) {
+            appDelegate.shortcutType = nil
+            environment.pendingQuickAction = action
+        }
+        guard let action = environment.pendingQuickAction else { return }
+        environment.pendingQuickAction = nil
+        environment.perform(action, clipboardURL: UIPasteboard.general.url ?? UIPasteboard.general.string.flatMap { RecipeURLImporter.normalizedURL($0) })
     }
 
     /// A tiny schema.org page for the stubbed import.
@@ -122,6 +146,21 @@ struct KitchenBuddyApp: App {
     "recipeInstructions":[{"@type":"HowToStep","text":"Make the pastry."},{"@type":"HowToStep","text":"Fill and bake."}],
     "recipeCategory":"Dessert"}</script></head><body></body></html>
     """
+
+    /// 5,100 recipes (the 34 samples × 150, titles suffixed) in one
+    /// transaction, for the performance pass on a device or simulator.
+    private static func seedPerformanceRecipes(into environment: AppEnvironment) {
+        guard let data = sampleRecipes, let base = try? LegacyV1Reader.read(data),
+              (try? environment.book.recipes.count(includeArchived: true)) ?? 0 < 1000 else { return }
+        var drafts: [RecipeDraft] = []
+        for round in 1...150 {
+            for var draft in base {
+                draft.content.title += " \(round)"
+                drafts.append(draft)
+            }
+        }
+        _ = try? environment.book.importDrafts(drafts)
+    }
 
     private static var sampleRecipes: Data? {
         Bundle.main.url(forResource: "DemoRecipes", withExtension: "json").flatMap { try? Data(contentsOf: $0) }

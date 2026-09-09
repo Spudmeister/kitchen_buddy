@@ -239,6 +239,7 @@ public final class RecipeEditorViewModel: Identifiable {
         do {
             let book = environment.book
             let saved = try editingID.map { try book.recipes.save(draft, for: $0) } ?? (try book.recipes.create(draft))
+            environment.spotlightUpdate(saved.id)
             return saved.id
         } catch {
             self.error = "\(error)"

@@ -322,6 +322,27 @@ final class RecipeFlowUITests: XCTestCase {
         return app.staticTexts[text].exists
     }
 
+    /// Requirement 19.4: a quick action opens the editor; Requirement 6.5:
+    /// searching 5,100 recipes stays responsive.
+    func testQuickActionAndLargeLibrarySearch() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--uitest-reset", "--seed", "demo", "--quick-action", "net.puddleglum.kitchenbuddy.new"]
+        app.launch()
+        XCTAssertTrue(app.textFields["titleField"].waitForExistence(timeout: 10), "New Recipe quick action opened the editor")
+        app.buttons["Cancel"].tap()
+
+        let big = XCUIApplication()
+        big.launchArguments = ["--seed-perf"]
+        big.launch()
+        let search = big.searchFields.firstMatch
+        XCTAssertTrue(search.waitForExistence(timeout: 60))
+        search.tap()
+        let start = Date()
+        search.typeText("bruschetta 7")
+        XCTAssertTrue(big.cells.containing(NSPredicate(format: "label CONTAINS 'Bruschetta 7'")).firstMatch.waitForExistence(timeout: 10))
+        XCTAssertLessThan(Date().timeIntervalSince(start), 8, "typing + results over 5,100 recipes")
+    }
+
     /// Requirement 17.5: a damaged database is renamed aside, the newest
     /// verified snapshot restored, and a non-dismissable notice shown.
     func testCorruptDatabaseShowsRecoveryNoticeAndRestores() {

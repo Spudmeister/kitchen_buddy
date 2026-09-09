@@ -21,7 +21,10 @@ Enter Manually, share-inbox drain, `kitchenbuddy://` links (merged, PR #12). M8 
 `m8/export-import-pdf`: v2 export document, Exporter (share/backup presets,
 photos), Importer (preview, skip/copy, snapshot, one transaction), PDF
 renderer, Share and Import Review sheets, Settings rows, Open In.
-Release step: tag **v0.3.0** on the merge.
+Release step: tag **v0.3.0** on the merge. M9 on `m9/polish`: Spotlight
+indexing + continuation, quick actions, feedback link, TestFlight template,
+signposts, 5,100-recipe perf seed, XXL accessibility pass. Release step:
+tag **v0.4.0** on the merge. After that: beta feedback triage (9.6).
 
 Milestones and tasks: `.kiro/specs/kitchen-buddy-ios/tasks.md`. Tags:
 v0.1.0 at M3 (usable recipe book), v0.2.0 at M5, v0.3.0 at M8, v0.4.0 at M9.
@@ -37,7 +40,7 @@ v0.1.0 at M3 (usable recipe book), v0.2.0 at M5, v0.3.0 at M8, v0.4.0 at M9.
 | M6 Photos | | done |
 | M7 URL import + Share Extension | | done |
 | M8 Export / import / PDF → **v0.3.0** | | done, tag on merge |
-| M9 Polish, accessibility, Spotlight, beta → **v0.4.0** | | next |
+| M9 Polish, accessibility, Spotlight, beta → **v0.4.0** | | done except 9.6 triage |
 
 ## Human steps remaining (Andrew)
 

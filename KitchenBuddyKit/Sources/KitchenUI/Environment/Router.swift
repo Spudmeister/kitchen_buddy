@@ -18,6 +18,7 @@ public final class Router {
         case renameFolder(Folder.ID)
         case moveFolder(Folder.ID)
         case moveRecipes([Recipe.ID])
+        case photoViewer(Recipe.ID, index: Int)
 
         public var id: String {
             switch self {
@@ -31,6 +32,7 @@ public final class Router {
             case .renameFolder(let id): return "rename-\(id)"
             case .moveFolder(let id): return "movefolder-\(id)"
             case .moveRecipes(let ids): return "moverecipes-\(ids.map(\.rawValue).joined(separator: ","))"
+            case .photoViewer(let id, let index): return "viewer-\(id)-\(index)"
             }
         }
     }

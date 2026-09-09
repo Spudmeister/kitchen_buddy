@@ -52,6 +52,7 @@ public struct RootView: View {
         case .history(let id): VersionHistoryView(environment: environment, recipeID: id)
         case .lineage(let id): LineageView(environment: environment, recipeID: id)
         case .notes(let id): NotesView(environment: environment, recipeID: id)
+        case .photos(let id): PhotoGalleryView(environment: environment, recipeID: id)
         case .archived: ArchivedView(environment: environment)
         case .settings: SettingsView(environment: environment)
         case .backups: BackupsView(environment: environment)
@@ -88,6 +89,8 @@ public struct RootView: View {
             MoveFolderView(environment: environment, folderID: id)
         case .moveRecipes(let ids):
             MoveRecipesView(environment: environment, recipeIDs: ids)
+        case .photoViewer(let id, let index):
+            PhotoViewerView(environment: environment, recipeID: id, index: index)
         }
     }
 }

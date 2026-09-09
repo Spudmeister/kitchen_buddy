@@ -1,3 +1,4 @@
+import Foundation
 import KitchenCore
 import SwiftUI
 
@@ -7,13 +8,13 @@ import SwiftUI
 /// Requirements: kitchen-buddy-ios 6.4
 struct RecipeRow: View {
     let recipe: RecipeSummary
+    var thumbnailURL: URL?
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
-            RoundedRectangle(cornerRadius: 8)
-                .fill(.quaternary)
+            PhotoImage(url: thumbnailURL, maxPixelSize: 200)
                 .frame(width: 56, height: 56)
-                .overlay { Image(systemName: "fork.knife").foregroundStyle(.secondary) }
+                .clipShape(RoundedRectangle(cornerRadius: 8))
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 4) {
                 Text(recipe.title)

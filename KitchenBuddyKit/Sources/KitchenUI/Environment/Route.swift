@@ -10,6 +10,7 @@ public enum Route: Hashable, Codable, Sendable {
     case history(Recipe.ID)
     case lineage(Recipe.ID)
     case notes(Recipe.ID)
+    case photos(Recipe.ID)
     case archived
     case settings
     case backups

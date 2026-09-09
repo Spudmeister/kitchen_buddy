@@ -87,6 +87,10 @@ public struct RecipeDetailView: View {
                         .background(.orange.opacity(0.15), in: RoundedRectangle(cornerRadius: 10))
                 }
 
+                if !detail.photos.isEmpty {
+                    PhotoHeader(environment: environment, recipeID: detail.id, photos: detail.photos)
+                }
+
                 VStack(alignment: .leading, spacing: 8) {
                     Text(detail.title)
                         .font(.largeTitle.bold())
@@ -372,6 +376,7 @@ private struct DetailActions: View {
         } label: { Label("Duplicate", systemImage: "plus.square.on.square") }
         Button { environment.router.present(.moveToFolder(recipeID)) } label: { Label("Move to Folder…", systemImage: "folder") }
         Button { environment.router.present(.tagPicker(recipeID)) } label: { Label("Tags…", systemImage: "tag") }
+        NavigationLink(value: Route.photos(recipeID)) { Label("Photos", systemImage: "photo.on.rectangle") }
         NavigationLink(value: Route.history(recipeID)) { Label("Version History", systemImage: "clock.arrow.circlepath") }
         Button { model.archive() } label: { Label("Archive", systemImage: "archivebox") }
             .accessibilityIdentifier("archiveButton")

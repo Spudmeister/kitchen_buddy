@@ -9,7 +9,8 @@ import SwiftUI
 /// `scripts/screenshots.sh`:
 ///
 /// - `--uitest-reset` — start from an empty container
-/// - `--seed demo` — import `DemoRecipes.json` through the real import path
+/// - `--seed demo` — import `DemoRecipes.json` through the real import path;
+///   `--seed-photos` additionally attaches generated photos to three recipes
 /// - `--open settings|backups|archived` — start with that screen pushed
 /// - `--open-recipe <title>` — start on that recipe's detail (`--edit` opens
 ///   its editor); `--search <text>` — start the Library with a search
@@ -40,6 +41,9 @@ struct KitchenBuddyApp: App {
             if Self.argumentValue("--seed", in: arguments) == "demo" {
                 Self.seedDemoRecipes(into: environment)
             }
+            if arguments.contains("--seed-photos") {
+                DemoPhotos.seed(into: environment.book)
+            }
             environment.initialSearchText = Self.argumentValue("--search", in: arguments)
             let units = Self.argumentValue("--units", in: arguments).flatMap(UnitPreference.init(rawValue:))
             let servings = Self.argumentValue("--default-servings", in: arguments).flatMap(Int.init)
@@ -56,6 +60,7 @@ struct KitchenBuddyApp: App {
                 case "history": initialRoutes.append(.history(match.id))
                 case "notes": initialRoutes.append(.notes(match.id))
                 case "lineage": initialRoutes.append(.lineage(match.id))
+                case "photos": initialRoutes.append(.photos(match.id))
                 default: break
                 }
                 if arguments.contains("--edit") { environment.router.present(.editRecipe(match.id)) }

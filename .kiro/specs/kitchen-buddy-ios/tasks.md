@@ -123,7 +123,9 @@ Order matters: 4.0–4.3 first, so the next TestFlight build has no dead Setting
 
 - [x] 10.1 Dry ingredients convert by weight: `IngredientDensity` table, `UnitConverter.convertByDensity`, P11 updated, pipeline table cases — _Req 9.6_ (Andrew, 2026-09-09: "flour shouldn't convert from US volume to metric volume")
 - [x] 10.2 No product name but Kitchen Buddy in the UI: the older JSON shape is "Kitchen Buddy recipes (older JSON)", never "Sous Chef" — _Req 14.1_ (Andrew, 2026-09-09)
-- [ ] 10.3 Next feedback item…
+- [x] 10.3 Explain the index buttons: Settings › Search section with a footer saying what Rebuild Search Index and Reindex Spotlight do and when to use them (Andrew, 2026-09-09)
+- [x] 10.4 Front-page filters: chip bar above the Library (Filters sheet, Clear, Under 30/45/60 min, 4+ stars, top tags) driving the same tokens as search; Filters sheet with a total-time slider, minimum rating, every tag, sort and direction, include archived — _Req 6.2, 6.3, 6.7_ (Andrew, 2026-09-09: "dinner recipes less than 45 minutes … bubbles, slides")
+- [ ] 10.5 Next feedback item…
 
 ## M9 — Polish, accessibility, Spotlight, beta → tag `v0.4.0`
 

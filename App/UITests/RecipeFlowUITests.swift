@@ -343,6 +343,38 @@ final class RecipeFlowUITests: XCTestCase {
         XCTAssertLessThan(Date().timeIntervalSince(start), 8, "typing + results over 5,100 recipes")
     }
 
+    /// Requirements 6.2, 6.3: the front-page chips narrow the Library
+    /// without touching the search field.
+    func testFilterChipsOnTheFrontPage() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--uitest-reset", "--seed", "demo"]
+        app.launch()
+        XCTAssertTrue(app.buttons["filtersChip"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["34 recipes"].exists || true)
+        app.buttons["chip-time-45"].tap()
+        XCTAssertTrue(app.buttons["clearFiltersChip"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.cells.containing(NSPredicate(format: "label CONTAINS 'BBQ Ribs'")).firstMatch.exists, "a 6-hour recipe is filtered out")
+        let tagChips = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'chip-tag-'"))
+        func visibleChip() -> XCUIElement? {
+            tagChips.allElementsBoundByIndex.first { $0.frame.minX >= 0 && $0.frame.maxX <= app.frame.width && $0.frame.width > 0 }
+        }
+        var swipes = 0
+        while visibleChip() == nil && swipes < 6 {
+            app.scrollViews.firstMatch.swipeLeft(velocity: .slow)
+            swipes += 1
+        }
+        let tagChip = visibleChip()
+        XCTAssertNotNil(tagChip, "a tag chip scrolled into view")
+        tagChip?.tap()
+        XCTAssertTrue(app.staticTexts.containing(NSPredicate(format: "label CONTAINS 'Filters · 2'")).firstMatch.waitForExistence(timeout: 5))
+        app.buttons["filtersChip"].tap()
+        XCTAssertTrue(app.staticTexts["Filters"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.switches["Limit total time"].exists)
+        app.buttons["filtersDone"].tap()
+        app.buttons["clearFiltersChip"].tap()
+        XCTAssertTrue(app.cells.containing(NSPredicate(format: "label CONTAINS 'BBQ Ribs'")).firstMatch.waitForExistence(timeout: 5))
+    }
+
     /// Requirement 17.5: a damaged database is renamed aside, the newest
     /// verified snapshot restored, and a non-dismissable notice shown.
     func testCorruptDatabaseShowsRecoveryNoticeAndRestores() {

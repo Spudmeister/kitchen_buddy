@@ -10,6 +10,7 @@ import SwiftUI
 public struct LibraryView: View {
     @State private var model: LibraryViewModel
     private let environment: AppEnvironment
+    @State private var isFilterSheetPresented = false
 
     public init(environment: AppEnvironment) {
         self.environment = environment
@@ -17,11 +18,16 @@ public struct LibraryView: View {
     }
 
     public var body: some View {
-        LibraryListView(model: model)
+        LibraryListView(model: model, topContent: AnyView(FilterBar(model: model, isSheetPresented: $isFilterSheetPresented)))
+            .sheet(isPresented: $isFilterSheetPresented) { FilterSheet(model: model) }
             .onAppear {
                 if let text = environment.initialSearchText {
                     model.searchText = text
                     environment.initialSearchText = nil
+                }
+                if let tokens = environment.initialTokens {
+                    model.tokens = tokens
+                    environment.initialTokens = nil
                 }
             }
             .navigationTitle("Recipes")
@@ -73,10 +79,19 @@ public struct LibraryView: View {
 /// The list itself, shared by the Library and the folder screen.
 struct LibraryListView: View {
     @Bindable var model: LibraryViewModel
+    var topContent: AnyView? = nil
     @Environment(\.dismissSearch) private var dismissSearch
 
     var body: some View {
         List {
+            if let topContent {
+                Section {
+                    topContent
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                }
+            }
             ForEach(model.sections) { section in
                 Section {
                     ForEach(section.recipes) { recipe in

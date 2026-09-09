@@ -29,6 +29,7 @@ SHOTS=(
   "backups|4|--seed demo --open backups"
   "recovery|4|--corrupt-db"
   "library|3|--seed demo"
+  "library-filters|3|--seed demo --seed-photos --filter-demo"
   "recipe|3|--seed demo --open-recipe Bruschetta"
   "search|3|--seed demo --search chick"
   "editor|4|--seed demo --open-recipe Bruschetta --edit"

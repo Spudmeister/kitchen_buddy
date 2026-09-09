@@ -25,8 +25,9 @@ public final class AppEnvironment {
     public private(set) var maintenanceGeneration = 0
     /// Navigation state shared by every screen.
     public let router = Router()
-    /// Search text to start the Library with (screenshots, UI tests).
+    /// Search text and filter tokens to start the Library with (screenshots, UI tests).
     public var initialSearchText: String?
+    public var initialTokens: [SearchToken]?
     /// URL import; the host may swap the fetcher (UI tests use a stub).
     public var urlImporter = RecipeURLImporter()
     /// The Share Extension's queue.

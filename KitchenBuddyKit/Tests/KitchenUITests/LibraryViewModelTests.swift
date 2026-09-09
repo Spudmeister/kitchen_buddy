@@ -65,6 +65,37 @@ import KitchenTesting
         #expect(model.results.map(\.id) == [soup.id])
     }
 
+    /// Front-page chips: time and rating chips replace their kind, tag chips
+    /// accumulate, Clear drops everything (Andrew, 2026-09-09).
+    @Test @MainActor func filterChipsToggleTokens() throws {
+        let environment = try Self.environment()
+        let quick = try environment.book.recipes.create(RecipeDraft(title: "Quick Dinner", ingredients: [IngredientDraft(name: "x")], instructions: [InstructionDraft(text: "y")], prepMinutes: 10, cookMinutes: 20, tags: ["Dinner"]))
+        _ = try environment.book.recipes.create(RecipeDraft(title: "Slow Dinner", ingredients: [IngredientDraft(name: "x")], instructions: [InstructionDraft(text: "y")], prepMinutes: 30, cookMinutes: 90, tags: ["Dinner"]))
+        _ = try environment.book.recipes.create(RecipeDraft(title: "Quick Breakfast", ingredients: [IngredientDraft(name: "x")], instructions: [InstructionDraft(text: "y")], prepMinutes: 5, cookMinutes: 10, tags: ["Breakfast"]))
+        let model = LibraryViewModel(environment: environment)
+        model.start()
+        defer { model.stop() }
+        #expect(model.tagChips.map(\.label) == ["Dinner", "Breakfast"], "most used first")
+
+        model.toggle(.tag("Dinner"))
+        model.toggle(.maximumMinutes(45))
+        model.refreshResults()
+        #expect(model.results.map(\.id) == [quick.id], "dinner under 45 minutes")
+        #expect(model.activeFilterCount == 2 && model.maximumMinutes == 45)
+        model.toggle(.maximumMinutes(60))
+        #expect(model.maximumMinutes == 60 && model.activeFilterCount == 2, "time chips replace each other")
+        model.toggle(.maximumMinutes(60))
+        #expect(model.maximumMinutes == nil)
+        model.setMinimumRating(4)
+        model.setMinimumRating(4)
+        #expect(model.minimumRating == 4 && model.activeFilterCount == 2)
+        model.setMaximumMinutes(35)
+        #expect(model.maximumMinutes == 35)
+        model.tokens = []
+        model.refreshResults()
+        #expect(model.results.count == 3 && !model.isActive(.tag("Dinner")))
+    }
+
     @Test @MainActor func startPaintsAtOnceAndEmptyStatesFollow() throws {
         let environment = try Self.environment()
         let model = LibraryViewModel(environment: environment)

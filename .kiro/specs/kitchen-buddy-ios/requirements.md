@@ -72,6 +72,7 @@ import. Each requirement maps back to the original `sous-chef` (core) and
 4. THE Library SHALL show per row: cover thumbnail, title, total time, rating, up to three tags.
 5. THE Recipe_Book SHALL keep search results under 100 ms for 5,000 recipes on an iPhone 12-class device.
 6. WHEN no recipes match THEN the Library SHALL distinguish "no recipes yet" from "no matches" and offer to clear filters or add a recipe.
+7. THE Library SHALL show its filters on the front page as tappable chips (time limits, minimum rating, the most-used tags, a Filters sheet with a time slider and every tag, sort) so a combination like "dinner under 45 minutes" takes two taps without opening search. *(Added 2026-09-09 from beta feedback.)*
 *Maps to: core 3.4, 3.5, 3.6, 9.2; PWA 3.1–3.7.*
 
 ### Requirement 7: Cooking Notes

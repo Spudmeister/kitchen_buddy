@@ -52,6 +52,12 @@ struct KitchenBuddyApp: App {
             if let title = Self.argumentValue("--open-recipe", in: arguments),
                let match = try? environment.book.recipes.summaries(RecipeQuery(text: title)).first {
                 initialRoutes = [.recipe(match.id)]
+                switch Self.argumentValue("--open", in: arguments) {
+                case "history": initialRoutes.append(.history(match.id))
+                case "notes": initialRoutes.append(.notes(match.id))
+                case "lineage": initialRoutes.append(.lineage(match.id))
+                default: break
+                }
                 if arguments.contains("--edit") { environment.router.present(.editRecipe(match.id)) }
             }
             _environment = State(initialValue: environment)
@@ -95,6 +101,7 @@ struct KitchenBuddyApp: App {
         case "settings": return [.settings]
         case "backups": return [.settings, .backups]
         case "archived": return [.archived]
+        case "folders": return [.folders]
         default: return []
         }
     }

@@ -49,6 +49,9 @@ public struct LibraryView: View {
                     SortMenu(sort: $model.sort, direction: $model.direction)
                 }
                 ToolbarItem(placement: .secondaryAction) {
+                    NavigationLink(value: Route.folders) { Label("Folders", systemImage: "folder") }
+                }
+                ToolbarItem(placement: .secondaryAction) {
                     NavigationLink(value: Route.archived) { Label("Archived", systemImage: "archivebox") }
                 }
                 ToolbarItem(placement: .secondaryAction) {

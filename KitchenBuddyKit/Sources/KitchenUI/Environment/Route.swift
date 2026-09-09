@@ -6,6 +6,10 @@ public enum Route: Hashable, Codable, Sendable {
     case recipe(Recipe.ID)
     case recipeVersion(Recipe.ID, version: Int)
     case folder(Folder.ID)
+    case folders
+    case history(Recipe.ID)
+    case lineage(Recipe.ID)
+    case notes(Recipe.ID)
     case archived
     case settings
     case backups

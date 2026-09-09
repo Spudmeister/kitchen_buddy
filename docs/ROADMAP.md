@@ -7,8 +7,11 @@ build **0.1.0 (43)** is the first usable recipe book — Library, Detail,
 Editor, pickers, Archived, on top of the M2 safety net. M4 built on
 `m4/settings-scaling-search`: the three Settings rows now drive the detail
 screen (default servings, unit system, dietary suggestions), clear-rating,
-the step-reorder fix, `#tag` / `in:Folder` shorthand and rating/time tokens;
-103 package tests + 6 XCUITests green.
+the step-reorder fix, `#tag` / `in:Folder` shorthand and rating/time tokens
+(merged, PR #9). M5 on `m5/versions-notes-folders`: Version History +
+restore, Lineage, Notes with undo, rating history + haptics, Folder browser
+(rename/move/delete/multi-select); 107 package tests + 8 XCUITests green.
+Release step: tag **v0.2.0** on the merge.
 
 Milestones and tasks: `.kiro/specs/kitchen-buddy-ios/tasks.md`. Tags:
 v0.1.0 at M3 (usable recipe book), v0.2.0 at M5, v0.3.0 at M8, v0.4.0 at M9.
@@ -20,8 +23,8 @@ v0.1.0 at M3 (usable recipe book), v0.2.0 at M5, v0.3.0 at M8, v0.4.0 at M9.
 | M2 Data safety | verified snapshots, integrity check + recovery, iCloud mirror, Settings › Backups — **before any build can hold a recipe** | done, build 41 |
 | M3 Library + Detail + Editor | usable recipe book → **v0.1.0** | done, build 43 |
 | M4 Scaling, units, tags, search polish | | done |
-| M5 Versions, lineage, notes, ratings, folders → **v0.2.0** | | next |
-| M6 Photos | | |
+| M5 Versions, lineage, notes, ratings, folders → **v0.2.0** | | done, tag on merge |
+| M6 Photos | | next |
 | M7 URL import + Share Extension | | |
 | M8 Export / import / PDF → **v0.3.0** | | |
 | M9 Polish, accessibility, Spotlight, beta → **v0.4.0** | | |

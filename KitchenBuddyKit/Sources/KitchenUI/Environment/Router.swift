@@ -13,6 +13,11 @@ public final class Router {
         case tagPicker(Recipe.ID)
         case moveToFolder(Recipe.ID)
         case newFolder(parentID: Folder.ID?)
+        case noteEditor(recipeID: Recipe.ID, noteID: RecipeNote.ID?)
+        case ratingHistory(Recipe.ID)
+        case renameFolder(Folder.ID)
+        case moveFolder(Folder.ID)
+        case moveRecipes([Recipe.ID])
 
         public var id: String {
             switch self {
@@ -21,6 +26,11 @@ public final class Router {
             case .tagPicker(let id): return "tags-\(id)"
             case .moveToFolder(let id): return "move-\(id)"
             case .newFolder(let parentID): return "folder-\(parentID?.rawValue ?? "root")"
+            case .noteEditor(let recipeID, let noteID): return "note-\(recipeID)-\(noteID?.rawValue ?? "new")"
+            case .ratingHistory(let id): return "ratings-\(id)"
+            case .renameFolder(let id): return "rename-\(id)"
+            case .moveFolder(let id): return "movefolder-\(id)"
+            case .moveRecipes(let ids): return "moverecipes-\(ids.map(\.rawValue).joined(separator: ","))"
             }
         }
     }

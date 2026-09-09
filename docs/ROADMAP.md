@@ -8,6 +8,10 @@ triage (tracked as M10, rolling), and the device checks listed under
 by weight (ADR-008); no product name but Kitchen Buddy in the UI; the index
 buttons explained; a front-page filter chip bar with a Filters sheet. The recipe book
 is feature-complete against the spec; what follows is feedback-driven.
+**M11 (in progress, branch `m11/health`, ADR-009):** health profiles
+(diabetes / blood pressure / heart health) estimated from a bundled food
+table with an auditable per-line worksheet, plus "servings you actually
+get" reports; ends with tag **v0.5.0**.
 
 History: M0–M2 merged (PRs #5, #6, #7); TestFlight build
 **0.1.0 (41)** verified on Andrew's phone: iCloud Drive available, daily
@@ -36,7 +40,7 @@ signposts, 5,100-recipe perf seed, XXL accessibility pass. Release step:
 tag **v0.4.0** on the merge. After that: beta feedback triage (9.6).
 
 Milestones and tasks: `.kiro/specs/kitchen-buddy-ios/tasks.md`. Tags:
-v0.1.0 at M3 (usable recipe book), v0.2.0 at M5, v0.3.0 at M8, v0.4.0 at M9.
+v0.1.0 at M3 (usable recipe book), v0.2.0 at M5, v0.3.0 at M8, v0.4.0 at M9, v0.5.0 at M11.
 
 | Milestone | What lands | State |
 |---|---|---|
@@ -50,6 +54,8 @@ v0.1.0 at M3 (usable recipe book), v0.2.0 at M5, v0.3.0 at M8, v0.4.0 at M9.
 | M7 URL import + Share Extension | | done, build 57 |
 | M8 Export / import / PDF → **v0.3.0** | | done, build 59 |
 | M9 Polish, accessibility, Spotlight, beta → **v0.4.0** | | done, tagged; 9.6 triage open |
+| M10 Beta feedback (rolling) | densities, no Sous Chef, index explained, filter chips | shipping as it lands (build 67) |
+| M11 Health profiles + actual servings → **v0.5.0** | food table, estimator, worksheet, badges/filters, serving reports, schema v3, export 2.1 | in progress |
 
 ## Human steps remaining (Andrew)
 

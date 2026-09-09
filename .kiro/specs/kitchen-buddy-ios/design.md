@@ -53,6 +53,33 @@ minimal, types Sendable-clean.
   US volume → metric weight and metric weight → US volume for dry/semi-solid
   ingredients; otherwise within-category conversion (ADR-008).
 
+- **Serving reports (M11):** `ServingReport {id, recipeID, servings?, note?, reportedAt}`,
+  append-only; `nil` servings means "back to the recipe's own count". Effective
+  servings = latest report's count ?? version servings. `RecipeDetail` carries
+  `latestServingReport` and `effectiveServings`; the detail view model's
+  scaling base, the default-servings preference and every per-serving health
+  figure use the effective value (Req 20).
+- **Nutrition (M11, `KitchenCore/Nutrition`):** `Food {id (stable slug), name,
+  keywords, fdcID?, per100g {carbohydrate, fiber, sodiumMg, saturatedFat},
+  glycemicIndex? {value, source, basis}, unitWeightGrams?, gramsPerCup?}` loaded
+  from the bundled `foods.json` (`FoodTable.version`, `FoodTable.foods`).
+  `FoodMatcher.match(name:)` = longest keyword contained in the lowercased,
+  diacritic-stripped name (same rule as `IngredientDensity`). `FoodOverride
+  {id, recipeID, ingredientKey, foodID?, createdAt}` is append-only; latest per
+  (recipe, key) wins; `foodID == nil` means "don't count".
+  `NutritionEstimator.estimate(ingredients:servings:overrides:)` →
+  `RecipeNutrition {lines: [LineEstimate], totals, perServing, coverage,
+  effectiveServings}`; `LineEstimate {ingredient, match (food, keyword|override),
+  grams, gramsBasis (weight|density|unitWeight), nutrients, glycemicLoad,
+  status (counted|unmatched|noQuantity|unitNotConvertible|excluded|seasoning)}`.
+  Grams: weight units → grams; volume → ml × (food density ?? `IngredientDensity`
+  ?? nil); count → unitWeight; pinch/dash/to taste → seasoning. Coverage =
+  counted ÷ (counted + unmatched + unitNotConvertible); < 0.8 → `.unknown`.
+  `HealthProfile {diabetes, bloodPressure, heartHealth}` with `nutrient`,
+  `thresholds (low, medium)`, `band(for:)` → `HealthBand {low, medium, high,
+  unknown}` (colour + word + SF symbol). `HealthSummary` (per profile band +
+  value) rides on `RecipeSummary` for badges and filters.
+
 ### PracticalRounding (exact port of the PWA algorithm)
 `q < 1/8` → round to 2 dp · piece/dozen → nearest ½ · pinch/dash/to_taste →
 whole · **ml/g at ≥ 1 → whole (added in M4: the port printed "236⅔ ml")** ·
@@ -93,6 +120,22 @@ without text reads `recipe_search` alone.
 `SearchIndex.refresh(recipeID, db)` runs inside every write transaction;
 `rebuildAll` when `preferences.search_index_version` is stale.
 
+### Schema (migration `v3-health`, M11)
+
+`serving_reports` (id, recipe_id, servings NULL or 1…999, note, reported_at)
+and `food_overrides` (id, recipe_id, ingredient_key, food_id NULL, created_at):
+both append-only with delete/update abort triggers, indexed by recipe and
+time. `recipe_health` is a **derived, rewritable** projection like
+`recipe_search`: recipe_id PRIMARY KEY, food_table_version, effective_servings,
+coverage, carbs_g, available_carbs_g, glycemic_load, sodium_mg,
+saturated_fat_g (all per serving), diabetes_band, sodium_band, sat_fat_band
+(0 low, 1 medium, 2 high, NULL unknown), computed_at. `HealthIndex.refresh`
+runs from `SearchIndex.refresh` so every existing write hook covers it;
+`rebuildAll` when `preferences.health_index_version` (food table version +
+thresholds version) is stale. Library summaries LEFT JOIN `recipe_health`;
+the `friendly(profile)` filter is `<band> = 0`. Fixture:
+`kb-schema-v2.sqlite`, written before the migration landed.
+
 ## Data safety
 
 See ADR-003 for the full design: Application Support location included in
@@ -125,13 +168,18 @@ the share inbox, `.kbrecipes` Open In, and quick actions resolve to a Route.
 | Import from file | `fileImporter` + `.onOpenURL`; review sheet with counts, titles, Skip/Copy, destination folder; snapshot → transaction |
 | Settings / Backups | preferences; Backups list with verification badges, Back Up Now, Restore…, Share snapshot; iCloud status; Damaged Databases (share only); Recovery full-screen cover at launch. Each preference row appears only once something reads it (tasks.md "No dead controls") |
 | Archived, Tag Picker, Move to Folder | as named |
+| Health worksheet (M11) | Per-serving figures with band, threshold and "you get N" basis; one row per ingredient line: matched food + keyword, grams + basis, carbs / GI (source) / GL, sodium, sat fat; "Not counted" group with reasons; tap a line → Food picker (search the table, "Don't count", "Back to automatic"); footer: coverage, sources, table version, disclaimer |
+| Servings you get (M11) | Sheet from the servings chip: stepper, note, "Use the recipe's count", history of reports |
+| Settings › Health (M11) | Three switches (Diabetes on by default), Sources screen (USDA FDC, International GI Tables, thresholds, version, count) |
 
 ## Export format v2
 
 See ADR-006. Envelope `{format: "kitchenbuddy-export", version: "2.0",
 exportedAt, appBuild, folders[], recipes[]}`; recipes carry all versions,
 tags, ratings, notes, photos (base64 optional), lineage, archive state.
-`LegacyV1Reader` lifts `"1.0"`/`"1.0.0"` files.
+`LegacyV1Reader` lifts `"1.0"`/`"1.0.0"` files. **2.1 (M11)** adds optional
+`servingReports[]` and `foodOverrides[]` per recipe; 2.0 readers ignore them,
+the 2.1 reader defaults them to empty, and any `"2."` version is accepted.
 
 ## Correctness Properties
 
@@ -167,6 +215,11 @@ tags, ratings, notes, photos (base64 optional), lineage, archive state.
 30. **Preference persistence** — survives reopen. *Req 18.3*
 31. **URL parser** — every committed fixture parses to title + ≥1 ingredient + ≥1 step; `parse(format(line)) == line`. *Req 12.2, 12.6*
 32. **Search index consistency** — incrementally maintained `recipe_search` rows equal rebuilt rows after any operation sequence. *Req 6.1*
+33. **Food matching** — deterministic; every food's own keywords resolve to that food; the longest keyword wins; every table entry is well-formed (unique id, lowercase keywords, nutrients ≥ 0, GI in 0…150 with a source). *Req 21.1, 21.2*
+34. **Estimator linearity** — scaling every quantity by k scales totals by k; scaling quantities and servings by the same k leaves per-serving figures unchanged; a "don't count" override removes exactly that line; coverage < 0.8 ⇒ every band unknown. *Req 21.2, 21.4*
+35. **Serving reports append-only** — reports never decrease in count; effective servings = latest report ?? version servings; a nil report resets. *Req 20.1, 20.2, 20.4*
+36. **Health index consistency** — `recipe_health` rows after any operation sequence equal a rebuild; the friendly filter returns exactly the low-band recipes. *Req 21.8, 21.9*
+37. **Export 2.1 round-trip** — serving reports and food overrides survive export → import, and a 2.0 file still imports. *Req 20.4, 21.10*
 
 ## Testing Strategy
 

@@ -20,6 +20,9 @@ import. Each requirement maps back to the original `sous-chef` (core) and
 - **Photo_Manager**: photo storage and thumbnails
 - **Snapshot_Manager**: verified database snapshots, integrity check, recovery
 - **Cloud_Mirror**: iCloud Drive copy of the newest verified snapshot and photos
+- **Food_Table**: the bundled, versioned table of common foods with USDA nutrients per 100 g, glycemic index with its source, unit weights and densities
+- **Nutrition_Estimator**: pure function from a version's ingredients and an effective servings count to per-serving nutrients, one auditable line per ingredient
+- **Health_Profile**: a named condition (diabetes, blood pressure, heart health) that bands one per-serving nutrient into low / medium / high
 
 ## Requirements
 
@@ -186,3 +189,24 @@ import. Each requirement maps back to the original `sous-chef` (core) and
 4. THE app SHALL register `.kbrecipes` as its document type, accept `.json` via Open In, and handle `kitchenbuddy://recipe/<id>` and `kitchenbuddy://import?url=` links.
 5. THE app SHALL respect Reduce Motion.
 *Maps to: PWA 30.1, 30.3–30.5; Spotlight/UTType new.*
+
+### Requirement 20: Actual Servings (Serving Reports)
+1. WHEN a user reports how many servings a recipe really makes for them ("this chili is 4 servings, not 8") THEN the Recipe_Book SHALL append a serving report (servings, optional note, timestamp) without creating a version or changing the recipe's stated yield.
+2. THE effective servings of a recipe SHALL be the latest serving report's count, or the version's servings when there is no report or the latest report resets to the recipe's own count.
+3. THE detail screen SHALL show both values when they differ ("Recipe says 8 · you get 4"), and the servings control, the default-servings preference (18.2) and every per-serving health figure (21) SHALL use the effective servings as their base.
+4. Serving reports SHALL be append-only and never deleted; the history SHALL be visible from the servings sheet; the export file SHALL carry them (13.4).
+*(Added 2026-09-09 from beta feedback: "my family loves chili and this recipe actually is just 4 servings".)*
+
+### Requirement 21: Health Profiles (Diabetes, Blood Pressure, Heart Health)
+1. THE app SHALL bundle a Food_Table: common foods with total carbohydrate, fibre, sodium and saturated fat per 100 g from USDA FoodData Central (public domain, FDC id kept per food), a glycemic index from the published International Tables of Glycemic Index values (source and basis kept per food, "proxy" when a close relative's value is used), a unit weight for countable foods, and a density for volume measures. The table SHALL be versioned and SHALL ship inside the app; no network is used.
+2. THE Nutrition_Estimator SHALL map each ingredient line to a food by the longest keyword found in its name (or by the user's override for that recipe and ingredient name), turn its quantity into grams (weights directly; volumes through density; counts through unit weight), and compute total carbohydrate, available carbohydrate (total − fibre), glycemic load (GI × available carbohydrate ÷ 100), sodium and saturated fat per line, per recipe and per effective serving. It SHALL be deterministic and pure.
+3. THE estimate SHALL be auditable: a worksheet SHALL show, for every ingredient line, the matched food and the keyword that matched it, the grams and how they were derived, the nutrient figures and the GI with its source; lines that were not counted SHALL be listed with the reason (no matching food, no quantity, a unit that cannot become grams, or "don't count" by the user).
+4. WHEN fewer than 80% of the recipe's countable lines are counted THEN every profile SHALL show "Not enough data" rather than a band. Lines without a quantity or with pinch / dash / to taste are seasoning and never count against coverage.
+5. THE Health_Profiles SHALL be: **Diabetes** on glycemic load per serving (low ≤ 10, medium 11–19, high ≥ 20, the published GL bands); **Blood pressure** on sodium per serving (low ≤ 140 mg, the FDA "low sodium" claim; medium ≤ 600 mg; high above); **Heart health** on saturated fat per serving (low ≤ 4 g, medium ≤ 8 g, high above; a third and two thirds of a 13 g daily limit). Each band SHALL have a colour, a word and a symbol, never colour alone (19.2).
+6. THE Library row and the Recipe Detail SHALL show a badge per enabled profile; tapping the Detail badge SHALL open the worksheet; the worksheet SHALL let the user change a line's food (search the Food_Table) or mark it "don't count", stored as an append-only override for that recipe and ingredient name and applied immediately.
+7. Settings SHALL have a Health section with one switch per profile (Diabetes on by default, the others off) and a Sources screen naming the data sources, the table version and food count, and the thresholds; every badge and the worksheet SHALL say the figures are estimates from typical ingredients, not medical advice.
+8. THE Library SHALL offer a "<profile>-friendly" filter (band = low) as a chip and a search token for each enabled profile; results SHALL satisfy it exactly (6.2).
+9. Per-serving figures and bands SHALL be kept in a derived table refreshed inside every write transaction and rebuilt when the Food_Table version, the thresholds or the derivation change (as the search index is), so the Library needs no per-row computation.
+10. Food overrides SHALL travel in the export file (13.4) and SHALL survive versions: they key on the recipe and the normalized ingredient name, not the ingredient row id.
+*(Added 2026-09-09 from beta feedback: "having diabetes (and maybe other common ailments) as first class … a transparent/auditable way that we calculate this … a simple color scale … considering portion size".)*
+

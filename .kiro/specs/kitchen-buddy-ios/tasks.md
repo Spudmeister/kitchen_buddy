@@ -1,7 +1,7 @@
 # Implementation Plan — Kitchen Buddy iOS
 
 Tags: **v0.1.0 at M3** (first usable recipe book, already backed up), **v0.2.0 at M5**,
-**v0.3.0 at M8**, **v0.4.0 at M9**. Data safety (M2) lands before any build that can hold a recipe. Every push to `main` uploads to TestFlight;
+**v0.3.0 at M8**, **v0.4.0 at M9**, **v0.5.0 at M11**. Data safety (M2) lands before any build that can hold a recipe. Every push to `main` uploads to TestFlight;
 each milestone ends with a "What to test" note for the TestFlight build.
 
 **No dead controls (rule added 2026-09-08 after build 43 shipped three Settings rows nothing read).** A setting, menu item, toolbar action, or token ships in the same task as the code that consumes it — never earlier as a placeholder. Every milestone's last task before the release/"What to test" step is a **control walk**: open every screen and confirm each control does something. Rows and menu items that belong to later milestones are listed under those milestones below, not under the screen that will host them.
@@ -138,3 +138,18 @@ Order matters: 4.0–4.3 first, so the next TestFlight build has no dead Setting
 - [x] 9.7 Control walk of the whole app, at default and accessibility text sizes
 - [x] 9.8 Release: tag `v0.4.0` (2026-09-08, PR #14)
 - **What to test:** search from the iPhone home screen for a recipe title; VoiceOver for a full create flow; send feedback through the link.
+
+## M11 — Health profiles + actual servings → tag `v0.5.0`
+
+Beta feedback (Andrew, 2026-09-09): diabetes as a first-class concern with a transparent, auditable calculation and a simple colour scale that respects portion size; "other common ailments"; and reporting the servings a recipe really makes. Decisions: published academic tables bundled in the app (USDA FoodData Central + International GI Tables), serving reports as append-only personal annotations, three profiles (diabetes, blood pressure, heart health). ADR-009.
+
+- [x] 11.1 Spec + ADR-009 (this commit); `kb-schema-v2.sqlite` fixture written from the pre-M11 code
+- [ ] 11.2 Migration `v3-health`: `serving_reports`, `food_overrides` (append-only, guarded), `recipe_health` (derived, rewritable); `Migrations.identifiers` pinned; fixture test opens v1 and v2 and migrates — _iron rule 2, Req 20.4, 21.9_
+- [ ] 11.3 `KitchenCore/Nutrition`: `Food`, `FoodTable` (bundled `foods.json`, ~200 foods, versioned), `FoodMatcher`, `NutritionEstimator`, `HealthProfile`/`HealthBand`; table validation test, worked examples (1 cup flour → 125 g → 92 g available carbs → GL 69), P33, P34 — _Req 21.1–21.5_
+- [ ] 11.4 Persistence: serving reports + food overrides in `RecipeStore` (append, latest wins, history), `RecipeDetail.effectiveServings`, `HealthIndex` refreshed from every write + `rebuildAll` on stale version, `RecipeSummary.health`, `RecipeQuery.friendly`; P35, P36 — _Req 20.1–20.2, 21.8–21.10_
+- [ ] 11.5 Export 2.1: `servingReports` + `foodOverrides` records, importer writes them, 2.0 files still import; P37 — _Req 13.4, 14.4, 20.4, 21.10_
+- [ ] 11.6 UI, each control with its consumer: Settings › Health switches + Sources screen (footer disclaimer); Library badge per enabled profile + "<profile>-friendly" chip and token; Detail Health section → worksheet → food picker (override, don't count, automatic); servings chip → "Servings you get" sheet with history; scaling base and default servings use effective servings; view-model tests; XCUITests; screenshots at default and XXL — _Req 20.3, 21.6–21.8_
+- [ ] 11.7 Docs: `docs/TESTFLIGHT.md` What to Test; ROADMAP; control walk of every screen at default and XXL text
+- [ ] 11.8 Release: tag `v0.5.0` on the merge (`git push --atomic origin main v0.5.0` from the release worktree)
+- **What to test:** open a chili or a pasta dish, read the Health badge, open the worksheet and check every line makes sense; change a wrong match; report "you get 4" and watch the badge and the scale base change; filter the Library by Diabetes-friendly.
+

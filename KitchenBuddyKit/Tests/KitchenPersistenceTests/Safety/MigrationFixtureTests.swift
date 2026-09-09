@@ -6,7 +6,7 @@ import KitchenTesting
 @testable import KitchenPersistence
 
 /// Feature: kitchen-buddy-ios, every committed schema fixture opens forever.
-/// `kb-schema-v1.sqlite` was written by `writeSchemaV1Fixture` (run with
+/// `kb-schema-v1.sqlite` and later fixtures were written by `writeSchemaFixture` (run with
 /// `KB_WRITE_SCHEMA_FIXTURE=<path>`; see scripts/make-schema-fixture.sh)
 /// and must never be regenerated once a later schema version exists.
 /// Validates: iron rule 2 (ADR-003)
@@ -58,9 +58,11 @@ import KitchenTesting
     }
 
     /// Fixture generator, gated by an environment variable so it never runs
-    /// in CI. Populates a fresh v1 database with a little of everything.
+    /// in CI. Populates a fresh database at the *current* schema with a
+    /// little of everything; run it once, just before a new migration lands,
+    /// naming the file after the schema version it holds.
     @Test(.enabled(if: ProcessInfo.processInfo.environment["KB_WRITE_SCHEMA_FIXTURE"] != nil))
-    func writeSchemaV1Fixture() throws {
+    func writeSchemaFixture() throws {
         let output = try #require(ProcessInfo.processInfo.environment["KB_WRITE_SCHEMA_FIXTURE"])
         let layout = TestDatabase.temporaryLayout()
         defer { TestDatabase.remove(layout) }
@@ -74,6 +76,11 @@ import KitchenTesting
         try book.recipes.move(bruschetta.id, toFolder: bread.id)
         try book.recipes.rate(bruschetta.id, value: 4)
         try book.recipes.rate(bruschetta.id, value: 5)
+        if Migrations.identifiers.contains("v2-rating-clears") {
+            // v2 fixtures carry a clear so v3+ keeps honouring rating_clears.
+            try book.recipes.rate(imported[3].id, value: 3)
+            try book.recipes.clearRating(imported[3].id)
+        }
         try book.recipes.addNote(to: bruschetta.id, body: "Use ripe tomatoes.", cookedOn: nil)
         var draft = bruschetta.draft
         draft.content.description = "Italian tomato appetizer, v2"

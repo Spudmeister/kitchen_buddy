@@ -82,7 +82,10 @@ import KitchenTesting
         model.undoDelete()
         #expect(model.notes.count == 2 && model.undoableDeletion == nil)
         model.delete(model.notes[1], undoWindow: 0.2)
-        try await waitUntil { model.undoableDeletion == nil }
+        // Await the window's own task: polling a wall clock timed out on CI
+        // when other main-actor tests starved the timer (PR #16).
+        await model.undoTimer?.value
+        #expect(model.undoableDeletion == nil, "the undo offer expires with the window")
         #expect(try environment.book.recipes.notes(created.id, includeDeleted: true).count == 2, "soft delete keeps the row")
         #expect(try environment.book.recipes.detail(created.id)?.recipe.currentVersion == 1, "notes never version")
     }

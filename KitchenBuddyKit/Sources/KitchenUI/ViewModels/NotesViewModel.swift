@@ -15,7 +15,9 @@ public final class NotesViewModel {
     /// The most recently deleted note, offered for Undo until dismissed.
     public private(set) var undoableDeletion: RecipeNote?
     public var error: String?
-    private var undoTimer: Task<Void, Never>?
+    /// Clears `undoableDeletion` when the window closes. Internal so tests
+    /// can await it instead of polling a wall clock the main actor may starve.
+    private(set) var undoTimer: Task<Void, Never>?
 
     public init(environment: AppEnvironment, recipeID: Recipe.ID) {
         self.environment = environment

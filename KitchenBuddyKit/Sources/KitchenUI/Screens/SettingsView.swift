@@ -46,6 +46,10 @@ public struct SettingsView: View {
             }
 
             Section("Library") {
+                Button("Import from File…") { model.environment.router.present(.importFile(nil)) }
+                    .accessibilityIdentifier("importFromFile")
+                Button("Export Full Backup…") { model.environment.router.present(.share(.all, backup: true)) }
+                    .accessibilityIdentifier("exportFullBackup")
                 Button("Rebuild Search Index") { Task { await model.rebuildSearchIndex() } }
                     .disabled(model.isBusy)
             }

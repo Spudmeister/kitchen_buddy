@@ -13,6 +13,7 @@ public struct RecipeDetailView: View {
     @State private var model: RecipeDetailViewModel
     private let environment: AppEnvironment
     @State private var confirmRestore = false
+    @State private var isSharePresented = false
 
     public init(environment: AppEnvironment, recipeID: Recipe.ID, versionNumber: Int? = nil) {
         self.environment = environment
@@ -28,6 +29,14 @@ public struct RecipeDetailView: View {
             .onChange(of: environment.router.presented) { if $0 != nil && $1 == nil { model.load() } }
             .sensoryFeedback(.success, trigger: model.ratingFeedbackTrigger)
             .modifier(RestoreDialog(model: model, environment: environment, isPresented: $confirmRestore))
+            .sheet(isPresented: $isSharePresented) {
+                if let detail = model.detail {
+                    ShareView(environment: environment, scope: .recipe(detail.id), backup: false,
+                              pdfInput: PDFRenderer.Input(detail: detail, ingredients: model.displayedIngredients, servings: model.servings,
+                                                          coverImageURL: detail.coverPhoto.map { environment.book.photos.url(for: $0) }))
+                }
+            }
+            .onChange(of: environment.detailShareRequest) { if environment.detailShareRequest == model.recipeID { isSharePresented = true; environment.detailShareRequest = nil } }
             .alert("Recipe", isPresented: Binding(get: { model.error != nil }, set: { if !$0 { model.error = nil } })) {
                 Button("OK", role: .cancel) {}
             } message: {
@@ -377,6 +386,8 @@ private struct DetailActions: View {
         Button { environment.router.present(.moveToFolder(recipeID)) } label: { Label("Move to Folder…", systemImage: "folder") }
         Button { environment.router.present(.tagPicker(recipeID)) } label: { Label("Tags…", systemImage: "tag") }
         NavigationLink(value: Route.photos(recipeID)) { Label("Photos", systemImage: "photo.on.rectangle") }
+        Button { environment.detailShareRequest = recipeID } label: { Label("Share…", systemImage: "square.and.arrow.up") }
+            .accessibilityIdentifier("shareRecipe")
         NavigationLink(value: Route.history(recipeID)) { Label("Version History", systemImage: "clock.arrow.circlepath") }
         Button { model.archive() } label: { Label("Archive", systemImage: "archivebox") }
             .accessibilityIdentifier("archiveButton")

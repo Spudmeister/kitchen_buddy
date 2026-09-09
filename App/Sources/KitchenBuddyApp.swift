@@ -54,6 +54,18 @@ struct KitchenBuddyApp: App {
             if let importURL = Self.argumentValue("--open-import", in: arguments).flatMap(URL.init(string:)) {
                 environment.router.present(.importURL(importURL))
             }
+            if arguments.contains("--open-import-file") {
+                // Export the current book to a temp file and open it for import
+                // (screenshots + the import-review UI test, no Files picker).
+                if let data = try? environment.book.exporter.exportData(.share(.all, includePhotos: false)) {
+                    let url = FileManager.default.temporaryDirectory.appendingPathComponent("Demo Export.kbrecipes")
+                    try? data.write(to: url)
+                    environment.router.present(.importFile(url))
+                }
+            }
+            if arguments.contains("--open-share") {
+                environment.router.present(.share(.all, backup: true))
+            }
             environment.initialSearchText = Self.argumentValue("--search", in: arguments)
             let units = Self.argumentValue("--units", in: arguments).flatMap(UnitPreference.init(rawValue:))
             let servings = Self.argumentValue("--default-servings", in: arguments).flatMap(Int.init)

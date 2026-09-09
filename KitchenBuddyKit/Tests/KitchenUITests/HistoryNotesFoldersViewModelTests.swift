@@ -120,7 +120,7 @@ import KitchenTesting
         #expect(try environment.book.folders.folder(other.id)?.deletedAt != nil, "but the row remains")
     }
 
-    @Test @MainActor func lineageAndHistoryScreensBuild() throws {
+    @Test @MainActor func lineageAndHistoryScreensBuild() async throws {
         let environment = try Self.environment()
         let created = try environment.book.recipes.create(Self.draft("Root"))
         let copy = try environment.book.recipes.duplicate(created.id)
@@ -133,5 +133,18 @@ import KitchenTesting
         _ = NoteEditorView(environment: environment, recipeID: copy.id, noteID: nil).body
         _ = FoldersView(environment: environment).body
         _ = RatingHistorySheet(environment: environment, recipeID: copy.id).body
+
+        let gallery = PhotoGalleryViewModel(environment: environment, recipeID: copy.id)
+        gallery.load()
+        #expect(gallery.photos.isEmpty)
+        await gallery.add(ImageGen.image(width: 300, height: 200))
+        await gallery.add(Data("bad".utf8))
+        #expect(gallery.photos.count == 1 && gallery.error != nil)
+        gallery.setCaption(gallery.photos[0], "Golden")
+        #expect(gallery.photos[0].caption == "Golden")
+        gallery.remove(gallery.photos[0])
+        #expect(gallery.photos.isEmpty)
+        _ = PhotoGalleryView(environment: environment, recipeID: copy.id).body
+        _ = PhotoViewerView(environment: environment, recipeID: copy.id, index: 0).body
     }
 }

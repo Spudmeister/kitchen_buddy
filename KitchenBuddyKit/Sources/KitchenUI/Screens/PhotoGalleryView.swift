@@ -18,7 +18,7 @@ public struct PhotoGalleryView: View {
         _model = State(initialValue: PhotoGalleryViewModel(environment: environment, recipeID: recipeID))
     }
 
-    private let columns = [GridItem(.adaptive(minimum: 110), spacing: 4)]
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 4), count: 3)
 
     public var body: some View {
         ScrollView {
@@ -27,9 +27,10 @@ public struct PhotoGalleryView: View {
                     Button {
                         environment.router.present(.photoViewer(model.recipeID, index: index))
                     } label: {
-                        PhotoImage(url: model.thumbnailURL(for: photo), maxPixelSize: 400)
-                            .frame(minHeight: 110)
-                            .aspectRatio(1, contentMode: .fill)
+                        // Square cell: the clear base fixes the size, the image fills it.
+                        Color.clear
+                            .aspectRatio(1, contentMode: .fit)
+                            .overlay { PhotoImage(url: model.thumbnailURL(for: photo), maxPixelSize: 400) }
                             .clipped()
                             .overlay(alignment: .topLeading) {
                                 if index == 0 {

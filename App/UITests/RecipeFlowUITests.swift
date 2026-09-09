@@ -252,6 +252,33 @@ final class RecipeFlowUITests: XCTestCase {
         return app.buttons[identifier].isHittable
     }
 
+    /// Requirements 11.3–11.5: gallery, cover change, viewer paging, soft removal.
+    func testPhotoGalleryCoverAndViewer() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--uitest-reset", "--seed", "demo", "--seed-photos", "--open-recipe", "BBQ Ribs", "--open", "photos"]
+        app.launch()
+        XCTAssertTrue(app.staticTexts["Photos"].waitForExistence(timeout: 10))
+        let cover = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Photo 1, cover'")).firstMatch
+        XCTAssertTrue(cover.waitForExistence(timeout: 5), "three seeded photos, first is the cover")
+        let second = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Photo 2'")).firstMatch
+        XCTAssertTrue(second.exists)
+        second.press(forDuration: 1.0)
+        app.buttons["Set as Cover"].tap()
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Photo 1, cover'")).firstMatch.waitForExistence(timeout: 5))
+
+        app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Photo 1'")).firstMatch.tap()
+        XCTAssertTrue(app.buttons["closeViewer"].waitForExistence(timeout: 5), "viewer opened")
+        app.swipeLeft()
+        app.buttons["closeViewer"].tap()
+
+        let third = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Photo 3'")).firstMatch
+        XCTAssertTrue(third.waitForExistence(timeout: 5))
+        third.press(forDuration: 1.0)
+        app.buttons["Remove"].tap()
+        app.buttons["Remove Photo"].tap()
+        XCTAssertFalse(app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Photo 3'")).firstMatch.waitForExistence(timeout: 2), "removed photo leaves the grid")
+    }
+
     /// Requirement 17.5: a damaged database is renamed aside, the newest
     /// verified snapshot restored, and a non-dismissable notice shown.
     func testCorruptDatabaseShowsRecoveryNoticeAndRestores() {

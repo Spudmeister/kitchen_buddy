@@ -87,12 +87,13 @@ Order matters: 4.0–4.3 first, so the next TestFlight build has no dead Setting
 
 ## M6 — Photos
 
-- [ ] 6.1 `PhotoStore`: ingest (downsample, JPEG, thumbnail, EXIF), file layout, soft remove, trash purge — _Req 11.1, 11.2, 11.4_
-- [ ] 6.2 `PhotosPicker` + camera wrapper; Add Photo from Detail and Editor — _Req 11.1_
-- [ ] 6.3 Photo header, cover thumbnails in Library, gallery with Set as Cover / caption — _Req 11.3_
-- [ ] 6.4 Full-screen viewer with paging and pinch zoom — _Req 11.5_
-- [ ] 6.5 P26; 50-photo memory test
-- [ ] 6.6 Control walk (Add Photo entry points, gallery actions, viewer)
+- [x] 6.1 `PhotoStore`: ingest (downsample, JPEG, thumbnail, EXIF), file layout, soft remove, trash purge — _Req 11.1, 11.2, 11.4_
+- [x] 6.2 `PhotosPicker` + camera wrapper; Add Photo from Detail and Editor — _Req 11.1_ (Detail overflow → Photos; Editor › Organize › Photos for existing recipes; a new recipe gets photos after its first save)
+- [x] 6.3 Photo header, cover thumbnails in Library, gallery with Set as Cover / caption — _Req 11.3_
+- [x] 6.4 Full-screen viewer with paging and pinch zoom — _Req 11.5_
+- [x] 6.5 P26; 50-photo memory test
+- [x] 6.6 Control walk (Add Photo entry points, gallery actions, viewer)
+- **Notes (2026-09-08):** ingest and display go through ImageIO thumbnails so the package builds on macOS and memory stays bounded (50 × 3000×2000 ingests grew resident memory ~225 MB in the test); files are `Photos/<id>.jpg` + `<id>-thumb.jpg`, removal moves them to `Photos/Trash/` and `purgeTrash` (30 days) is the only path that deletes photo bytes; `--seed-photos` attaches generated images for screenshots and the gallery XCUITest.
 - **What to test:** add HEIC photos from camera and library, set cover, zoom, check Library thumbnails and storage growth.
 
 ## M7 — URL import + Share Extension

@@ -40,6 +40,16 @@ read the old files (P23).
 - v1 (`"1.0"` / `"1.0.0"` envelopes, arrays, the fixture dictionary) is
   lifted to v2 with fresh ids and one version per recipe.
 
+## 2.1 (M11, 2026-09-09, ADR-009)
+
+- Recipes gain `servingReports[]` (id, servings or null for "back to the
+  recipe's", note, reportedAt) and `foodOverrides[]` (id, ingredientKey,
+  foodId — null for "don't count", "" for "back to automatic" — createdAt),
+  both oldest first and only in the backup preset (they are personal).
+- The reader defaults both arrays to empty, so 2.0 files decode; any
+  `"2."` version is accepted. An override naming a food this build's table
+  doesn't know imports as "automatic" rather than miscounting.
+
 ## Consequences
 
 - Committed sample files for every format version decode forever (iron rule 5).

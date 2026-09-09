@@ -95,6 +95,8 @@ public final class Exporter: Sendable {
             return nil
         } : []
         let notes = options.includeHistory ? try RecipeSQL.notes(id, includeDeleted: true, db) : []
+        let reports = options.includeHistory ? try RecipeSQL.servingReports(id, db) : []
+        let overrides = options.includeHistory ? try RecipeSQL.foodOverrides(id, db) : []
         let photoRows = try RecipeSQL.photos(id, db)
         let photoRecords = try photoRows.map { photo -> ExportDocumentV2.PhotoRecord in
             let data: Data? = options.includePhotos ? (try? Data(contentsOf: photos.url(for: photo))) : nil
@@ -111,6 +113,8 @@ public final class Exporter: Sendable {
             ratings: ratings.map(ExportDocumentV2.RatingRecord.init),
             ratingClears: clears,
             notes: notes.map(ExportDocumentV2.NoteRecord.init),
-            photos: photoRecords)
+            photos: photoRecords,
+            servingReports: reports.map(ExportDocumentV2.ServingReportRecord.init),
+            foodOverrides: overrides.map(ExportDocumentV2.FoodOverrideRecord.init))
     }
 }

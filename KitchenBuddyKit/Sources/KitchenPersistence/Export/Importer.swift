@@ -181,6 +181,19 @@ public final class Importer: Sendable {
                                              Timestamp.normalize(note.createdAt).sql, Timestamp.normalize(note.updatedAt).sql,
                                              note.deletedAt.map(Timestamp.normalize).sql])
                     }
+                    for report in record.servingReports {
+                        guard report.servings.map({ (1...999).contains($0) }) ?? true else { continue }
+                        try db.execute(sql: "INSERT INTO serving_reports (id, recipe_id, servings, note, reported_at) VALUES (?, ?, ?, ?, ?)",
+                                       arguments: [policy == .copyAsNew ? ServingReport.ID().rawValue : report.id.rawValue, newID.rawValue,
+                                                   report.servings, report.note, Timestamp.normalize(report.reportedAt).sql])
+                    }
+                    for override in record.foodOverrides {
+                        // Unknown food ids (a newer table) import as "automatic" so nothing is silently miscounted.
+                        let foodID = override.foodId.map { FoodTable.food(id: $0) == nil && $0 != FoodOverride.automaticMarker ? FoodOverride.automaticMarker : $0 }
+                        try db.execute(sql: "INSERT INTO food_overrides (id, recipe_id, ingredient_key, food_id, created_at) VALUES (?, ?, ?, ?, ?)",
+                                       arguments: [policy == .copyAsNew ? FoodOverride.ID().rawValue : override.id.rawValue, newID.rawValue,
+                                                   override.ingredientKey, foodID, Timestamp.normalize(override.createdAt).sql])
+                    }
                     for photo in record.photos.sorted(by: { $0.sortOrder < $1.sortOrder }) where photo.removedAt == nil {
                         guard let data = photo.data else { continue }
                         let photoID = policy == .copyAsNew ? Photo.ID() : photo.id

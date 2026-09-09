@@ -61,6 +61,7 @@ each milestone ends with a "What to test" note for the TestFlight build.
 Order matters: 4.0–4.3 first, so the next TestFlight build has no dead Settings row.
 
 - [ ] 4.0 Editor bug: press-and-hold reorder of a step scrolls the form to the top (reported on build 43). Iterate rows by stable id, reorder only in edit mode via handles, resign focus when edit mode starts; XCUITest drags step 3 above step 1 and asserts order + scroll position — _Req 1.2_
+- [ ] 4.0.1 Clear a rating (reported on build 43: no way back to unrated). Append-only design: migration `v2-rating-clears` adds a `rating_clears` table (delete-guarded); current rating = latest event across ratings and clears; `RecipeStoring.clearRating`; tapping the selected star again clears, VoiceOver "Clear rating" action; P17 extended (clears are events in the chronological history, never removals); `MigrationFixtureTests` gains the v1 → v2 assertion — _Req 15.1–15.3_
 - [ ] 4.1 Servings stepper with live scaling, factor label, reset, long-press numeric entry; **consumes Settings › default servings** (18.2) — _Req 8.1–8.5_
 - [ ] 4.2 Original / US / Metric control on Detail with best-unit display; **consumes Settings › Units** (9.3); per-screen change does not write the preference — _Req 9.3, 9.4_
 - [ ] 4.3 Dietary suggestions footer in the editor with accept flow; **consumes Settings › Suggest dietary tags** — _Req 5.3, 5.4_
@@ -68,7 +69,7 @@ Order matters: 4.0–4.3 first, so the next TestFlight build has no dead Setting
 - [ ] 4.5 Rating and time search tokens; count footer — _Req 6.2_
 - [ ] 4.6 P9, P11, P13, P14 at view-model level; `QuantityFormatter` table snapshot test
 - [ ] 4.7 Control walk: every Settings row, Library token, Detail control, and Editor control does something in this build
-- **What to test:** set Units to Metric and a default of 6 servings in Settings, open any recipe: it opens at 6 servings in metric. Scale to 1, 3, 7 and check fractions look like a cookbook. Add "butter" to a recipe with dietary suggestions on and see "vegetarian" offered, off and see nothing. Try `#vegetarian` and `in:Desserts`. Reorder steps by drag.
+- **What to test:** set Units to Metric and a default of 6 servings in Settings, open any recipe: it opens at 6 servings in metric. Scale to 1, 3, 7 and check fractions look like a cookbook. Add "butter" to a recipe with dietary suggestions on and see "vegetarian" offered, off and see nothing. Try `#vegetarian` and `in:Desserts`. Reorder steps by drag. Rate a recipe, tap the same star to clear it, and check the Library row drops the star.
 
 ## M5 — Versions, lineage, notes, ratings, folders → tag `v0.2.0`
 

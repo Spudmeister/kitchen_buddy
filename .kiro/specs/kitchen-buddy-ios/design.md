@@ -44,7 +44,9 @@ minimal, types Sendable-clean.
   at the store boundary so returned values equal fetched ones (ADR-007).
 - `RecipeVersion` is immutable; `Recipe` points at `currentVersion`.
 - `RecipeNote {id, recipeID, body, cookedOn, pinned, versionAtCreation, createdAt, updatedAt, deletedAt}`.
-- `Rating` rows are append-only; current = latest `ratedAt`.
+- `Rating` rows are append-only; clearing a rating appends a `rating_clears`
+  event (schema v2, M4); current = the latest event across both tables, or
+  none when that event is a clear.
 - Display pipeline: `Scaler.scale` (exact) → `UnitConverter.convert(to:)` →
   `PracticalRounding.round` → `QuantityFormatter`.
 

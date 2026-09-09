@@ -98,12 +98,13 @@ Order matters: 4.0–4.3 first, so the next TestFlight build has no dead Setting
 
 ## M7 — URL import + Share Extension
 
-- [ ] 7.1 `SchemaOrgExtractor` (JSON-LD incl. `@graph`, arrays, `HowToSection`; microdata fallback), ISO-8601 durations, yield parsing — _Req 12.1, 12.2_
-- [ ] 7.2 `IngredientNormalizer` (unit aliases, fractions, category keywords) and multi-line paste splitter — _Req 12.2, 1.3_
-- [ ] 7.3 Import-from-URL sheet (`PasteButton`, progress, failure states, manual-entry fallback); Editor review mode; **adds "Import from URL" to the Library `+` menu here** — _Req 12.3, 12.4_
-- [ ] 7.4 Share Extension queue drain (`InboxWatcher`), `kitchenbuddy://import?url=` — _Req 12.5, 19.4_
-- [ ] 7.5 P31 over hand-written fixtures (JSON-LD, `@graph`, microdata); `scripts/fetch-url-fixtures.sh` for live checks
-- [ ] 7.6 Control walk (Share Extension, `+` menu, URL scheme)
+- [x] 7.1 `SchemaOrgExtractor` (JSON-LD incl. `@graph`, arrays, `HowToSection`; microdata fallback), ISO-8601 durations, yield parsing — _Req 12.1, 12.2_
+- [x] 7.2 `IngredientNormalizer` (unit aliases, fractions, category keywords) and multi-line paste splitter — _Req 12.2, 1.3_
+- [x] 7.3 Import-from-URL sheet (`PasteButton`, progress, failure states, manual-entry fallback); Editor review mode; **adds "Import from URL" to the Library `+` menu here** — _Req 12.3, 12.4_
+- [x] 7.4 Share Extension queue drain (`ShareInbox`, drained on becoming active), `kitchenbuddy://import?url=` and `kitchenbuddy://recipe/<id>` — _Req 12.5, 19.4_
+- [x] 7.5 P31 over hand-written fixtures (JSON-LD, `@graph`, microdata); `scripts/fetch-url-fixtures.sh` for live checks
+- [x] 7.6 Control walk (Share Extension, `+` menu, URL scheme)
+- **Notes (2026-09-08):** extraction is Foundation-only (regex tag scanning, JSONSerialization); JSON-LD wins, microdata is the fallback; ingredient categories pick the longest keyword match; `RecipeURLImporter` takes an injectable fetcher — the app's `--stub-import` answers with an embedded page so the XCUITest runs without network; the Share Extension itself is unchanged from M0 and needs a device check (share a page from Safari, then foreground the app).
 - **What to test:** share five recipe pages from Safari (a big site, a paywall, a blog, a non-recipe page) and report what each did; import one by pasting.
 
 ## M8 — Export / import / PDF → tag `v0.3.0`

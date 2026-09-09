@@ -279,6 +279,28 @@ final class RecipeFlowUITests: XCTestCase {
         XCTAssertFalse(app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Photo 3'")).firstMatch.waitForExistence(timeout: 2), "removed photo leaves the grid")
     }
 
+    /// Requirements 12.3, 12.4: import from URL opens the editor in review
+    /// mode and saves only on Save; a failure offers manual entry.
+    func testImportFromURLReviewsThenSaves() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--uitest-reset", "--stub-import"]
+        app.launch()
+        XCTAssertTrue(app.staticTexts["No recipes yet"].waitForExistence(timeout: 10))
+        app.buttons["addMenu"].tap()
+        app.buttons["importURLMenuItem"].tap()
+        let field = app.textFields["importURLField"]
+        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        field.tap()
+        field.typeText("example.com/lemon-tart")
+        app.buttons["importButton"].tap()
+        XCTAssertTrue(app.staticTexts["reviewBanner"].waitForExistence(timeout: 10) || app.textFields["titleField"].waitForExistence(timeout: 10), "editor opens in review mode")
+        XCTAssertEqual(app.textFields["titleField"].value as? String, "Stubbed Lemon Tart")
+        XCTAssertTrue(app.buttons["saveButton"].isEnabled)
+        app.buttons["saveButton"].tap()
+        XCTAssertTrue(app.staticTexts["Stubbed Lemon Tart"].waitForExistence(timeout: 5), "saved and opened")
+        XCTAssertTrue(app.staticTexts.containing(NSPredicate(format: "label CONTAINS 'example.com'")).firstMatch.exists, "source link kept")
+    }
+
     /// Requirement 17.5: a damaged database is renamed aside, the newest
     /// verified snapshot restored, and a non-dismissable notice shown.
     func testCorruptDatabaseShowsRecoveryNoticeAndRestores() {

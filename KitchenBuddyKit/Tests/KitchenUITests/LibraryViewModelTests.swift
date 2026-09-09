@@ -57,45 +57,53 @@ import KitchenTesting
         #expect(model.suggestedTokens.contains(.maximumMinutes(60)))
 
         model.tokens = [.minimumRating(4)]
-        model.start()
-        defer { model.stop() }
-        try await waitUntil { model.hasLoaded }
+        model.refreshResults()
         #expect(model.results.map(\.id) == [pie.id])
         model.tokens = []
         model.searchText = "#soup"
-        model.start()
-        try await waitUntil { model.results.map(\.id) == [soup.id] }
+        model.refreshResults()
+        #expect(model.results.map(\.id) == [soup.id])
     }
 
-    @Test @MainActor func observationDeliversResultsAndEmptyStates() async throws {
+    @Test @MainActor func startPaintsAtOnceAndEmptyStatesFollow() throws {
         let environment = try Self.environment()
         let model = LibraryViewModel(environment: environment)
         model.start()
         defer { model.stop() }
-        try await waitUntil { model.hasLoaded }
-        #expect(model.emptyState == .noRecipes)
+        #expect(model.hasLoaded && model.emptyState == .noRecipes, "first results are synchronous")
 
         let toast = try environment.book.recipes.create(Self.draft("Toast", tags: ["Breakfast"]))
-        try await waitUntil { model.results.map(\.id) == [toast.id] }
-        #expect(model.emptyState == nil)
+        model.refreshResults()
+        #expect(model.results.map(\.id) == [toast.id] && model.emptyState == nil)
 
         model.searchText = "zzz"
         model.start()
-        try await waitUntil { model.hasLoaded && model.results.isEmpty }
-        #expect(model.emptyState == .noMatches)
+        #expect(model.results.isEmpty && model.emptyState == .noMatches)
 
         model.clearFilters()
         model.start()
-        try await waitUntil { model.results.count == 1 }
+        #expect(model.results.count == 1)
         model.archive(toast.id)
-        try await waitUntil { model.results.isEmpty }
-        #expect(model.emptyState == .noRecipes, "an archived-only book reads as empty")
+        model.refreshResults()
+        #expect(model.results.isEmpty && model.emptyState == .noRecipes, "an archived-only book reads as empty")
         model.unarchive(toast.id)
-        try await waitUntil { model.results.count == 1 }
+        model.refreshResults()
+        #expect(model.results.count == 1)
         #expect(model.suggestedTokens.contains(.tag("Breakfast")))
     }
 
-    @Test @MainActor func sectionsGroupByTopLevelFolder() async throws {
+    /// The one test that waits on the live observation: a write from
+    /// outside the model reaches its results without a refresh call.
+    @Test @MainActor func observationDeliversExternalWrites() async throws {
+        let environment = try Self.environment()
+        let model = LibraryViewModel(environment: environment)
+        model.start()
+        defer { model.stop() }
+        let toast = try environment.book.recipes.create(Self.draft("Toast"))
+        try await waitUntil(timeout: 120) { model.results.map(\.id) == [toast.id] }
+    }
+
+    @Test @MainActor func sectionsGroupByTopLevelFolder() throws {
         let environment = try Self.environment()
         try environment.updatePreferences { $0.groupLibraryByFolder = true }
         let baking = try environment.book.folders.create(name: "Baking", parentID: nil)
@@ -108,7 +116,7 @@ import KitchenTesting
         let model = LibraryViewModel(environment: environment)
         model.start()
         defer { model.stop() }
-        try await waitUntil { model.results.count == 3 }
+        #expect(model.results.count == 3)
         let sections = model.sections
         #expect(sections.map(\.title) == ["Baking", "Soups", "Unfiled"])
         #expect(sections[0].recipes.map(\.id) == [loaf.id])

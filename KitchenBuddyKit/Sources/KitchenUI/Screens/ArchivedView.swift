@@ -18,7 +18,9 @@ public struct ArchivedView: View {
     public var body: some View {
         List {
             ForEach(recipes) { recipe in
-                NavigationLink(value: Route.recipe(recipe.id)) { RecipeRow(recipe: recipe) }
+                NavigationLink(value: Route.recipe(recipe.id)) {
+                    RecipeRow(recipe: recipe, thumbnailURL: recipe.thumbnailPhotoID.map { environment.book.photos.thumbnailURL(forPhotoID: $0) })
+                }
                     .swipeActions(edge: .trailing) {
                         Button { unarchive(recipe.id) } label: { Label("Unarchive", systemImage: "tray.and.arrow.up") }
                             .tint(.green)

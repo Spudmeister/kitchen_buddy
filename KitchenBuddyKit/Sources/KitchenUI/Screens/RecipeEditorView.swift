@@ -15,6 +15,7 @@ public struct RecipeEditorView: View {
     @State private var isTagPickerPresented = false
     @State private var isFolderPickerPresented = false
     @State private var isReordering = false
+    @State private var isPhotosPresented = false
 
     public init(environment: AppEnvironment, model: RecipeEditorViewModel, onSaved: @escaping (Recipe.ID) -> Void = { _ in }) {
         self.environment = environment
@@ -95,6 +96,14 @@ public struct RecipeEditorView: View {
                         }
                     }
                     .tint(.primary)
+                    if let id = model.editingID {
+                        Button { isPhotosPresented = true } label: {
+                            LabeledContent("Photos") {
+                                Text("\((try? environment.book.photos.photos(for: id).count) ?? 0)").foregroundStyle(.secondary)
+                            }
+                        }
+                        .tint(.primary)
+                    }
                 } header: {
                     Text("Organize")
                 } footer: {
@@ -162,6 +171,14 @@ public struct RecipeEditorView: View {
             }
             .sheet(isPresented: $isFolderPickerPresented) {
                 FolderPickerView(environment: environment, selection: $model.folderID)
+            }
+            .sheet(isPresented: $isPhotosPresented) {
+                if let id = model.editingID {
+                    NavigationStack {
+                        PhotoGalleryView(environment: environment, recipeID: id)
+                            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Done") { isPhotosPresented = false } } }
+                    }
+                }
             }
             .alert("Couldn't save", isPresented: Binding(get: { model.error != nil }, set: { if !$0 { model.error = nil } })) {
                 Button("OK", role: .cancel) {}

@@ -114,12 +114,14 @@ enum RecipeSQL {
     static func photos(_ recipeID: Recipe.ID, _ db: Database) throws -> [Photo] {
         try Row.fetchAll(db, sql: """
             SELECT * FROM photos WHERE recipe_id = ? AND removed_at IS NULL ORDER BY sort_order, created_at
-            """, arguments: [recipeID.rawValue]).map { row in
-            Photo(id: row.id("id"), recipeID: row.id("recipe_id"), fileName: row["file_name"],
-                  width: row["width"], height: row["height"], takenAt: row.optionalTimestamp("taken_at"),
-                  caption: row["caption"], sortOrder: row["sort_order"],
-                  createdAt: row.timestamp("created_at"), removedAt: row.optionalTimestamp("removed_at"))
-        }
+            """, arguments: [recipeID.rawValue]).map(photo(from:))
+    }
+
+    static func photo(from row: Row) -> Photo {
+        Photo(id: row.id("id"), recipeID: row.id("recipe_id"), fileName: row["file_name"],
+              width: row["width"], height: row["height"], takenAt: row.optionalTimestamp("taken_at"),
+              caption: row["caption"], sortOrder: row["sort_order"],
+              createdAt: row.timestamp("created_at"), removedAt: row.optionalTimestamp("removed_at"))
     }
 
     /// Pinned first, then newest first.

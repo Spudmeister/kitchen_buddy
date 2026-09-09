@@ -15,6 +15,7 @@ public final class RecipeBook: Sendable {
     public let folders: FolderStore
     public let tags: TagStore
     public let preferences: PreferencesStore
+    public let photos: PhotoStore
     public let backups: BackupManager
     public let launchReport: LaunchReport
     /// False for in-memory books, which skip the pre-import snapshot.
@@ -35,6 +36,7 @@ public final class RecipeBook: Sendable {
         folders = FolderStore(handle: handle, clock: clock)
         tags = TagStore(handle: handle, clock: clock)
         preferences = PreferencesStore(handle: handle)
+        photos = PhotoStore(layout: layout, handle: handle, clock: clock)
         try Self.rebuildIndexIfStale(handle.writer)
         // After housekeeping, so its change baseline excludes the rebuild.
         backups = BackupManager(layout: layout, handle: handle, clock: clock)

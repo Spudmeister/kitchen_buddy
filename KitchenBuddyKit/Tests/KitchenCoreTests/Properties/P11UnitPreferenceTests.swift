@@ -19,7 +19,10 @@ import KitchenTesting
             for (original, shown) in zip(ingredients, displayed) {
                 if let unit = original.unit, unit.isConvertible, original.quantity != nil {
                     #expect(shown.unit?.system == preference.system, "seed \(seed): \(original) → \(shown)")
-                    #expect(shown.unit?.category == unit.category, "seed \(seed)")
+                    let crossesByDensity = IngredientDensity.gramsPerCup(for: original.name) != nil
+                        && ((unit.category == .volume && unit.system == .us && preference == .metric)
+                            || (unit.category == .weight && unit.system == .metric && preference == .us))
+                    #expect(shown.unit?.category == (crossesByDensity ? (unit.category == .volume ? .weight : .volume) : unit.category), "seed \(seed)")
                 } else {
                     #expect(shown.unit == original.unit, "seed \(seed): \(original) → \(shown)")
                 }

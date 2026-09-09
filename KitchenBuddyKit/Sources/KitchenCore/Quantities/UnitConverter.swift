@@ -78,13 +78,38 @@ public enum UnitConverter {
         return (converted, target)
     }
 
+    /// Converts an ingredient to `system`. Dry and semi-solid ingredients
+    /// with a known density cross between volume and weight (a US cup of
+    /// flour → grams; grams of flour → US cups); everything else converts
+    /// within its category.
     public static func convert(_ ingredient: Ingredient, to system: UnitSystem) -> Ingredient {
         guard let quantity = ingredient.quantity, let unit = ingredient.unit else { return ingredient }
-        let result = convert(quantity, unit, to: system)
+        let result = convertByDensity(quantity, unit, name: ingredient.name, to: system) ?? convert(quantity, unit, to: system)
         var copy = ingredient
         copy.quantity = result.quantity
         copy.unit = result.unit
         return copy
+    }
+
+    /// US volume → metric weight, or metric weight → US volume, when the
+    /// ingredient has a density. Nil otherwise (caller falls back).
+    static func convertByDensity(_ quantity: Fraction, _ unit: IngredientUnit, name: String,
+                                 to system: UnitSystem) -> (quantity: Fraction, unit: IngredientUnit)? {
+        guard let density = IngredientDensity.gramsPerMilliliter(for: name), let factor = baseFactor(unit) else { return nil }
+        switch (unit.category, unit.system, system) {
+        case (.volume, .us, .metric):
+            let grams = quantity.doubleValue * factor * density
+            guard let target = bestUnit(forBaseQuantity: grams, category: .weight, system: .metric),
+                  let targetFactor = baseFactor(target) else { return nil }
+            return (Fraction.rationalizing(grams / targetFactor, maxDenominator: maxDenominator), target)
+        case (.weight, .metric, .us):
+            let milliliters = quantity.doubleValue * factor / density
+            guard let target = bestUnit(forBaseQuantity: milliliters, category: .volume, system: .us),
+                  let targetFactor = baseFactor(target) else { return nil }
+            return (Fraction.rationalizing(milliliters / targetFactor, maxDenominator: maxDenominator), target)
+        default:
+            return nil
+        }
     }
 
     /// Applies the unit preference: as written for `.original`, otherwise

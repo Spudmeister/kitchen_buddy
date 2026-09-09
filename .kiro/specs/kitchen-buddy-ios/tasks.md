@@ -82,7 +82,7 @@ Order matters: 4.0–4.3 first, so the next TestFlight build has no dead Setting
 - [x] 5.6 P2–P4, P17–P20, P25 end-to-end; UI tests for restore and folder cycle rejection
 - [x] 5.7 Control walk (every new menu item, sheet, and Settings row reads or writes something)
 - **Notes (2026-09-08):** Version History summarises each version against its predecessor; restore is offered from the read-only version view with a confirmation and lands back on the recipe; rating haptics use `sensoryFeedback`; long-press the stars for history; Folders is reachable from the Library overflow and every folder screen; the move sheet never offers a folder's own subtree, and the store's cycle rejection is still surfaced if it fires.
-- [ ] 5.8 Release: tag `v0.2.0`
+- [x] 5.8 Release: tag `v0.2.0` (2026-09-08, build 51, PR #10)
 - **What to test:** edit a recipe three times, restore v1, confirm v4 appears; duplicate and follow lineage; nest folders three deep and try to move a folder into its own child.
 
 ## M6 — Photos
@@ -116,7 +116,7 @@ Order matters: 4.0–4.3 first, so the next TestFlight build has no dead Setting
 - [x] 8.5 P21–P24; PDF golden test (page count, text extraction)
 - [x] 8.6 Control walk (Settings import/export rows, Share screen, `.kbrecipes` Open In)
 - **Notes (2026-09-08):** `ImportDocument.read` detects v2 vs v1 and lifts v1 to v2 records; import keeps ids under skip-existing (so a backup restores byte-for-byte rows) and remaps everything under copy-as-new; a parent absent from both the book and the file is cleared; photo files written for a rolled-back import are removed; the PDF is SwiftUI pages drawn into one CGContext, paginated by an estimated line budget; `--open-import-file` / `--open-share` drive the screens without the Files picker. AirDrop/Open In needs a device check.
-- [ ] 8.7 Release: tag `v0.3.0`
+- [x] 8.7 Release: tag `v0.3.0` (2026-09-08, build 59, PR #13)
 - **What to test:** AirDrop a `.kbrecipes` between two phones, print a PDF from Files, export a full backup, delete-and-reinstall (TestFlight only), import the backup.
 
 ## M9 — Polish, accessibility, Spotlight, beta → tag `v0.4.0`
@@ -128,5 +128,5 @@ Order matters: 4.0–4.3 first, so the next TestFlight build has no dead Setting
 - [x] 9.5 App icon, launch screen, TestFlight "What to Test" template (`docs/TESTFLIGHT.md`), feedback link (Settings › Send Feedback, mailto set in the App target), screenshot script states
 - [ ] 9.6 Beta feedback triage (one sub-task per accepted item)
 - [x] 9.7 Control walk of the whole app, at default and accessibility text sizes
-- [ ] 9.8 Release: tag `v0.4.0`
+- [x] 9.8 Release: tag `v0.4.0` (2026-09-08, PR #14)
 - **What to test:** search from the iPhone home screen for a recipe title; VoiceOver for a full create flow; send feedback through the link.

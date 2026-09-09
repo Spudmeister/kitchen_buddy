@@ -1,6 +1,12 @@
 # Roadmap
 
-**Status (2026-09-08):** M0–M2 merged (PRs #5, #6, #7); TestFlight build
+**Status (2026-09-09):** every milestone M0–M9 is merged and tagged;
+**v0.4.0 is the current TestFlight build.** Releases: v0.1.0 (build 43, M3),
+v0.2.0 (51, M5), v0.3.0 (59, M8), v0.4.0 (M9). Open: 9.6 beta feedback
+triage, and the device checks listed under "Human steps". The recipe book
+is feature-complete against the spec; what follows is feedback-driven.
+
+History: M0–M2 merged (PRs #5, #6, #7); TestFlight build
 **0.1.0 (41)** verified on Andrew's phone: iCloud Drive available, daily
 snapshot mirrored and visible in Files. Gate 2.6.1 closed. **M3 merged (PR #8) and tagged v0.1.0**: TestFlight
 build **0.1.0 (43)** is the first usable recipe book — Library, Detail,
@@ -36,11 +42,11 @@ v0.1.0 at M3 (usable recipe book), v0.2.0 at M5, v0.3.0 at M8, v0.4.0 at M9.
 | M2 Data safety | verified snapshots, integrity check + recovery, iCloud mirror, Settings › Backups — **before any build can hold a recipe** | done, build 41 |
 | M3 Library + Detail + Editor | usable recipe book → **v0.1.0** | done, build 43 |
 | M4 Scaling, units, tags, search polish | | done |
-| M5 Versions, lineage, notes, ratings, folders → **v0.2.0** | | done, tag on merge |
-| M6 Photos | | done |
-| M7 URL import + Share Extension | | done |
-| M8 Export / import / PDF → **v0.3.0** | | done, tag on merge |
-| M9 Polish, accessibility, Spotlight, beta → **v0.4.0** | | done except 9.6 triage |
+| M5 Versions, lineage, notes, ratings, folders → **v0.2.0** | | done, build 51 |
+| M6 Photos | | done, build 55 |
+| M7 URL import + Share Extension | | done, build 57 |
+| M8 Export / import / PDF → **v0.3.0** | | done, build 59 |
+| M9 Polish, accessibility, Spotlight, beta → **v0.4.0** | | done, tagged; 9.6 triage open |
 
 ## Human steps remaining (Andrew)
 

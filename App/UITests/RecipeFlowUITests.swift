@@ -15,6 +15,13 @@ final class RecipeFlowUITests: XCTestCase {
         if more.waitForExistence(timeout: 3) { more.tap() }
     }
 
+    private func snap(_ app: XCUIApplication, _ name: String) {
+        let attachment = XCTAttachment(screenshot: app.screenshot())
+        attachment.name = name
+        attachment.lifetime = .keepAlways
+        add(attachment)
+    }
+
     private func tapWhenHittable(_ element: XCUIElement, timeout: TimeInterval = 5) {
         let deadline = Date().addingTimeInterval(timeout)
         while !element.isHittable && Date() < deadline { usleep(200_000) }
@@ -318,7 +325,7 @@ final class RecipeFlowUITests: XCTestCase {
     }
 
     private func scrollToBottom(_ app: XCUIApplication, _ text: String) -> Bool {
-        for _ in 0..<12 where !app.staticTexts[text].exists { app.swipeUp() }
+        for _ in 0..<40 where !app.staticTexts[text].exists { app.swipeUp(velocity: .fast) }
         return app.staticTexts[text].exists
     }
 
@@ -373,6 +380,83 @@ final class RecipeFlowUITests: XCTestCase {
         app.buttons["filtersDone"].tap()
         app.buttons["clearFiltersChip"].tap()
         XCTAssertTrue(app.cells.containing(NSPredicate(format: "label CONTAINS 'BBQ Ribs'")).firstMatch.waitForExistence(timeout: 5))
+    }
+
+    /// Requirements 20.1–20.3, 21.6–21.8: the health badge opens the
+    /// worksheet, a line can be excluded, "servings you get" moves the base,
+    /// and the Library's friendly chip filters.
+    func testHealthWorksheetAndServingsYouGet() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--uitest-reset", "--seed", "demo", "--open-recipe", "Chicken Tacos"]
+        app.launch()
+        XCTAssertTrue(app.staticTexts["Chicken Tacos"].waitForExistence(timeout: 10))
+
+        // Badge → worksheet
+        let section = app.buttons["healthSection"].firstMatch.exists ? app.buttons["healthSection"].firstMatch : app.otherElements["healthSection"].firstMatch
+        XCTAssertTrue(section.waitForExistence(timeout: 5), "diabetes is on by default, so the recipe carries a badge")
+        tapWhenHittable(section)
+        XCTAssertTrue(app.navigationBars["Health worksheet"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["coverageText"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["coverageText"].label.contains("100%"), app.staticTexts["coverageText"].label)
+
+        // Exclude a line → it moves to "Not counted"
+        let firstCounted = app.buttons["countedLine"].firstMatch
+        XCTAssertTrue(firstCounted.waitForExistence(timeout: 5))
+        firstCounted.tap()
+        XCTAssertTrue(app.buttons["foodDontCount"].waitForExistence(timeout: 5))
+        app.buttons["foodDontCount"].tap()
+        XCTAssertTrue(app.staticTexts["coverageText"].waitForExistence(timeout: 5))
+        let deadline = Date().addingTimeInterval(5)
+        while !app.staticTexts["coverageText"].label.hasPrefix("8 of 8") && Date() < deadline { usleep(200_000) }
+        XCTAssertTrue(app.staticTexts["coverageText"].label.hasPrefix("8 of 8"), app.staticTexts["coverageText"].label)
+        // The excluded line sits in a lazy List section below the fold.
+        XCTAssertTrue(scrollToBottom(app, "Not counted"))
+        XCTAssertTrue(app.buttons["uncountedLine"].firstMatch.exists)
+        app.swipeDown(); app.swipeDown(); app.swipeDown()
+
+        // Back to the recipe → servings you get
+        app.navigationBars.buttons.firstMatch.tap()
+        XCTAssertTrue(app.buttons["servingsChip"].waitForExistence(timeout: 5))
+        tapWhenHittable(app.buttons["servingsChip"])
+        XCTAssertTrue(app.staticTexts["servingsYouGet"].waitForExistence(timeout: 5))
+        sleep(1)  // let the sheet finish presenting before hit-testing the stepper
+        // The detail screen's own stepper sits behind the sheet; scope to the sheet's.
+        XCTAssertTrue(app.navigationBars["Servings"].waitForExistence(timeout: 5))
+        let containers = app.otherElements.containing(.navigationBar, identifier: "Servings")
+        let sheetStepper = containers.element(boundBy: max(0, containers.count - 1)).steppers.firstMatch
+        XCTAssertTrue(sheetStepper.waitForExistence(timeout: 5))
+        let increment = sheetStepper.buttons["Increment"].exists ? sheetStepper.buttons["Increment"] : sheetStepper.buttons.element(boundBy: 1)
+        increment.tap()
+        XCTAssertTrue(app.staticTexts["5 servings"].waitForExistence(timeout: 5), app.staticTexts["servingsYouGet"].label)
+        increment.tap()
+        XCTAssertTrue(app.staticTexts["6 servings"].waitForExistence(timeout: 5), app.staticTexts["servingsYouGet"].label)
+        app.buttons["saveServings"].tap()
+        XCTAssertTrue(app.staticTexts["Recipe says 4 · you get 6"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["6 servings"].waitForExistence(timeout: 5), "the scale base follows the report")
+
+        // Library → friendly chip
+        app.navigationBars.buttons.firstMatch.tap()
+        XCTAssertTrue(app.buttons["chip-friendly:diabetes"].waitForExistence(timeout: 5), "one chip per enabled profile")
+        // The chip may sit off the right edge of the row; the Filters sheet has the same switch.
+        app.buttons["filtersChip"].tap()
+        let friendly = app.switches["filter-friendly:diabetes"].firstMatch
+        XCTAssertTrue(friendly.waitForExistence(timeout: 5))
+        // A Form toggle row only flips when the control itself is hit.
+        friendly.coordinate(withNormalizedOffset: CGVector(dx: 0.93, dy: 0.5)).tap()
+        XCTAssertTrue(app.staticTexts.containing(NSPredicate(format: "label CONTAINS 'Filters · 1'")).firstMatch.waitForExistence(timeout: 5) || (friendly.value as? String) == "1")
+        app.buttons["filtersDone"].tap()
+        XCTAssertTrue(app.buttons["clearFiltersChip"].waitForExistence(timeout: 5))
+        // Rows below the fold aren't in a lazy List, so search within the filtered set.
+        let search = app.searchFields.firstMatch
+        XCTAssertTrue(search.waitForExistence(timeout: 5))
+        search.tap()
+        search.typeText("guac")
+        XCTAssertTrue(app.cells.containing(NSPredicate(format: "label CONTAINS 'Guacamole'")).firstMatch.waitForExistence(timeout: 5), "a low-GL recipe stays")
+        // Delete the typed text (the clear button would drop the token too).
+        search.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 4))
+        search.typeText("carbonara")
+        XCTAssertTrue(app.buttons["clearFiltersChip"].exists, "the friendly token is still applied")
+        XCTAssertFalse(app.cells.containing(NSPredicate(format: "label CONTAINS 'Spaghetti Carbonara'")).firstMatch.waitForExistence(timeout: 3), "a high-GL recipe is filtered out")
     }
 
     /// Requirement 17.5: a damaged database is renamed aside, the newest

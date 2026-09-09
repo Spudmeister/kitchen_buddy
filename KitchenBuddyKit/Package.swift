@@ -22,7 +22,7 @@ let package = Package(
         // Pure value types and pure functions: Fraction, units, scaling,
         // practical rounding, tag detection, schema.org parsing, export codables.
         // Foundation only — no GRDB, no UI, no network.
-        .target(name: "KitchenCore", resources: [.copy("Resources")]),
+        .target(name: "KitchenCore", resources: [.process("Resources")]),
 
         // SQLite via GRDB, files, network, backups. The ONLY target that may
         // `import GRDB`; it exposes stores through protocols, never GRDB types.

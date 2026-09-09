@@ -9,6 +9,8 @@ import SwiftUI
 struct RecipeRow: View {
     let recipe: RecipeSummary
     var thumbnailURL: URL?
+    /// Profiles enabled in Settings; badges show only for known bands.
+    var healthProfiles: [HealthProfile] = []
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -36,6 +38,14 @@ struct RecipeRow: View {
                 .labelStyle(.titleAndIcon)
                 if !recipe.tags.isEmpty {
                     TagChips(names: Array(recipe.tags.prefix(3)))
+                }
+                if let health = recipe.health {
+                    let known = healthProfiles.map(health.score(for:)).filter { $0.band != .unknown }
+                    if !known.isEmpty {
+                        HStack(spacing: 6) {
+                            ForEach(known, id: \.profile) { HealthBadge(score: $0, compact: true) }
+                        }
+                    }
                 }
             }
         }

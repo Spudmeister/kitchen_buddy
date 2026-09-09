@@ -55,6 +55,13 @@ SHOTS=(
   "perf-library|25|--seed demo --seed-perf --search chick"
   "quick-new|3|--seed demo --quick-action net.puddleglum.kitchenbuddy.new"
   "editor-xxl|4|--seed demo --open-recipe Bruschetta --edit -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXL"
+  "library-health|3|--seed demo --seed-photos --health-demo"
+  "recipe-health|3|--seed demo --health-demo --open-recipe 'Chicken Tacos'"
+  "worksheet|3|--seed demo --health-demo --open-recipe 'Chicken Tacos' --open health"
+  "servings-sheet|3|--seed demo --open-recipe 'Chicken Tacos' --open servings"
+  "health-sources|3|--seed demo --open health-sources"
+  "worksheet-xxl|3|--seed demo --health-demo --open-recipe 'Chicken Tacos' --open health -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXL"
+  "recipe-health-xxl|3|--seed demo --health-demo --open-recipe 'Chicken Tacos' -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXL"
 )
 
 requested=("$@")

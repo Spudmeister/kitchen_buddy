@@ -21,6 +21,8 @@ public protocol RecipeStoring: Sendable {
     func versions(_ id: Recipe.ID) throws -> [RecipeVersion]
     func heritage(_ id: Recipe.ID) throws -> RecipeHeritage?
     func summaries(_ query: RecipeQuery) throws -> [RecipeSummary]
+    /// One Library row, archived or not, with its health projection.
+    func summary(_ id: Recipe.ID) throws -> RecipeSummary?
     func observeSummaries(_ query: RecipeQuery) -> AsyncThrowingStream<[RecipeSummary], Error>
     func count(includeArchived: Bool) throws -> Int
 

@@ -72,7 +72,10 @@ public enum FoodTable {
     }
 
     private static func load() -> Document {
-        guard let url = Bundle.module.url(forResource: "foods", withExtension: "json", subdirectory: "Resources"),
+        // `.process` flattens the folder (a top-level "Resources" directory
+        // breaks codesign on iOS); older builds kept the subdirectory.
+        guard let url = Bundle.module.url(forResource: "foods", withExtension: "json")
+                ?? Bundle.module.url(forResource: "foods", withExtension: "json", subdirectory: "Resources"),
               let data = try? Data(contentsOf: url),
               let document = try? decode(data) else {
             assertionFailure("foods.json missing or malformed — run scripts/foods-table.py")

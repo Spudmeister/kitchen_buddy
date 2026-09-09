@@ -16,6 +16,9 @@ public final class PreferencesStore: PreferencesStoring {
         static let dietarySuggestions = "dietary_suggestions_enabled"
         static let groupByFolder = "group_library_by_folder"
         static let iCloudBackup = "icloud_backup_enabled"
+        /// Comma-separated `HealthProfile` raw values; "" means none, a
+        /// missing key means the default.
+        static let healthProfiles = "health_profiles"
     }
 
     let handle: DatabaseHandle
@@ -37,7 +40,10 @@ public final class PreferencesStore: PreferencesStoring {
                 defaultServings: values[Key.defaultServings].flatMap(Int.init).flatMap { $0 > 0 ? $0 : nil },
                 dietarySuggestionsEnabled: values[Key.dietarySuggestions].map { $0 == "1" } ?? defaults.dietarySuggestionsEnabled,
                 groupLibraryByFolder: values[Key.groupByFolder].map { $0 == "1" } ?? defaults.groupLibraryByFolder,
-                iCloudBackupEnabled: values[Key.iCloudBackup].map { $0 == "1" } ?? defaults.iCloudBackupEnabled
+                iCloudBackupEnabled: values[Key.iCloudBackup].map { $0 == "1" } ?? defaults.iCloudBackupEnabled,
+                enabledHealthProfiles: values[Key.healthProfiles].map { stored in
+                    Set(stored.split(separator: ",").compactMap { HealthProfile(rawValue: String($0)) })
+                } ?? defaults.enabledHealthProfiles
             )
         }
     }
@@ -49,6 +55,7 @@ public final class PreferencesStore: PreferencesStoring {
             try Self.setValue(preferences.dietarySuggestionsEnabled ? "1" : "0", forKey: Key.dietarySuggestions, db)
             try Self.setValue(preferences.groupLibraryByFolder ? "1" : "0", forKey: Key.groupByFolder, db)
             try Self.setValue(preferences.iCloudBackupEnabled ? "1" : "0", forKey: Key.iCloudBackup, db)
+            try Self.setValue(preferences.healthProfiles.map(\.rawValue).joined(separator: ","), forKey: Key.healthProfiles, db)
         }
     }
 

@@ -412,7 +412,9 @@
     "french bread",
     "italian bread",
     "dinner rolls",
-    "rolls"
+    "rolls",
+    "croutons",
+    "crostini"
    ],
    "usda": "Bread, white, commercially prepared",
    "carbs": 49.0,
@@ -1057,7 +1059,10 @@
     "vanilla extract",
     "vanilla",
     "vanilla essence",
-    "almond extract"
+    "almond extract",
+    "vanilla bean",
+    "vanilla beans",
+    "vanilla pod"
    ],
    "usda": "Vanilla extract",
    "carbs": 12.7,
@@ -1066,7 +1071,7 @@
    "satFat": 0.0,
    "gi": 65,
    "giBasis": "proxy: sucrose 65 (small amounts)",
-   "unitGrams": null,
+   "unitGrams": 3,
    "cupGrams": 208
   },
   {
@@ -2166,6 +2171,25 @@
    "giBasis": "no carbohydrate",
    "unitGrams": 170,
    "cupGrams": null
+  },
+  {
+   "id": "anchovies",
+   "name": "Anchovies",
+   "keywords": [
+    "anchovies",
+    "anchovy",
+    "anchovy paste",
+    "anchovy fillets"
+   ],
+   "usda": "Fish, anchovy, european, canned in oil, drained solids",
+   "carbs": 0.0,
+   "fiber": 0.0,
+   "sodium": 3668,
+   "satFat": 2.2,
+   "gi": null,
+   "giBasis": "no carbohydrate",
+   "unitGrams": 4,
+   "cupGrams": 150
   },
   {
    "id": "tuna-canned",
@@ -3714,6 +3738,11 @@
     "tarragon",
     "fresh herbs",
     "herbs",
+    "thyme",
+    "rosemary",
+    "sage",
+    "oregano leaves",
+    "basil sprigs",
     "curry leaves",
     "kaffir lime leaves",
     "lime leaves"
@@ -5051,7 +5080,7 @@
    "satFat": 1.5,
    "gi": 30,
    "giBasis": "assumed: spice, small amounts",
-   "unitGrams": null,
+   "unitGrams": 0.5,
    "cupGrams": 100
   },
   {

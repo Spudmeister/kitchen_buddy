@@ -58,6 +58,8 @@ public struct RootView: View {
         case .archived: ArchivedView(environment: environment)
         case .settings: SettingsView(environment: environment)
         case .backups: BackupsView(environment: environment)
+        case .health(let id): HealthWorksheetView(environment: environment, recipeID: id)
+        case .healthSources: HealthSourcesView()
         }
     }
 
@@ -99,6 +101,10 @@ public struct RootView: View {
             ImportFileView(environment: environment, url: url)
         case .share(let scope, let backup):
             ShareView(environment: environment, scope: scope, backup: backup, pdfInput: nil)
+        case .servingsReport(let id):
+            ServingsReportView(environment: environment, recipeID: id)
+        case .foodPicker(let id, let name):
+            FoodPickerView(environment: environment, recipeID: id, ingredientName: name)
         }
     }
 }

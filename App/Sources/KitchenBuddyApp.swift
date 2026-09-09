@@ -76,6 +76,11 @@ struct KitchenBuddyApp: App {
             environment.feedbackURL = URL(string: "mailto:ace@puddleglum.net?subject=Kitchen%20Buddy%20feedback")
             environment.initialSearchText = Self.argumentValue("--search", in: arguments)
             if arguments.contains("--filter-demo") { environment.initialTokens = [.tag("chicken"), .maximumMinutes(45)] }
+            if arguments.contains("--health-demo") {
+                // Every profile on, and the Library filtered to diabetes-friendly.
+                try? environment.updatePreferences { $0.enabledHealthProfiles = Set(HealthProfile.allCases) }
+                if Self.argumentValue("--open-recipe", in: arguments) == nil { environment.initialTokens = [.friendly(.diabetes)] }
+            }
             let units = Self.argumentValue("--units", in: arguments).flatMap(UnitPreference.init(rawValue:))
             let servings = Self.argumentValue("--default-servings", in: arguments).flatMap(Int.init)
             if units != nil || servings != nil {
@@ -92,6 +97,8 @@ struct KitchenBuddyApp: App {
                 case "notes": initialRoutes.append(.notes(match.id))
                 case "lineage": initialRoutes.append(.lineage(match.id))
                 case "photos": initialRoutes.append(.photos(match.id))
+                case "health": initialRoutes.append(.health(match.id))
+                case "servings": environment.router.present(.servingsReport(match.id))
                 default: break
                 }
                 if arguments.contains("--edit") { environment.router.present(.editRecipe(match.id)) }
@@ -178,6 +185,7 @@ struct KitchenBuddyApp: App {
         case "backups": return [.settings, .backups]
         case "archived": return [.archived]
         case "folders": return [.folders]
+        case "health-sources": return [.settings, .healthSources]
         default: return []
         }
     }

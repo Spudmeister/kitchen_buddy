@@ -96,7 +96,8 @@ struct LibraryListView: View {
                 Section {
                     ForEach(section.recipes) { recipe in
                         NavigationLink(value: Route.recipe(recipe.id)) {
-                            RecipeRow(recipe: recipe, thumbnailURL: recipe.thumbnailPhotoID.map { model.environment.book.photos.thumbnailURL(forPhotoID: $0) })
+                            RecipeRow(recipe: recipe, thumbnailURL: recipe.thumbnailPhotoID.map { model.environment.book.photos.thumbnailURL(forPhotoID: $0) },
+                                      healthProfiles: model.environment.preferences.healthProfiles)
                         }
                         .swipeActions(edge: .trailing) {
                             if recipe.isArchived {

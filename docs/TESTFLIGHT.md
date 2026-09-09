@@ -14,6 +14,22 @@ that is the bug we care about most: tell us exactly what you did.
 Feedback: Settings › Send Feedback, or take a screenshot and use its Share
 sheet → TestFlight to attach it.
 
+## 0.5.0 (M11 — health profiles, servings you get)
+
+- Open a chili, a pasta and a salad. Each shows a Diabetes badge (green /
+  orange / red, with a word). Tap it: the worksheet lists every ingredient
+  line with the food it was matched to, the grams, and what it contributes.
+  Does every line make sense? If one is wrong, tap it and pick the right food
+  or "Don't count".
+- Settings › Health: switch on Blood pressure and Heart health, then look at
+  the same recipes and the Library chips. Read Sources & thresholds.
+- On the recipe, tap the servings chip and say how many you really get
+  ("Recipe says 8 · you get 4"). The badge and the scaling base should
+  follow. Then "Use the recipe's count".
+- Library: tap "Diabetes-friendly". Only green recipes should remain.
+- Recipes without a servings count or with unusual ingredients say "Not
+  enough data" rather than guessing — tell us which ingredients it missed.
+
 ## 0.4.0 (M9)
 
 - Search from the iPhone Home screen (Spotlight) for a recipe title; tap the

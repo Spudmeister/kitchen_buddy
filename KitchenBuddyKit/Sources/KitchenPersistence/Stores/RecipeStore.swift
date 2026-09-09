@@ -112,6 +112,10 @@ public final class RecipeStore: RecipeStoring {
         }
     }
 
+    public func summary(_ id: Recipe.ID) throws -> RecipeSummary? {
+        try writer.read { db in try SearchIndex.summary(id, db) }
+    }
+
     public func summaries(_ query: RecipeQuery) throws -> [RecipeSummary] {
         try Signpost.measure("search") { try writer.read { db in try SearchIndex.summaries(query, db) } }
     }

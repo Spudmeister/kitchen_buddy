@@ -4,7 +4,11 @@
 **0.1.0 (41)** verified on Andrew's phone: iCloud Drive available, daily
 snapshot mirrored and visible in Files. Gate 2.6.1 closed. **M3 merged (PR #8) and tagged v0.1.0**: TestFlight
 build **0.1.0 (43)** is the first usable recipe book — Library, Detail,
-Editor, pickers, Archived, on top of the M2 safety net. Next: M4.
+Editor, pickers, Archived, on top of the M2 safety net. M4 built on
+`m4/settings-scaling-search`: the three Settings rows now drive the detail
+screen (default servings, unit system, dietary suggestions), clear-rating,
+the step-reorder fix, `#tag` / `in:Folder` shorthand and rating/time tokens;
+103 package tests + 6 XCUITests green.
 
 Milestones and tasks: `.kiro/specs/kitchen-buddy-ios/tasks.md`. Tags:
 v0.1.0 at M3 (usable recipe book), v0.2.0 at M5, v0.3.0 at M8, v0.4.0 at M9.
@@ -15,8 +19,8 @@ v0.1.0 at M3 (usable recipe book), v0.2.0 at M5, v0.3.0 at M8, v0.4.0 at M9.
 | M1 Domain + persistence | Fraction/units/scaling/rounding/tags, schema v1 + guards + FTS5, stores, properties | done, PR #5 |
 | M2 Data safety | verified snapshots, integrity check + recovery, iCloud mirror, Settings › Backups — **before any build can hold a recipe** | done, build 41 |
 | M3 Library + Detail + Editor | usable recipe book → **v0.1.0** | done, build 43 |
-| M4 Scaling, units, tags, search polish | | next |
-| M5 Versions, lineage, notes, ratings, folders → **v0.2.0** | | |
+| M4 Scaling, units, tags, search polish | | done |
+| M5 Versions, lineage, notes, ratings, folders → **v0.2.0** | | next |
 | M6 Photos | | |
 | M7 URL import + Share Extension | | |
 | M8 Export / import / PDF → **v0.3.0** | | |

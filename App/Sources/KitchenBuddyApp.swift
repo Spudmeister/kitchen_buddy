@@ -13,6 +13,8 @@ import SwiftUI
 /// - `--open settings|backups|archived` — start with that screen pushed
 /// - `--open-recipe <title>` — start on that recipe's detail (`--edit` opens
 ///   its editor); `--search <text>` — start the Library with a search
+/// - `--units original|us|metric`, `--default-servings <n>` — write those
+///   preferences before the first screen (screenshots of settings in effect)
 /// - `--corrupt-db` — seed, snapshot, then damage the database so launch
 ///   recovery runs (UI test for the recovery notice)
 @main
@@ -39,6 +41,14 @@ struct KitchenBuddyApp: App {
                 Self.seedDemoRecipes(into: environment)
             }
             environment.initialSearchText = Self.argumentValue("--search", in: arguments)
+            let units = Self.argumentValue("--units", in: arguments).flatMap(UnitPreference.init(rawValue:))
+            let servings = Self.argumentValue("--default-servings", in: arguments).flatMap(Int.init)
+            if units != nil || servings != nil {
+                try? environment.updatePreferences {
+                    if let units { $0.unitPreference = units }
+                    if let servings { $0.defaultServings = servings }
+                }
+            }
             if let title = Self.argumentValue("--open-recipe", in: arguments),
                let match = try? environment.book.recipes.summaries(RecipeQuery(text: title)).first {
                 initialRoutes = [.recipe(match.id)]

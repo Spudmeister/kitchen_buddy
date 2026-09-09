@@ -4,6 +4,8 @@
 /// - below 1/8 → nearest hundredth (tiny spice amounts keep precision)
 /// - piece, dozen → nearest half
 /// - pinch, dash, to taste → nearest whole
+/// - ml, g at 1 or more → nearest whole (an addition to the port: nobody
+///   measures ⅔ ml)
 /// - otherwise: fractional part below 1/16 rounds down to the whole; else
 ///   the nearest of 1/8, 1/4, 1/3, 1/2, 2/3, 3/4, 1 (ties go to the smaller)
 ///
@@ -24,6 +26,9 @@ public enum PracticalRounding {
         case .other: return roundHalfUp(quantity, denominator: 1)
         case .volume, .weight, nil: break
         }
+        // Metric base units read as whole numbers once there is at least one of
+        // them; below that the fraction table keeps "½ g" from becoming "0 g".
+        if (unit == .ml || unit == .g) && quantity >= .one { return roundHalfUp(quantity, denominator: 1) }
 
         let whole = quantity.whole
         let fractional = quantity.fractionalPart

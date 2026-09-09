@@ -23,11 +23,18 @@ import KitchenTesting
         try FileManager.default.createDirectory(at: layout.root, withIntermediateDirectories: true)
         try FileManager.default.copyItem(at: fixture, to: layout.databaseURL)
 
-        let book = try RecipeBook.open(layout, clock: TestDatabase.clock())
+        // System clock: the fixture's own timestamps are 2026-01-01 ticks, and a
+        // clear event must land after them to count.
+        let book = try RecipeBook.open(layout, clock: .system)
         let integrity = try book.writer.read { db in try String.fetchOne(db, sql: "PRAGMA integrity_check") }
         #expect(integrity == "ok")
         let applied = try book.writer.read { db in try DatabaseStack.migrator.appliedMigrations(db) }
         #expect(applied == Migrations.identifiers)
+        guard case .migrated(let preMigration?) = book.launchReport else {
+            Issue.record("a v1 file must be snapshotted before v2 migrates it: \(book.launchReport)")
+            return
+        }
+        #expect(preMigration.reason == .preMigration && preMigration.isVerified)
 
         #expect(try book.recipes.count(includeArchived: true) == Self.fixtureRecipeCount)
         #expect(try book.recipes.count(includeArchived: false) == Self.fixtureRecipeCount - 1)
@@ -36,6 +43,9 @@ import KitchenTesting
         let bruschetta = try #require(try book.recipes.summaries(RecipeQuery(text: "bruschetta")).first)
         #expect(try book.recipes.versions(bruschetta.id).count == 2)
         #expect(try book.recipes.ratings(bruschetta.id).map(\.value) == [4, 5])
+        try book.recipes.clearRating(bruschetta.id)
+        #expect(try book.recipes.detail(bruschetta.id)?.currentRating == nil, "v2 clears work on a migrated v1 book")
+        #expect(try book.recipes.ratings(bruschetta.id).count == 2, "history untouched")
         #expect(try book.recipes.notes(bruschetta.id).count == 1)
         #expect(try book.folders.all().count == 2)
         #expect(try book.preferences.load().unitPreference == .metric)

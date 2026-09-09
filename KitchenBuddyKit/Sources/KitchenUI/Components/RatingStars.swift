@@ -7,6 +7,7 @@ import SwiftUI
 struct RatingStars: View {
     let value: Int?
     var onSelect: ((Int) -> Void)?
+    var onClear: (() -> Void)?
 
     var body: some View {
         HStack(spacing: 2) {
@@ -21,15 +22,18 @@ struct RatingStars: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Rating")
         .accessibilityValue(value.map { "\($0) of 5 stars" } ?? "Not rated")
-        .accessibilityHint(onSelect == nil ? "" : "Swipe up or down to change")
+        .accessibilityHint(onSelect == nil ? "" : "Swipe up or down to change. Tap the current star to clear.")
+        .accessibilityIdentifier("ratingStars")
         .accessibilityAdjustableAction { direction in
             guard let onSelect else { return }
             let current = value ?? 0
             switch direction {
             case .increment: onSelect(min(5, current + 1))
-            case .decrement: onSelect(max(1, current - 1))
+            case .decrement:
+                if current <= 1 { onClear?() } else { onSelect(current - 1) }
             @unknown default: break
             }
         }
+        .accessibilityAction(named: "Clear rating") { onClear?() }
     }
 }

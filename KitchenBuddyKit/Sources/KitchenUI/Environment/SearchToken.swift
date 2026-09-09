@@ -1,19 +1,23 @@
 import KitchenCore
 
 /// A filter chip in the Library search field. Tokens map onto
-/// `RecipeQuery` filters; M4 adds rating and time tokens and the `#tag` /
-/// `in:` shorthand.
+/// `RecipeQuery` filters; `#tag` and `in:Folder` typed into the field are
+/// interpreted the same way.
 ///
 /// Requirements: kitchen-buddy-ios 6.2
 public enum SearchToken: Identifiable, Hashable, Sendable {
     case tag(String)
     case folder(Folder.ID, name: String)
+    case minimumRating(Int)
+    case maximumMinutes(Int)
     case includeArchived
 
     public var id: String {
         switch self {
         case .tag(let name): return "tag:\(TagName.key(name))"
         case .folder(let id, _): return "folder:\(id)"
+        case .minimumRating(let value): return "rating:\(value)"
+        case .maximumMinutes(let minutes): return "time:\(minutes)"
         case .includeArchived: return "archived"
         }
     }
@@ -22,6 +26,8 @@ public enum SearchToken: Identifiable, Hashable, Sendable {
         switch self {
         case .tag(let name): return name
         case .folder(_, let name): return "In \(name)"
+        case .minimumRating(let value): return "\(value)+ stars"
+        case .maximumMinutes(let minutes): return "Under \(DurationText.minutes(minutes))"
         case .includeArchived: return "Include archived"
         }
     }
@@ -30,6 +36,8 @@ public enum SearchToken: Identifiable, Hashable, Sendable {
         switch self {
         case .tag: return "tag"
         case .folder: return "folder"
+        case .minimumRating: return "star"
+        case .maximumMinutes: return "clock"
         case .includeArchived: return "archivebox"
         }
     }

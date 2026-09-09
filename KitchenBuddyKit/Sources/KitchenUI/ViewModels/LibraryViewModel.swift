@@ -27,7 +27,11 @@ public final class LibraryViewModel {
     public var direction: RecipeQuery.Direction = .ascending
     public private(set) var results: [RecipeSummary] = []
     public private(set) var folders: [Folder] = []
-    public private(set) var suggestedTokens: [SearchToken] = []
+    private var availableTokens: [SearchToken] = []
+    /// Tokens offered under the search field: the active ones are left out.
+    public var suggestedTokens: [SearchToken] {
+        availableTokens.filter { token in !tokens.contains(where: { $0.id == token.id }) }
+    }
     public private(set) var totalRecipes = 0
     public private(set) var hasLoaded = false
     public var error: String?
@@ -40,13 +44,33 @@ public final class LibraryViewModel {
 
     // MARK: Query
 
+    /// The query with tokens and the `#tag` / `in:Folder` shorthand applied.
+    /// Shorthand words leave the free text so the FTS pattern never sees them.
     public var query: RecipeQuery {
-        var query = RecipeQuery(text: searchText, sort: sort, direction: direction)
+        var query = RecipeQuery(sort: sort, direction: direction)
         query.folderID = scopeFolderID
+        var words: [String] = []
+        for word in searchText.split(separator: " ", omittingEmptySubsequences: true).map(String.init) {
+            if word.hasPrefix("#"), word.count > 1 {
+                query.tags.append(String(word.dropFirst()))
+            } else if word.lowercased().hasPrefix("in:"), word.count > 3 {
+                let name = String(word.dropFirst(3))
+                if let folder = folders.first(where: { $0.name.caseInsensitiveCompare(name) == .orderedSame }) {
+                    query.folderID = folder.id
+                } else {
+                    words.append(name)
+                }
+            } else {
+                words.append(word)
+            }
+        }
+        query.text = words.joined(separator: " ")
         for token in tokens {
             switch token {
             case .tag(let name): query.tags.append(name)
             case .folder(let id, _): query.folderID = id
+            case .minimumRating(let value): query.minimumRating = max(query.minimumRating ?? 0, value)
+            case .maximumMinutes(let minutes): query.maximumTotalMinutes = min(query.maximumTotalMinutes ?? .max, minutes)
             case .includeArchived: query.includeArchived = true
             }
         }
@@ -54,7 +78,7 @@ public final class LibraryViewModel {
     }
 
     public var isSearching: Bool { !searchText.isEmpty || !tokens.isEmpty }
-    public var groupsByFolder: Bool { environment.preferences.groupLibraryByFolder && searchText.isEmpty && scopeFolderID == nil }
+    public var groupsByFolder: Bool { environment.preferences.groupLibraryByFolder && query.text.isEmpty && scopeFolderID == nil }
 
     public var emptyState: EmptyState? {
         guard hasLoaded, results.isEmpty else { return nil }
@@ -122,8 +146,8 @@ public final class LibraryViewModel {
         if scopeFolderID == nil {
             suggested += folders.filter { $0.parentID == nil }.prefix(4).map { SearchToken.folder($0.id, name: $0.name) }
         }
-        suggested.append(.includeArchived)
-        suggestedTokens = suggested.filter { token in !tokens.contains(where: { $0.id == token.id }) }
+        suggested += [.minimumRating(4), .maximumMinutes(30), .maximumMinutes(60), .includeArchived]
+        availableTokens = suggested
     }
 
     public func clearFilters() {

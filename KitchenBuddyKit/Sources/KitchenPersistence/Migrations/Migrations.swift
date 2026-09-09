@@ -7,11 +7,14 @@ import GRDB
 enum Migrations {
     /// Registered migration identifiers, in order. Tests pin this list so a
     /// rename or removal is caught.
-    static let identifiers: [String] = ["v1-initial"]
+    static let identifiers: [String] = ["v1-initial", "v2-rating-clears"]
 
     static func registerAll(in migrator: inout DatabaseMigrator) {
         migrator.registerMigration("v1-initial") { db in
             try db.execute(sql: SchemaV1.sql)
+        }
+        migrator.registerMigration("v2-rating-clears") { db in
+            try db.execute(sql: SchemaV2.sql)
         }
     }
 }

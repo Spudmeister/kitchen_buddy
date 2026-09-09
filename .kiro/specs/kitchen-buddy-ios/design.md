@@ -52,7 +52,8 @@ minimal, types Sendable-clean.
 
 ### PracticalRounding (exact port of the PWA algorithm)
 `q < 1/8` → round to 2 dp · piece/dozen → nearest ½ · pinch/dash/to_taste →
-whole · otherwise fractional part `< 1/16` → floor, else nearest of
+whole · **ml/g at ≥ 1 → whole (added in M4: the port printed "236⅔ ml")** ·
+otherwise fractional part `< 1/16` → floor, else nearest of
 {1/8, 1/4, 1/3, 1/2, 2/3, 3/4, 1}, ties → smaller.
 
 ### UnitConverter tables

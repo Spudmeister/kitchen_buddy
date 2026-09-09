@@ -72,6 +72,28 @@ import KitchenTesting
         #expect(detail.tags == ["Breakfast", "Quick"])
     }
 
+    /// P13 at the view-model level: suggestions are deterministic, exclude
+    /// existing tags, follow the Settings switch, and attach only on accept.
+    @Test @MainActor func dietarySuggestionsAreGatedAndAccepted() throws {
+        let environment = try Self.environment()
+        let model = RecipeEditorViewModel(environment: environment)
+        model.title = "Salad"
+        model.ingredients[0].name = "kale"
+        model.steps[0].text = "Toss."
+        #expect(model.dietarySuggestions == DietaryTag.allCases)
+        model.tags = ["Vegan"]
+        #expect(!model.dietarySuggestions.contains(.vegan))
+        model.accept(.glutenFree)
+        model.accept(.glutenFree)
+        #expect(model.tags == ["Vegan", "gluten-free"])
+        model.ingredients[0].name = "Chicken"
+        #expect(!model.dietarySuggestions.contains(.vegetarian) && model.tags.count == 2, "changing ingredients never removes an accepted tag")
+        try environment.updatePreferences { $0.dietarySuggestionsEnabled = false }
+        #expect(model.dietarySuggestions.isEmpty, "Settings switch respected")
+        let id = try #require(model.save())
+        #expect(Set(try environment.book.recipes.detail(id)?.tags ?? []) == ["Vegan", "gluten-free"])
+    }
+
     @Test @MainActor func detailActions() throws {
         let environment = try Self.environment()
         let folder = try environment.book.folders.create(name: "Breakfast", parentID: nil)

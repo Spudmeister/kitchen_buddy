@@ -20,6 +20,9 @@ import KitchenCore
         (Fraction(14, 10), .pinch, Fraction(1)),          // wholes
         (Fraction(3, 2), .dash, Fraction(2)),             // half rounds up
         (Fraction(7, 4), nil, Fraction(7, 4)),            // no unit behaves like a measure
+        (Fraction(59147, 250), .ml, Fraction(237)),       // metric base units: whole numbers
+        (Fraction(1, 4), .g, Fraction(1, 4)),             // under 1 g the fraction table still applies
+        (Fraction(1001, 2), .ml, Fraction(501)),          // halves round up
     ])
     func matchesTheTable(quantity: Fraction, unit: IngredientUnit?, expected: Fraction) {
         #expect(PracticalRounding.round(quantity, unit: unit) == expected)

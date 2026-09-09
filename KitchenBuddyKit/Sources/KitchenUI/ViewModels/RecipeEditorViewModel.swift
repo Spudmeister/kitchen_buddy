@@ -160,6 +160,21 @@ public final class RecipeEditorViewModel {
 
     public var canSave: Bool { problems.isEmpty }
 
+    /// Keyword dietary suggestions for the current ingredients, minus tags
+    /// already on the recipe; empty when Settings has them off. Pure and
+    /// gated: nothing is attached until `accept` (Requirement 5.4).
+    public var dietarySuggestions: [DietaryTag] {
+        guard environment.preferences.dietarySuggestionsEnabled else { return [] }
+        let content = draft.content.normalized()
+        guard !content.ingredients.isEmpty else { return [] }
+        return TagDetector.suggestions(for: content, existingTags: tags)
+    }
+
+    public func accept(_ suggestion: DietaryTag) {
+        guard !tags.contains(where: { TagName.key($0) == TagName.key(suggestion.rawValue) }) else { return }
+        tags.append(suggestion.rawValue)
+    }
+
     public var hasChanges: Bool {
         guard let original else {
             return !title.isEmpty || !descriptionText.isEmpty || ingredients.contains { !$0.name.isEmpty }

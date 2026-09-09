@@ -33,6 +33,8 @@ SHOTS=(
   "search|3|--seed demo --search chick"
   "editor|4|--seed demo --open-recipe Bruschetta --edit"
   "archived|3|--seed demo --open archived"
+  "recipe-metric-6|3|--seed demo --units metric --default-servings 6 --open-recipe Bruschetta"
+  "editor-suggestions|4|--seed demo --open-recipe Bruschetta --edit"
   "recipe-xxl|3|--seed demo --open-recipe Bruschetta -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXL"
   "editor-xxl|4|--seed demo --open-recipe Bruschetta --edit -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXL"
 )

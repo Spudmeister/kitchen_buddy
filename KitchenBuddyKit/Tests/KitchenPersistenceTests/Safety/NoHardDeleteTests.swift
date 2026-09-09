@@ -15,6 +15,8 @@ import KitchenTesting
         draft.folderID = folder.id
         let recipe = try book.recipes.create(draft)
         try book.recipes.rate(recipe.id, value: 3)
+        try book.recipes.clearRating(recipe.id)
+        try book.recipes.rate(recipe.id, value: 4)
         try book.recipes.addNote(to: recipe.id, body: "n", cookedOn: nil)
         try book.writer.write { db in
             try db.execute(sql: """
@@ -41,6 +43,7 @@ import KitchenTesting
         "UPDATE ingredients SET name = 'x'",
         "UPDATE instructions SET text = 'x'",
         "UPDATE ratings SET value = 1",
+        "UPDATE rating_clears SET cleared_at = 'x'",
         "UPDATE recipes SET parent_recipe_id = id",
         "UPDATE recipes SET parent_recipe_id = 'other'",
     ])

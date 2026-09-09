@@ -100,6 +100,78 @@ final class RecipeFlowUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Test Toast Deluxe"].waitForExistence(timeout: 5))
     }
 
+    /// Requirements 8.1–8.5, 9.3, 9.4, 18.2: Settings drive the detail
+    /// screen; the stepper scales live; the unit control converts; a tap
+    /// on the current star clears the rating.
+    func testSettingsScaleUnitsAndClearRating() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--uitest-reset", "--seed", "demo", "--units", "metric", "--default-servings", "16", "--open-recipe", "Bruschetta"]
+        app.launch()
+        XCTAssertTrue(app.staticTexts["16 servings"].waitForExistence(timeout: 10), "opens at the default servings")
+        XCTAssertTrue(app.staticTexts["Scale factor ×2"].exists, "8 → 16 is ×2")
+        XCTAssertTrue(app.staticTexts.containing(NSPredicate(format: "label CONTAINS 'ml'")).firstMatch.exists, "metric by default")
+        app.buttons["resetServings"].tap()
+        XCTAssertTrue(app.staticTexts["8 servings"].waitForExistence(timeout: 5))
+
+        let increment = app.buttons["Increment"].firstMatch.exists ? app.buttons["Increment"].firstMatch : app.steppers.firstMatch.buttons.element(boundBy: 1)
+        increment.tap()
+        XCTAssertTrue(app.staticTexts["9 servings"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Scale factor ×1⅛"].exists)
+        app.segmentedControls["unitPicker"].buttons["As written"].tap()
+        XCTAssertTrue(app.staticTexts["4½ pieces"].waitForExistence(timeout: 5), "4 tomatoes × 9/8 = 4½")
+
+        let stars = app.otherElements["ratingStars"]
+        XCTAssertTrue(stars.exists)
+        XCTAssertEqual(stars.value as? String, "Not rated")
+        stars.coordinate(withNormalizedOffset: CGVector(dx: 0.7, dy: 0.5)).tap()
+        XCTAssertTrue(NSPredicate(format: "value CONTAINS 'of 5 stars'").evaluate(with: stars), "a star was set: \(stars.value ?? "")")
+        stars.coordinate(withNormalizedOffset: CGVector(dx: 0.7, dy: 0.5)).tap()
+        XCTAssertEqual(stars.value as? String, "Not rated", "the same star clears")
+    }
+
+    /// Requirements 1.2, 5.3, 5.4: reordering keeps the form in place and
+    /// dietary suggestions are offered, applied only on accept.
+    func testEditorReorderKeepsPlaceAndSuggestionsNeedAccept() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--uitest-reset", "--seed", "demo", "--open-recipe", "Bruschetta", "--edit"]
+        app.launch()
+        XCTAssertTrue(app.textFields["titleField"].waitForExistence(timeout: 10))
+        // Bruschetta has no meat/dairy/gluten-free conflicts except the baguette (gluten) → vegan etc. offered.
+        let suggestion = app.buttons["suggest-vegan"]
+        app.swipeUp(); app.swipeUp(); app.swipeUp()
+        XCTAssertTrue(suggestion.waitForExistence(timeout: 5), "vegan is suggested for bruschetta")
+        suggestion.tap()
+        XCTAssertFalse(app.buttons["suggest-vegan"].exists, "accepted suggestion leaves the list")
+        XCTAssertTrue(app.staticTexts.containing(NSPredicate(format: "label CONTAINS 'vegan'")).firstMatch.exists)
+
+        app.swipeDown(); app.swipeDown(); app.swipeDown()
+        XCTAssertTrue(app.buttons["reorderIngredients"].waitForExistence(timeout: 5))
+        // The Steps header sits below six two-line ingredient rows.
+        let stepsToggle = app.buttons["reorderSteps"]
+        var attempts = 0
+        while !(stepsToggle.exists && stepsToggle.isHittable) && attempts < 10 {
+            app.swipeUp(velocity: .slow)
+            attempts += 1
+        }
+        stepsToggle.tap()
+        let handles = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Reorder Step'"))
+        XCTAssertTrue(handles.count >= 3, "step drag handles appear in reorder mode: \(handles.count)")
+        var scrolls = 0
+        while !(handles.element(boundBy: 2).isHittable && handles.element(boundBy: 0).isHittable) && scrolls < 6 {
+            app.swipeUp(velocity: .slow)
+            scrolls += 1
+        }
+        let first = app.textViews["stepText"].firstMatch.exists ? app.textViews["stepText"].firstMatch : app.textFields["stepText"].firstMatch
+        let titleVisibleBefore = app.textFields["titleField"].isHittable
+        handles.element(boundBy: 2).press(forDuration: 0.6, thenDragTo: handles.element(boundBy: 0))
+        XCTAssertEqual(app.textFields["titleField"].isHittable, titleVisibleBefore, "the form did not jump")
+        stepsToggle.tap()
+        _ = first
+        app.buttons["saveButton"].tap()
+        XCTAssertTrue(app.staticTexts["Bruschetta"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts.containing(NSPredicate(format: "label BEGINSWITH 'Step 1. Add olive oil'")).firstMatch.exists, "step 3 moved to the top")
+    }
+
     /// Requirement 17.5: a damaged database is renamed aside, the newest
     /// verified snapshot restored, and a non-dismissable notice shown.
     func testCorruptDatabaseShowsRecoveryNoticeAndRestores() {

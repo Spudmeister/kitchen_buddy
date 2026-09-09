@@ -37,8 +37,12 @@ public protocol RecipeStoring: Sendable {
 
     // Ratings
     @discardableResult func rate(_ id: Recipe.ID, value: Int) throws -> Rating
-    /// Chronological.
+    /// Appends a clear event: the recipe reads as unrated until rated again.
+    func clearRating(_ id: Recipe.ID) throws
+    /// Chronological star ratings only.
     func ratings(_ id: Recipe.ID) throws -> [Rating]
+    /// Chronological ratings and clears.
+    func ratingEvents(_ id: Recipe.ID) throws -> [RatingEvent]
 
     // Notes
     @discardableResult func addNote(to id: Recipe.ID, body: String, cookedOn: Date?) throws -> RecipeNote

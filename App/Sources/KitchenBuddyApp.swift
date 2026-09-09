@@ -1,3 +1,4 @@
+import KitchenCore
 import KitchenPersistence
 import KitchenUI
 import SwiftUI
@@ -9,7 +10,9 @@ import SwiftUI
 ///
 /// - `--uitest-reset` — start from an empty container
 /// - `--seed demo` — import `DemoRecipes.json` through the real import path
-/// - `--open settings|backups` — start with that screen pushed
+/// - `--open settings|backups|archived` — start with that screen pushed
+/// - `--open-recipe <title>` — start on that recipe's detail (`--edit` opens
+///   its editor); `--search <text>` — start the Library with a search
 /// - `--corrupt-db` — seed, snapshot, then damage the database so launch
 ///   recovery runs (UI test for the recovery notice)
 @main
@@ -17,7 +20,7 @@ struct KitchenBuddyApp: App {
     @Environment(\.scenePhase) private var scenePhase
     @State private var environment: AppEnvironment?
     @State private var openError: String?
-    private let initialRoutes: [Route]
+    private var initialRoutes: [Route]
 
     init() {
         let arguments = ProcessInfo.processInfo.arguments
@@ -34,6 +37,12 @@ struct KitchenBuddyApp: App {
             let environment = try AppEnvironment.open(layout, sampleRecipes: Self.sampleRecipes)
             if Self.argumentValue("--seed", in: arguments) == "demo" {
                 Self.seedDemoRecipes(into: environment)
+            }
+            environment.initialSearchText = Self.argumentValue("--search", in: arguments)
+            if let title = Self.argumentValue("--open-recipe", in: arguments),
+               let match = try? environment.book.recipes.summaries(RecipeQuery(text: title)).first {
+                initialRoutes = [.recipe(match.id)]
+                if arguments.contains("--edit") { environment.router.present(.editRecipe(match.id)) }
             }
             _environment = State(initialValue: environment)
         } catch {
@@ -75,6 +84,7 @@ struct KitchenBuddyApp: App {
         switch argumentValue("--open", in: arguments) {
         case "settings": return [.settings]
         case "backups": return [.settings, .backups]
+        case "archived": return [.archived]
         default: return []
         }
     }

@@ -28,10 +28,13 @@ SHOTS=(
   "settings|3|--seed demo --open settings"
   "backups|4|--seed demo --open backups"
   "recovery|4|--corrupt-db"
-  # M3+: "library|3|--seed demo"
-  #      "recipe|3|--seed demo --open-recipe largeRecipe"
-  #      "search|3|--seed demo --search chocolate"
-  #      "editor|3|--seed demo --open-recipe largeRecipe --edit"
+  "library|3|--seed demo"
+  "recipe|3|--seed demo --open-recipe Bruschetta"
+  "search|3|--seed demo --search chick"
+  "editor|4|--seed demo --open-recipe Bruschetta --edit"
+  "archived|3|--seed demo --open archived"
+  "recipe-xxl|3|--seed demo --open-recipe Bruschetta -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXL"
+  "editor-xxl|4|--seed demo --open-recipe Bruschetta --edit -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXL"
 )
 
 requested=("$@")

@@ -36,20 +36,21 @@ each milestone ends with a "What to test" note for the TestFlight build.
   - [x] 2.3.1 iCloud entitlements restored (2026-09-08); the App ID's iCloud capability had to be in Xcode 6 mode ("Include CloudKit support" ticked) — fixed via the API, see ADR-004 "Portal capabilities"
 - [x] 2.4 Settings and Backups screens; share damaged DB — _Req 18.1–18.4_ (includes 1.9.1 "Load sample recipes"; Archived / Import / Export / Spotlight rows arrive with their milestones)
 - [x] 2.5 P6 (full operation sequences), P27–P29 with fuzzed corrupt fixtures; retention test over 60 simulated days
-- [ ] 2.6 Gate: no build reaches TestFlight with a recipe editor until 2.1–2.5 are done and the iCloud container is assigned
-  - [ ] 2.6.1 Andrew: on a device signed into iCloud, Settings › Backups must show "iCloud Drive: Available" and a copied snapshot must appear in Files › iCloud Drive › Kitchen Buddy › Backups. Verified 2026-09-08 that the simulator cannot do this even when signed in: its `bird` daemon answers `BRCloudDocsErrorDomain 153 "iCloud Drive not supported"`, so `url(forUbiquityContainerIdentifier:)` is nil there by design — the app correctly shows "Unavailable". Device only.
+- [x] 2.6 Gate: no build reaches TestFlight with a recipe editor until 2.1–2.5 are done and the iCloud container is assigned
+  - [x] 2.6.1 Andrew: on a device signed into iCloud, Settings › Backups must show "iCloud Drive: Available" and a copied snapshot must appear in Files › iCloud Drive › Kitchen Buddy › Backups. Verified 2026-09-08 that the simulator cannot do this even when signed in: its `bird` daemon answers `BRCloudDocsErrorDomain 153 "iCloud Drive not supported"`, so `url(forUbiquityContainerIdentifier:)` is nil there by design — the app correctly shows "Unavailable". Device only. Closed 2026-09-08 on build 41: Andrew's phone showed "iCloud Drive: Available", "Last copied to iCloud 3 seconds ago", and Files › iCloud Drive › Kitchen Buddy › Backups holding the daily snapshot.
 - **Notes (2026-09-08):** stores reach the database through a swappable `DatabaseHandle` so restore can close, swap, and reopen the file under them; weekly retention anchors use fixed epoch-aligned weeks (sliding windows dropped a week — caught by the 60-day simulation); verifying an existing snapshot checks integrity only, the recipe-count-vs-live rule guards fresh snapshots; `AppEnvironment` (3.1) landed here because Settings needed it. ADR-003 addendum records the mechanics.
 - **What to test:** Settings › Backups shows verified snapshots after use; iCloud on → file visible in Files › iCloud Drive › Kitchen Buddy; restore a snapshot and verify counts.
 
 ## M3 — Library + Detail + Editor (usable recipe book) → tag `v0.1.0`
 
-- [ ] 3.1 `Router`, `Route`, `AppEnvironment`, app wiring, `@SceneStorage` path
-- [ ] 3.2 Library screen (list, rows, `.searchable` tokens, sort menu, folder sections, swipe/context actions, empty states) — _Req 6.1–6.4, 6.6, 3.2_
-- [ ] 3.3 Recipe Detail (header, meta, tags, ingredients tap-to-check, steps, version badge, toolbar menu) — _Req 10.1–10.4, 3.1_
-- [ ] 3.4 Recipe Editor (form, reorder, fraction entry, validation, discard confirmation, version-on-content-change) — _Req 1.1–1.6, 2.1, 2.2_
-- [ ] 3.5 Tag Picker and Move-to-Folder sheets; folder picker in editor — _Req 5.1, 5.5, 16.1_
-- [ ] 3.6 Archived screen and archived-mode Detail — _Req 3.2–3.4_
-- [ ] 3.7 Dynamic Type + VoiceOver baseline; XCUITest create → edit → search → archive → unarchive — _Req 19.1, 19.2_
+- [x] 3.1 `Router`, `Route`, `AppEnvironment`, app wiring, `@SceneStorage` path
+- [x] 3.2 Library screen (list, rows, `.searchable` tokens, sort menu, folder sections, swipe/context actions, empty states) — _Req 6.1–6.4, 6.6, 3.2_
+- [x] 3.3 Recipe Detail (header, meta, tags, ingredients tap-to-check, steps, version badge, toolbar menu) — _Req 10.1–10.4, 3.1_
+- [x] 3.4 Recipe Editor (form, reorder, fraction entry, validation, discard confirmation, version-on-content-change) — _Req 1.1–1.6, 2.1, 2.2_
+- [x] 3.5 Tag Picker and Move-to-Folder sheets; folder picker in editor — _Req 5.1, 5.5, 16.1_
+- [x] 3.6 Archived screen and archived-mode Detail — _Req 3.2–3.4_
+- [x] 3.7 Dynamic Type + VoiceOver baseline; XCUITest create → edit → search → archive → unarchive — _Req 19.1, 19.2_
+- **Notes (2026-09-08):** rating stars are tappable already (store existed; haptics + history come with 5.4); a minimal folder screen (subfolders + scoped list) ships here, the full browser is 5.5; search tokens cover tags, folders, include-archived (rating/time tokens and `#tag`/`in:` shorthand are 4.4/4.5); on iOS 26 secondary toolbar items collapse into the system "More" overflow, so detail actions are flat items, not a nested menu; the ingredient editor row stacks at accessibility sizes (checked with `-UIPreferredContentSizeCategoryName` screenshots).
 - [ ] 3.8 Release: tag `v0.1.0`
 - **What to test:** create 10 recipes by hand, edit, reorder ingredients, search, sort, archive/unarchive, largest text size. Report anything that loses data.
 

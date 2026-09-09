@@ -32,6 +32,33 @@ import KitchenCore
         #expect(UnitConverter.convert(Fraction(1), from: .cup, to: .piece) == nil)
     }
 
+    /// Dry ingredients cross to weight in metric and back to cups in US;
+    /// liquids stay on volume (Andrew, 2026-09-09).
+    @Test func dryIngredientsConvertByWeight() {
+        func metric(_ name: String, _ quantity: Fraction, _ unit: IngredientUnit) -> String? {
+            let shown = QuantityPipeline.prepare(Ingredient(name: name, quantity: quantity, unit: unit), preference: .metric)
+            return QuantityFormatter.string(quantity: shown.quantity, unit: shown.unit)
+        }
+        func us(_ name: String, _ quantity: Fraction, _ unit: IngredientUnit) -> String? {
+            let shown = QuantityPipeline.prepare(Ingredient(name: name, quantity: quantity, unit: unit), preference: .us)
+            return QuantityFormatter.string(quantity: shown.quantity, unit: shown.unit)
+        }
+        #expect(metric("all-purpose flour", Fraction(1), .cup) == "125 g")
+        #expect(metric("granulated sugar", Fraction(2), .cup) == "400 g")
+        #expect(metric("packed brown sugar", Fraction(1, 2), .cup) == "107 g")
+        #expect(metric("unsalted butter", Fraction(1, 2), .cup) == "114 g")
+        #expect(metric("honey", Fraction(1), .tbsp) == "21 g")
+        #expect(metric("kosher salt", Fraction(1), .tsp) == "5 g")
+        #expect(metric("bread flour", Fraction(8), .cup) == "1 kg")
+        #expect(metric("whole milk", Fraction(1), .cup) == "237 ml", "liquids stay on volume")
+        #expect(metric("olive oil", Fraction(2), .tbsp) == "30 ml")
+        #expect(us("flour", Fraction(250), .g) == "2 cups")
+        #expect(us("sugar", Fraction(100), .g) == "½ cup")
+        #expect(us("butter", Fraction(227), .g) == "1 cup")
+        #expect(us("water", Fraction(500), .ml) == "2⅛ cups", "liquids stay on volume")
+        #expect(metric("flour", Fraction(2), .cup) == "250 g" && us("flour", Fraction(2), .cup) == "2 cups", "US stays US")
+    }
+
     @Test func originalPreferenceLeavesEverything() {
         let ingredient = Ingredient(name: "milk", quantity: Fraction(2), unit: .cup)
         #expect(UnitConverter.convert([ingredient], preference: .original) == [ingredient])

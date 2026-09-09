@@ -48,7 +48,10 @@ minimal, types Sendable-clean.
   event (schema v2, M4); current = the latest event across both tables, or
   none when that event is a clear.
 - Display pipeline: `Scaler.scale` (exact) → `UnitConverter.convert(to:)` →
-  `PracticalRounding.round` → `QuantityFormatter`.
+  `PracticalRounding.round` → `QuantityFormatter`. `UnitConverter` first tries
+  `IngredientDensity` (grams per US cup by ingredient keyword, longest match):
+  US volume → metric weight and metric weight → US volume for dry/semi-solid
+  ingredients; otherwise within-category conversion (ADR-008).
 
 ### PracticalRounding (exact port of the PWA algorithm)
 `q < 1/8` → round to 2 dp · piece/dozen → nearest ½ · pinch/dash/to_taste →

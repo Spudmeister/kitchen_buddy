@@ -57,7 +57,8 @@ import KitchenTesting
         #expect(model.servings == 6 && model.isScaled, "opens at the default servings (18.2)")
         #expect(model.unitPreference == .metric)
         let shown = model.displayedIngredients
-        #expect(shown[0].unit == .ml && shown[1].unit == .ml, "convertible ingredients follow the preference")
+        #expect(shown[0].unit == .g, "flour has a density: cups become grams")
+        #expect(shown[1].unit == .ml, "milk stays on volume")
         #expect(shown[2].unit == .piece && shown[3].unit == .toTaste, "others pass through")
 
         model.unitPreference = .us

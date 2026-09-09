@@ -119,6 +119,12 @@ Order matters: 4.0–4.3 first, so the next TestFlight build has no dead Setting
 - [x] 8.7 Release: tag `v0.3.0` (2026-09-08, build 59, PR #13)
 - **What to test:** AirDrop a `.kbrecipes` between two phones, print a PDF from Files, export a full backup, delete-and-reinstall (TestFlight only), import the backup.
 
+## M10 — Beta feedback (rolling)
+
+- [x] 10.1 Dry ingredients convert by weight: `IngredientDensity` table, `UnitConverter.convertByDensity`, P11 updated, pipeline table cases — _Req 9.6_ (Andrew, 2026-09-09: "flour shouldn't convert from US volume to metric volume")
+- [x] 10.2 No product name but Kitchen Buddy in the UI: the older JSON shape is "Kitchen Buddy recipes (older JSON)", never "Sous Chef" — _Req 14.1_ (Andrew, 2026-09-09)
+- [ ] 10.3 Next feedback item…
+
 ## M9 — Polish, accessibility, Spotlight, beta → tag `v0.4.0`
 
 - [x] 9.1 Spotlight indexing + continuation; **adds "Reindex Spotlight" to Settings (18.4) here** — _Req 19.3_

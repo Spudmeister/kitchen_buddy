@@ -94,6 +94,7 @@ import. Each requirement maps back to the original `sous-chef` (core) and
 
 ### Requirement 9: Unit Conversion and Default System
 1. THE Unit_Converter SHALL convert between US and metric volume and weight units using fixed factors; count and descriptive units (piece, dozen, pinch, dash, to taste) SHALL pass through unchanged.
+6. WHEN an ingredient has a known density (flour, sugar, butter, oats, cocoa, salt and the other common dry or semi-solid ingredients) THEN converting a US volume to metric SHALL give a weight (1 cup flour → 125 g) and converting a metric weight to US SHALL give a volume (250 g flour → 2 cups); liquids and unknown ingredients SHALL convert within their own category. *(Added 2026-09-09 from beta feedback.)*
 2. WHEN converting THEN the Unit_Converter SHALL choose the best unit by magnitude (1,200 ml → 1.2 l; 48 tsp → 1 cup).
 3. THE detail screen SHALL offer Original / US / Metric; the default SHALL come from Preferences; a per-screen change SHALL NOT change the preference.
 4. WHEN the preference is US or Metric THEN every recipe SHALL display in that system; when Original, as written.
@@ -134,7 +135,7 @@ import. Each requirement maps back to the original `sous-chef` (core) and
 *Maps to: core 8.1, 8.2, 8.5, 9.3, 9.7, 9.8; PWA 24.5, 29.1–29.3.*
 
 ### Requirement 14: Import from File
-1. WHEN a user opens a `.kbrecipes` or `.json` file (Files picker, AirDrop, Open In) THEN the Recipe_Book SHALL validate it as format v1 (PWA) or v2.
+1. WHEN a user opens a `.kbrecipes` or `.json` file (Files picker, AirDrop, Open In) THEN the Recipe_Book SHALL validate it as the Kitchen Buddy recipe format (v2, or the older v1 JSON shape). The UI SHALL present one format, "Kitchen Buddy recipes"; no other product name appears. *(Clarified 2026-09-09.)*
 2. WHEN validation succeeds THEN the UI SHALL preview counts (recipes, folders, photos, versions, notes) and list recipe titles, flagging ids already present.
 3. THE user SHALL choose to skip existing recipes (default) or import them as copies with new ids.
 4. WHEN the user confirms THEN the Recipe_Book SHALL take a snapshot first, then import in a single transaction; on any error nothing SHALL be imported.

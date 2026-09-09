@@ -47,7 +47,7 @@ public struct ImportFileView: View {
                         LabeledContent("Folders", value: "\(preview.folderCount)")
                         LabeledContent("Notes", value: "\(preview.noteCount)")
                         LabeledContent("Photos", value: "\(preview.photoCount)")
-                        LabeledContent("Format", value: preview.source == .v2 ? "Kitchen Buddy 2.0" : "Sous Chef (v1)")
+                        LabeledContent("Format", value: preview.source == .v2 ? "Kitchen Buddy recipes 2.0" : "Kitchen Buddy recipes (older JSON)")
                     }
                     if preview.existingCount > 0 {
                         Section {
@@ -80,7 +80,7 @@ public struct ImportFileView: View {
                         Button { isPickerPresented = true } label: { Label("Choose File…", systemImage: "doc") }
                             .accessibilityIdentifier("chooseImportFile")
                     } footer: {
-                        Text("Kitchen Buddy files (.kbrecipes) and Sous Chef exports (.json).")
+                        Text("Kitchen Buddy recipe files (.kbrecipes or .json).")
                     }
                 }
             }

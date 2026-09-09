@@ -3,7 +3,9 @@
 **Status (2026-09-09):** every milestone M0–M9 is merged and tagged;
 **v0.4.0 is the current TestFlight build.** Releases: v0.1.0 (build 43, M3),
 v0.2.0 (51, M5), v0.3.0 (59, M8), v0.4.0 (M9). Open: 9.6 beta feedback
-triage, and the device checks listed under "Human steps". The recipe book
+triage (tracked as M10, rolling), and the device checks listed under
+"Human steps". First M10 items shipped 2026-09-09: dry ingredients convert
+by weight (ADR-008); no product name but Kitchen Buddy in the UI. The recipe book
 is feature-complete against the spec; what follows is feedback-driven.
 
 History: M0–M2 merged (PRs #5, #6, #7); TestFlight build

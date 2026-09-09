@@ -16,6 +16,7 @@ public enum BookOperation: Hashable, Sendable {
     case addTag(recipe: Int, tag: String)
     case removeTag(recipe: Int, tag: String)
     case rate(recipe: Int, value: Int)
+    case clearRating(recipe: Int)
     case archive(recipe: Int)
     case unarchive(recipe: Int)
     case restore(recipe: Int, version: Int)
@@ -45,7 +46,7 @@ public enum BookOperation: Hashable, Sendable {
             case 5: return .setTags(recipe: index.run(&rng), tags: RecipeGen.tags.run(&rng))
             case 6: return .addTag(recipe: index.run(&rng), tag: RecipeGen.tag.run(&rng))
             case 7: return .removeTag(recipe: index.run(&rng), tag: RecipeGen.tag.run(&rng))
-            case 8: return .rate(recipe: index.run(&rng), value: Int.random(in: 1...5, using: &rng))
+            case 8: return Bool.random(using: &rng) ? .rate(recipe: index.run(&rng), value: Int.random(in: 1...5, using: &rng)) : .clearRating(recipe: index.run(&rng))
             case 9: return .archive(recipe: index.run(&rng))
             case 10: return .unarchive(recipe: index.run(&rng))
             case 11: return .restore(recipe: index.run(&rng), version: index.run(&rng))
@@ -120,6 +121,9 @@ public final class BookDriver {
         case .rate(let index, let value):
             guard let id = recipe(index) else { return }
             try book.recipes.rate(id, value: value)
+        case .clearRating(let index):
+            guard let id = recipe(index) else { return }
+            try book.recipes.clearRating(id)
         case .archive(let index):
             guard let id = recipe(index) else { return }
             try book.recipes.archive(id)

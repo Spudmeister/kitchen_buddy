@@ -4,9 +4,11 @@ import KitchenPersistence
 import Observation
 
 /// Recipe Detail state for the current version (or a chosen past version,
-/// read-only). Ingredient checks are view state and clear on leaving.
+/// read-only). Ingredient checks, the servings scale, and the unit choice
+/// are view state: they never touch the stored recipe. The initial servings
+/// and unit system come from Settings.
 ///
-/// Requirements: kitchen-buddy-ios 3.1, 3.4, 10.1–10.3, 15.1
+/// Requirements: kitchen-buddy-ios 3.1, 3.4, 8.1–8.5, 9.3, 9.4, 10.1–10.3, 15.1–15.3, 18.2
 @MainActor @Observable
 public final class RecipeDetailViewModel {
     public let environment: AppEnvironment
@@ -18,11 +20,54 @@ public final class RecipeDetailViewModel {
     public private(set) var isMissing = false
     public var checked: Set<Ingredient.ID> = []
     public var error: String?
+    /// Servings currently displayed; nil until loaded or when the recipe has none.
+    public var servings: Int?
+    /// Display-only unit choice, seeded from Settings and never written back.
+    public var unitPreference: UnitPreference
+    public var isServingsEntryPresented = false
+    public var servingsEntryText = ""
 
     public init(environment: AppEnvironment, recipeID: Recipe.ID, versionNumber: Int? = nil) {
         self.environment = environment
         self.recipeID = recipeID
         self.versionNumber = versionNumber
+        unitPreference = environment.preferences.unitPreference
+    }
+
+    // MARK: Scaling and units
+
+    public var baseServings: Int? { detail?.version.servings }
+    /// Scaling needs a servings value on the recipe (Requirement 8.4).
+    public var canScale: Bool { baseServings != nil }
+    public var scaleFactor: Fraction {
+        guard let servings, let factor = Scaler.factor(from: baseServings, to: servings) else { return .one }
+        return factor
+    }
+    public var isScaled: Bool { scaleFactor != .one }
+    public var scaleFactorText: String { "×\(QuantityFormatter.string(for: scaleFactor))" }
+
+    /// Ingredients scaled exactly, converted to the chosen system, rounded
+    /// to practical measures.
+    public var displayedIngredients: [Ingredient] {
+        guard let detail else { return [] }
+        return QuantityPipeline.prepare(detail.version.ingredients, factor: scaleFactor, preference: unitPreference)
+    }
+
+    public func setServings(_ value: Int) {
+        guard canScale else { return }
+        servings = min(max(1, value), 999)
+    }
+
+    public func resetServings() { servings = baseServings }
+
+    public func beginServingsEntry() {
+        servingsEntryText = servings.map(String.init) ?? ""
+        isServingsEntryPresented = true
+    }
+
+    public func commitServingsEntry() {
+        if let value = Int(servingsEntryText.trimmingCharacters(in: .whitespaces)) { setServings(value) }
+        isServingsEntryPresented = false
     }
 
     public var isArchived: Bool { detail?.recipe.isArchived == true }
@@ -36,6 +81,11 @@ public final class RecipeDetailViewModel {
             detail = try versionNumber.map { try book.recipes.detail(recipeID, version: $0) } ?? (try book.recipes.detail(recipeID))
             isMissing = detail == nil
             folderName = try detail?.recipe.folderID.flatMap { try book.folders.folder($0) }?.name
+            if servings == nil, let base = detail?.version.servings {
+                // Settings › default servings opens scaled (Requirement 18.2).
+                servings = environment.preferences.defaultServings ?? base
+            }
+            if let base = detail?.version.servings, servings != nil, versionNumber == nil, base != detail?.version.servings { servings = base }
         } catch {
             self.error = "\(error)"
         }
@@ -45,8 +95,17 @@ public final class RecipeDetailViewModel {
         if !checked.insert(ingredient.id).inserted { checked.remove(ingredient.id) }
     }
 
+    /// Tapping the current star clears; anything else rates.
     public func rate(_ value: Int) {
-        perform { try $0.recipes.rate(recipeID, value: value) }
+        if detail?.currentRating?.value == value {
+            clearRating()
+        } else {
+            perform { try $0.recipes.rate(recipeID, value: value) }
+        }
+    }
+
+    public func clearRating() {
+        perform { try $0.recipes.clearRating(recipeID) }
     }
 
     public func archive() {

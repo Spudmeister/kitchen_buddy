@@ -220,8 +220,23 @@ public final class RecipeStore: RecipeStoring {
         }
     }
 
+    public func clearRating(_ id: Recipe.ID) throws {
+        try writer.write { db in
+            try RecipeSQL.requireRecipe(id, db)
+            let now = clock.now()
+            try db.execute(sql: "INSERT INTO rating_clears (id, recipe_id, cleared_at) VALUES (?, ?, ?)",
+                           arguments: [Tagged<RatingEvent>().rawValue, id.rawValue, now.sql])
+            try RecipeSQL.touch(id, now: now, db)
+            try SearchIndex.refresh(id, db)
+        }
+    }
+
     public func ratings(_ id: Recipe.ID) throws -> [Rating] {
         try writer.read { db in try RecipeSQL.ratings(id, db) }
+    }
+
+    public func ratingEvents(_ id: Recipe.ID) throws -> [RatingEvent] {
+        try writer.read { db in try RecipeSQL.ratingEvents(id, db) }
     }
 
     // MARK: Notes

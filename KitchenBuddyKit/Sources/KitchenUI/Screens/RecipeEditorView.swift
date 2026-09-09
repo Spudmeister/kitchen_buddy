@@ -14,6 +14,7 @@ public struct RecipeEditorView: View {
     private let onSaved: (Recipe.ID) -> Void
     @State private var isTagPickerPresented = false
     @State private var isFolderPickerPresented = false
+    @State private var isReordering = false
 
     public init(environment: AppEnvironment, model: RecipeEditorViewModel, onSaved: @escaping (Recipe.ID) -> Void = { _ in }) {
         self.environment = environment
@@ -32,30 +33,39 @@ public struct RecipeEditorView: View {
                         .lineLimit(1...4)
                 }
 
+                // Rows iterate by their stable ids and move only in edit mode
+                // (drag handles), so a long press on a text field never starts
+                // a drag and the form keeps its scroll position.
                 Section {
                     ForEach($model.ingredients) { $row in
                         IngredientRowEditor(row: $row)
+                            .moveDisabled(!isReordering)
                     }
                     .onDelete { model.removeIngredients(at: $0) }
                     .onMove { model.moveIngredients(from: $0, to: $1) }
                     Button { model.addIngredient() } label: { Label("Add Ingredient", systemImage: "plus.circle") }
                         .accessibilityIdentifier("addIngredient")
+                        .deleteDisabled(true)
+                        .moveDisabled(true)
                 } header: {
-                    HStack { Text("Ingredients"); Spacer(); ReorderButton() }
+                    HStack { Text("Ingredients"); Spacer(); reorderToggle("reorderIngredients") }
                 } footer: {
                     Text("Quantities take fractions: 1 1/2, ¾, 0.75.")
                 }
 
                 Section {
-                    ForEach(Array($model.steps.enumerated()), id: \.element.id) { index, $row in
-                        StepRowEditor(number: index + 1, row: $row)
+                    ForEach($model.steps) { $row in
+                        StepRowEditor(number: (model.steps.firstIndex { $0.id == row.id } ?? 0) + 1, row: $row)
+                            .moveDisabled(!isReordering)
                     }
                     .onDelete { model.removeSteps(at: $0) }
                     .onMove { model.moveSteps(from: $0, to: $1) }
                     Button { model.addStep() } label: { Label("Add Step", systemImage: "plus.circle") }
                         .accessibilityIdentifier("addStep")
+                        .deleteDisabled(true)
+                        .moveDisabled(true)
                 } header: {
-                    HStack { Text("Steps"); Spacer(); ReorderButton() }
+                    HStack { Text("Steps"); Spacer(); reorderToggle("reorderSteps") }
                 }
 
                 Section("Details") {
@@ -71,7 +81,7 @@ public struct RecipeEditorView: View {
                     TextField("Source URL (optional)", text: $model.sourceText).urlKeyboard().autocorrectionDisabled()
                 }
 
-                Section("Organize") {
+                Section {
                     Button { isTagPickerPresented = true } label: {
                         LabeledContent("Tags") {
                             Text(model.tags.isEmpty ? "None" : model.tags.joined(separator: ", "))
@@ -85,6 +95,31 @@ public struct RecipeEditorView: View {
                         }
                     }
                     .tint(.primary)
+                } header: {
+                    Text("Organize")
+                } footer: {
+                    // Dietary suggestions: offered, never applied on their own (5.3, 5.4).
+                    if !model.dietarySuggestions.isEmpty {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Looks like this recipe could be tagged:")
+                            FlowLayout(spacing: 6) {
+                                ForEach(model.dietarySuggestions, id: \.self) { suggestion in
+                                    Button {
+                                        model.accept(suggestion)
+                                    } label: {
+                                        Label(suggestion.displayName, systemImage: "plus")
+                                            .font(.caption)
+                                            .padding(.horizontal, 8)
+                                            .padding(.vertical, 4)
+                                            .background(.tint.opacity(0.12), in: Capsule())
+                                    }
+                                    .accessibilityLabel("Add tag \(suggestion.displayName)")
+                                    .accessibilityIdentifier("suggest-\(suggestion.rawValue)")
+                                }
+                            }
+                        }
+                        .padding(.top, 4)
+                    }
                 }
 
                 if !model.problems.isEmpty {
@@ -99,6 +134,8 @@ public struct RecipeEditorView: View {
             }
             .navigationTitle(model.navigationTitle)
             .inlineTitle()
+            .reorderMode(active: isReordering)
+            .onChange(of: isReordering) { if isReordering { Keyboard.dismiss() } }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
@@ -133,6 +170,13 @@ public struct RecipeEditorView: View {
             }
         }
         .interactiveDismissDisabled(model.hasChanges)
+    }
+
+    private func reorderToggle(_ identifier: String) -> some View {
+        Button(isReordering ? "Done" : "Reorder") { isReordering.toggle() }
+            .font(.subheadline)
+            .textCase(nil)
+            .accessibilityIdentifier(identifier)
     }
 
     private var folderName: String {

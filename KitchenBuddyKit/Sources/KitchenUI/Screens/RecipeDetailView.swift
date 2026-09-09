@@ -71,7 +71,7 @@ public struct RecipeDetailView: View {
     @ViewBuilder
     private func content(_ detail: RecipeDetail) -> some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            LazyVStack(alignment: .leading, spacing: 20, pinnedViews: [.sectionHeaders]) {
                 if let archivedAt = detail.recipe.archivedAt {
                     Label("Archived \(archivedAt.formatted(date: .abbreviated, time: .omitted)). Unarchive to edit.",
                           systemImage: "archivebox")
@@ -93,7 +93,9 @@ public struct RecipeDetailView: View {
                 metaRow(detail)
 
                 HStack(spacing: 12) {
-                    RatingStars(value: detail.currentRating?.value, onSelect: model.isReadOnly ? nil : { model.rate($0) })
+                    RatingStars(value: detail.currentRating?.value,
+                                onSelect: model.isReadOnly ? nil : { model.rate($0) },
+                                onClear: model.isReadOnly ? nil : { model.clearRating() })
                     Text("v\(detail.version.version) · \(detail.version.createdAt.formatted(date: .abbreviated, time: .omitted))")
                         .font(.caption)
                         .padding(.horizontal, 8)
@@ -107,30 +109,83 @@ public struct RecipeDetailView: View {
                     Label(folderName, systemImage: "folder").font(.subheadline).foregroundStyle(.secondary)
                 }
 
-                section("Ingredients") {
-                    ForEach(detail.version.ingredients) { ingredient in
-                        ingredientRow(ingredient)
+                Section {
+                    section("Ingredients") {
+                        ForEach(model.displayedIngredients) { ingredient in
+                            ingredientRow(ingredient)
+                        }
                     }
-                }
+                    .padding(.top, 8)
 
-                section("Steps") {
-                    ForEach(detail.version.instructions) { step in
-                        stepRow(step)
+                    section("Steps") {
+                        ForEach(detail.version.instructions) { step in
+                            stepRow(step)
+                        }
                     }
-                }
 
-                if let url = detail.version.sourceURL {
-                    Link(destination: url) { Label(url.host ?? url.absoluteString, systemImage: "link") }
-                        .font(.subheadline)
-                }
+                    if let url = detail.version.sourceURL {
+                        Link(destination: url) { Label(url.host ?? url.absoluteString, systemImage: "link") }
+                            .font(.subheadline)
+                    }
 
-                Text("Added \(detail.recipe.createdAt.formatted(date: .abbreviated, time: .omitted)) · Updated \(detail.recipe.updatedAt.formatted(date: .abbreviated, time: .omitted))")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    Text("Added \(detail.recipe.createdAt.formatted(date: .abbreviated, time: .omitted)) · Updated \(detail.recipe.updatedAt.formatted(date: .abbreviated, time: .omitted))")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                } header: {
+                    controlsBar
+                }
             }
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .alert("Servings", isPresented: $model.isServingsEntryPresented) {
+            TextField("Servings", text: $model.servingsEntryText).numberKeyboard()
+            Button("Scale") { model.commitServingsEntry() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Scale the ingredients to this many servings.")
+        }
+    }
+
+    /// Servings stepper + factor + reset, and the unit control. Pinned above
+    /// the ingredients; display state only (Requirements 8.1–8.5, 9.3, 9.4).
+    private var controlsBar: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            if model.canScale, let servings = model.servings {
+                HStack(spacing: 12) {
+                    Stepper(value: Binding(get: { servings }, set: { model.setServings($0) }), in: 1...999) {
+                        Text("\(servings) \(servings == 1 ? "serving" : "servings")")
+                            .font(.headline)
+                            .contentShape(Rectangle())
+                            .onLongPressGesture { model.beginServingsEntry() }
+                            .accessibilityHint("Long-press to type a number")
+                    }
+                    if model.isScaled {
+                        Text(model.scaleFactorText)
+                            .font(.subheadline.monospacedDigit())
+                            .foregroundStyle(.secondary)
+                            .accessibilityLabel("Scale factor \(model.scaleFactorText)")
+                        Button("Reset") { model.resetServings() }
+                            .font(.subheadline)
+                            .accessibilityIdentifier("resetServings")
+                    }
+                }
+            } else {
+                Label("Add a servings count to scale this recipe.", systemImage: "info.circle")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+            Picker("Units", selection: $model.unitPreference) {
+                Text("As written").tag(UnitPreference.original)
+                Text("US").tag(UnitPreference.us)
+                Text("Metric").tag(UnitPreference.metric)
+            }
+            .pickerStyle(.segmented)
+            .accessibilityIdentifier("unitPicker")
+        }
+        .padding(.vertical, 10)
+        .padding(.horizontal, 12)
+        .background(.bar, in: RoundedRectangle(cornerRadius: 12))
     }
 
     private func metaRow(_ detail: RecipeDetail) -> some View {

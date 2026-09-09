@@ -44,13 +44,16 @@ minimal, types Sendable-clean.
   at the store boundary so returned values equal fetched ones (ADR-007).
 - `RecipeVersion` is immutable; `Recipe` points at `currentVersion`.
 - `RecipeNote {id, recipeID, body, cookedOn, pinned, versionAtCreation, createdAt, updatedAt, deletedAt}`.
-- `Rating` rows are append-only; current = latest `ratedAt`.
+- `Rating` rows are append-only; clearing a rating appends a `rating_clears`
+  event (schema v2, M4); current = the latest event across both tables, or
+  none when that event is a clear.
 - Display pipeline: `Scaler.scale` (exact) → `UnitConverter.convert(to:)` →
   `PracticalRounding.round` → `QuantityFormatter`.
 
 ### PracticalRounding (exact port of the PWA algorithm)
 `q < 1/8` → round to 2 dp · piece/dozen → nearest ½ · pinch/dash/to_taste →
-whole · otherwise fractional part `< 1/16` → floor, else nearest of
+whole · **ml/g at ≥ 1 → whole (added in M4: the port printed "236⅔ ml")** ·
+otherwise fractional part `< 1/16` → floor, else nearest of
 {1/8, 1/4, 1/3, 1/2, 2/3, 3/4, 1}, ties → smaller.
 
 ### UnitConverter tables
@@ -117,7 +120,7 @@ the share inbox, `.kbrecipes` Open In, and quick actions resolve to a Route.
 | Import from URL | URL field + `PasteButton`; progress; success → editor review; failure reasons + Enter Manually |
 | Export / Share | PDF or `.kbrecipes`; Share vs Backup preset; photos toggle with size; `ShareLink` over `Transferable` |
 | Import from file | `fileImporter` + `.onOpenURL`; review sheet with counts, titles, Skip/Copy, destination folder; snapshot → transaction |
-| Settings / Backups | preferences; Backups list with verification badges, Back Up Now, Restore…, Share snapshot; iCloud status; Damaged Databases (share only); Recovery full-screen cover at launch |
+| Settings / Backups | preferences; Backups list with verification badges, Back Up Now, Restore…, Share snapshot; iCloud status; Damaged Databases (share only); Recovery full-screen cover at launch. Each preference row appears only once something reads it (tasks.md "No dead controls") |
 | Archived, Tag Picker, Move to Folder | as named |
 
 ## Export format v2

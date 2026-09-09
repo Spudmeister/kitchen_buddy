@@ -41,9 +41,7 @@ public enum SearchIndex {
             SELECT t.name FROM tags t JOIN recipe_tags rt ON rt.tag_id = t.id
             WHERE rt.recipe_id = ? ORDER BY t.name COLLATE NOCASE
             """, arguments: [recipeID.rawValue])
-        let latestRating = try Int.fetchOne(db, sql: """
-            SELECT value FROM ratings WHERE recipe_id = ? ORDER BY rated_at DESC, rowid DESC LIMIT 1
-            """, arguments: [recipeID.rawValue])
+        let latestRating = try RecipeSQL.latestRating(recipeID, db)?.value
         let thumbnail = try String.fetchOne(db, sql: """
             SELECT id FROM photos WHERE recipe_id = ? AND removed_at IS NULL ORDER BY sort_order, created_at LIMIT 1
             """, arguments: [recipeID.rawValue])

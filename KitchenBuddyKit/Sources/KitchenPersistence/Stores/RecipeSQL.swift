@@ -83,9 +83,28 @@ enum RecipeSQL {
                          arguments: [recipeID.rawValue]).map(rating(from:))
     }
 
+    /// The newest rating unless a clear came at or after it.
     static func latestRating(_ recipeID: Recipe.ID, _ db: Database) throws -> Rating? {
-        try Row.fetchOne(db, sql: "SELECT * FROM ratings WHERE recipe_id = ? ORDER BY rated_at DESC, rowid DESC LIMIT 1",
-                         arguments: [recipeID.rawValue]).map(rating(from:))
+        guard let rating = try Row.fetchOne(db, sql: "SELECT * FROM ratings WHERE recipe_id = ? ORDER BY rated_at DESC, rowid DESC LIMIT 1",
+                                            arguments: [recipeID.rawValue]).map(rating(from:)) else { return nil }
+        let lastClear = try String.fetchOne(db, sql: "SELECT cleared_at FROM rating_clears WHERE recipe_id = ? ORDER BY cleared_at DESC, rowid DESC LIMIT 1",
+                                            arguments: [recipeID.rawValue])
+        if let lastClear, lastClear >= rating.ratedAt.sql { return nil }
+        return rating
+    }
+
+    /// Ratings and clears interleaved, oldest first.
+    static func ratingEvents(_ recipeID: Recipe.ID, _ db: Database) throws -> [RatingEvent] {
+        let rated = try ratings(recipeID, db).map(RatingEvent.rated)
+        let cleared = try Row.fetchAll(db, sql: "SELECT * FROM rating_clears WHERE recipe_id = ? ORDER BY cleared_at, rowid",
+                                       arguments: [recipeID.rawValue]).map { row in
+            RatingEvent.cleared(id: row.id("id"), recipeID: row.id("recipe_id"), at: row.timestamp("cleared_at"))
+        }
+        return (rated + cleared).sorted { a, b in
+            if a.date != b.date { return a.date < b.date }
+            // Same instant: a clear after a rating wins, matching `latestRating`.
+            return a.value != nil && b.value == nil
+        }
     }
 
     static func rating(from row: Row) -> Rating {

@@ -34,6 +34,39 @@ import KitchenTesting
         #expect(!model.isSearching && model.query == RecipeQuery(sort: .rating, direction: .descending))
     }
 
+    @Test @MainActor func shorthandAndTokensBecomeFilters() async throws {
+        let environment = try Self.environment()
+        let desserts = try environment.book.folders.create(name: "Desserts", parentID: nil)
+        let pie = try environment.book.recipes.create(Self.draft("Apple Pie", tags: ["Dessert", "Baking"], folderID: desserts.id))
+        let soup = try environment.book.recipes.create(Self.draft("Apple Soup", tags: ["Soup"]))
+        try environment.book.recipes.rate(pie.id, value: 5)
+        try environment.book.recipes.rate(soup.id, value: 2)
+        let model = LibraryViewModel(environment: environment)
+        model.refreshSideData()
+
+        model.searchText = "apple #dessert"
+        #expect(model.query.text == "apple" && model.query.tags == ["dessert"])
+        model.searchText = "in:desserts"
+        #expect(model.query.folderID == desserts.id && model.query.text.isEmpty)
+        model.searchText = "in:nowhere apple"
+        #expect(model.query.folderID == nil && model.query.text == "nowhere apple", "unknown folder stays plain text")
+        model.searchText = ""
+        model.tokens = [.minimumRating(4), .maximumMinutes(30)]
+        #expect(model.query.minimumRating == 4 && model.query.maximumTotalMinutes == 30)
+        #expect(model.suggestedTokens.contains(.minimumRating(4)) == false, "active tokens are not re-suggested")
+        #expect(model.suggestedTokens.contains(.maximumMinutes(60)))
+
+        model.tokens = [.minimumRating(4)]
+        model.start()
+        defer { model.stop() }
+        try await waitUntil { model.hasLoaded }
+        #expect(model.results.map(\.id) == [pie.id])
+        model.tokens = []
+        model.searchText = "#soup"
+        model.start()
+        try await waitUntil { model.results.map(\.id) == [soup.id] }
+    }
+
     @Test @MainActor func observationDeliversResultsAndEmptyStates() async throws {
         let environment = try Self.environment()
         let model = LibraryViewModel(environment: environment)

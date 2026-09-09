@@ -7,7 +7,7 @@ import KitchenTesting
 /// Row counts of every user-content table, for the non-destruction properties.
 struct TableCounts: Equatable, CustomStringConvertible {
     static let tables = ["recipes", "recipe_versions", "ingredients", "instructions", "ratings",
-                         "recipe_notes", "folders", "tags", "photos"]
+                         "rating_clears", "recipe_notes", "folders", "tags", "photos"]
     var counts: [String: Int]
 
     static func snapshot(_ book: RecipeBook) throws -> TableCounts {

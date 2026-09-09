@@ -22,6 +22,11 @@ import KitchenTesting
             #expect(error <= Fraction(1, 200), "seed \(seed)")
             return
         }
+        if (unit == .ml || unit == .g) && quantity >= .one {
+            #expect(rounded.isWhole, "seed \(seed): \(rounded)")
+            #expect(error <= Fraction(1, 2), "seed \(seed)")
+            return
+        }
         switch unit?.category {
         case .count:
             #expect(rounded.denominator == 1 || rounded.denominator == 2, "seed \(seed): \(rounded)")

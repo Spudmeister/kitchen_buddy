@@ -69,6 +69,14 @@ remain the requirements source, `.kiro/specs/kitchen-buddy-ios/` is the live spe
   state the plan, the current state, and the gap — then stop.
 - **Say what's happening at every hand-off:** what was done, what wasn't,
   what happens next.
+- **No dead controls.** A setting, menu item, toolbar action, or search
+  token ships in the same build as the code that reads it — never as a
+  placeholder for a later milestone. Before any tag, walk every screen and
+  confirm each control does something (each milestone has a "control walk"
+  task). Build 43 shipped three Settings rows nothing read; don't repeat it.
+- **Watch what you push.** A push or merge is unfinished until its Actions
+  run reports; never merge a PR before its checks are green; a red run on
+  `main` is yours to fix without being asked.
 
 ## Spec-driven development
 

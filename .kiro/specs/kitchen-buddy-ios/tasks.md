@@ -74,13 +74,14 @@ Order matters: 4.0–4.3 first, so the next TestFlight build has no dead Setting
 
 ## M5 — Versions, lineage, notes, ratings, folders → tag `v0.2.0`
 
-- [ ] 5.1 Version History + Viewer + restore; **adds the "Version History" item to the Detail overflow here** (10.3) — _Req 2.3–2.5_
-- [ ] 5.2 Duplicate + Lineage screen + lineage section — _Req 4.1–4.4_
-- [ ] 5.3 Notes section, Notes screen, Note Editor, pin, soft delete with undo — _Req 7.1–7.5_
-- [ ] 5.4 Ratings: star control with haptics, history, Library filter/sort — _Req 15.1–15.5_
-- [ ] 5.5 Folder browser: nested, create/rename/move/delete, multi-select move, counts — _Req 16.1–16.6, 18.1_
-- [ ] 5.6 P2–P4, P17–P20, P25 end-to-end; UI tests for restore and folder cycle rejection
-- [ ] 5.7 Control walk (every new menu item, sheet, and Settings row reads or writes something)
+- [x] 5.1 Version History + Viewer + restore; **adds the "Version History" item to the Detail overflow here** (10.3) — _Req 2.3–2.5_
+- [x] 5.2 Duplicate + Lineage screen + lineage section — _Req 4.1–4.4_
+- [x] 5.3 Notes section, Notes screen, Note Editor, pin, soft delete with undo — _Req 7.1–7.5_
+- [x] 5.4 Ratings: star control with haptics, history, Library filter/sort — _Req 15.1–15.5_
+- [x] 5.5 Folder browser: nested, create/rename/move/delete, multi-select move, counts — _Req 16.1–16.6, 18.1_
+- [x] 5.6 P2–P4, P17–P20, P25 end-to-end; UI tests for restore and folder cycle rejection
+- [x] 5.7 Control walk (every new menu item, sheet, and Settings row reads or writes something)
+- **Notes (2026-09-08):** Version History summarises each version against its predecessor; restore is offered from the read-only version view with a confirmation and lands back on the recipe; rating haptics use `sensoryFeedback`; long-press the stars for history; Folders is reachable from the Library overflow and every folder screen; the move sheet never offers a folder's own subtree, and the store's cycle rejection is still surfaced if it fires.
 - [ ] 5.8 Release: tag `v0.2.0`
 - **What to test:** edit a recipe three times, restore v1, confirm v4 appears; duplicate and follow lineage; nest folders three deep and try to move a folder into its own child.
 

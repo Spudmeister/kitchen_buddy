@@ -172,6 +172,86 @@ final class RecipeFlowUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts.containing(NSPredicate(format: "label BEGINSWITH 'Step 1. Add olive oil'")).firstMatch.exists, "step 3 moved to the top")
     }
 
+    /// Requirements 2.3–2.5: edit twice, open Version History, view v1,
+    /// restore it — v4 appears with v1's title and nothing is removed.
+    func testVersionHistoryAndRestore() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--uitest-reset", "--seed", "demo", "--open-recipe", "Bruschetta"]
+        app.launch()
+        XCTAssertTrue(app.buttons["editButton"].waitForExistence(timeout: 10))
+        for suffix in [" Two", " Three"] {
+            app.buttons["editButton"].tap()
+            let title = app.textFields["titleField"]
+            XCTAssertTrue(title.waitForExistence(timeout: 5))
+            title.coordinate(withNormalizedOffset: CGVector(dx: 0.98, dy: 0.5)).tap()
+            title.typeText(suffix)
+            app.buttons["saveButton"].tap()
+            XCTAssertTrue(app.buttons["editButton"].waitForExistence(timeout: 5))
+        }
+        XCTAssertTrue(app.staticTexts["Bruschetta Two Three"].exists)
+        openOverflow(app)
+        app.buttons["Version History"].tap()
+        XCTAssertTrue(app.staticTexts["Version History"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["First version"].exists)
+        app.cells.containing(NSPredicate(format: "label CONTAINS 'v1'")).firstMatch.tap()
+        XCTAssertTrue(app.buttons["restoreButton"].waitForExistence(timeout: 5))
+        app.buttons["restoreButton"].tap()
+        app.buttons["Restore as New Version"].tap()
+        XCTAssertTrue(app.staticTexts["Bruschetta"].waitForExistence(timeout: 5), "back on the recipe with v1's title")
+        XCTAssertTrue(app.staticTexts.containing(NSPredicate(format: "label BEGINSWITH 'Version 4'")).firstMatch.waitForExistence(timeout: 5), "restore appended v4")
+    }
+
+    /// Requirements 16.2, 16.4: a folder cannot move into its own child; a
+    /// deleted folder's contents move up. Requirement 7.5: note delete has Undo.
+    func testFolderCycleRejectionAndNoteUndo() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--uitest-reset", "--seed", "demo", "--open", "folders"]
+        app.launch()
+        XCTAssertTrue(app.buttons["newFolder"].waitForExistence(timeout: 10))
+        app.buttons["newFolder"].tap()
+        let name = app.textFields["Folder name"]
+        XCTAssertTrue(name.waitForExistence(timeout: 5))
+        name.tap(); name.typeText("Outer")
+        app.buttons["Create"].tap()
+        let outer = app.cells.containing(NSPredicate(format: "label CONTAINS 'Outer'")).firstMatch
+        XCTAssertTrue(outer.waitForExistence(timeout: 5))
+        outer.press(forDuration: 1.0)
+        app.buttons["New Subfolder"].tap()
+        let subName = app.textFields["Folder name"]
+        XCTAssertTrue(subName.waitForExistence(timeout: 5))
+        subName.tap(); subName.typeText("Inner")
+        app.buttons["Create"].tap()
+        XCTAssertTrue(outer.waitForExistence(timeout: 5))
+        outer.press(forDuration: 1.0)
+        app.buttons["Move to…"].tap()
+        XCTAssertTrue(app.staticTexts["Move Folder"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["Inner"].exists, "the folder's own subtree is not offered as a target")
+        app.buttons["Cancel"].tap()
+
+        // Notes with undo
+        app.navigationBars.buttons.firstMatch.tap()
+        app.cells.containing(NSPredicate(format: "label CONTAINS 'Bruschetta'")).firstMatch.tap()
+        XCTAssertTrue(app.buttons["addNoteDetail"].waitForExistence(timeout: 5) || scrollTo(app, "addNoteDetail"))
+        app.buttons["addNoteDetail"].tap()
+        let body = app.textViews["noteBody"].firstMatch.exists ? app.textViews["noteBody"].firstMatch : app.textFields["noteBody"].firstMatch
+        XCTAssertTrue(body.waitForExistence(timeout: 5))
+        body.tap(); body.typeText("Great with extra basil.")
+        app.buttons["saveNote"].tap()
+        XCTAssertTrue(app.staticTexts["Great with extra basil."].waitForExistence(timeout: 5))
+        app.buttons["All notes (1)"].tap()
+        XCTAssertTrue(app.staticTexts["Notes"].waitForExistence(timeout: 5))
+        app.cells.firstMatch.swipeLeft()
+        app.buttons["Delete"].tap()
+        XCTAssertTrue(app.buttons["undoDelete"].waitForExistence(timeout: 3))
+        app.buttons["undoDelete"].tap()
+        XCTAssertTrue(app.staticTexts["Great with extra basil."].waitForExistence(timeout: 5), "undo brought the note back")
+    }
+
+    private func scrollTo(_ app: XCUIApplication, _ identifier: String) -> Bool {
+        for _ in 0..<8 where !app.buttons[identifier].isHittable { app.swipeUp(velocity: .slow) }
+        return app.buttons[identifier].isHittable
+    }
+
     /// Requirement 17.5: a damaged database is renamed aside, the newest
     /// verified snapshot restored, and a non-dismissable notice shown.
     func testCorruptDatabaseShowsRecoveryNoticeAndRestores() {

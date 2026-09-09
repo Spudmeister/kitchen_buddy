@@ -48,6 +48,10 @@ public struct RootView: View {
         case .recipe(let id): RecipeDetailView(environment: environment, recipeID: id)
         case .recipeVersion(let id, let version): RecipeDetailView(environment: environment, recipeID: id, versionNumber: version)
         case .folder(let id): FolderView(environment: environment, folderID: id)
+        case .folders: FoldersView(environment: environment)
+        case .history(let id): VersionHistoryView(environment: environment, recipeID: id)
+        case .lineage(let id): LineageView(environment: environment, recipeID: id)
+        case .notes(let id): NotesView(environment: environment, recipeID: id)
         case .archived: ArchivedView(environment: environment)
         case .settings: SettingsView(environment: environment)
         case .backups: BackupsView(environment: environment)
@@ -74,6 +78,16 @@ public struct RootView: View {
             RecipeFolderSheet(environment: environment, recipeID: id)
         case .newFolder(let parentID):
             NewFolderView(environment: environment, parentID: parentID)
+        case .noteEditor(let recipeID, let noteID):
+            NoteEditorView(environment: environment, recipeID: recipeID, noteID: noteID)
+        case .ratingHistory(let id):
+            RatingHistorySheet(environment: environment, recipeID: id)
+        case .renameFolder(let id):
+            RenameFolderView(environment: environment, folderID: id)
+        case .moveFolder(let id):
+            MoveFolderView(environment: environment, folderID: id)
+        case .moveRecipes(let ids):
+            MoveRecipesView(environment: environment, recipeIDs: ids)
         }
     }
 }

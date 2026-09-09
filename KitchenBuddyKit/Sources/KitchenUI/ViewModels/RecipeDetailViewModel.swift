@@ -26,6 +26,9 @@ public final class RecipeDetailViewModel {
     public var unitPreference: UnitPreference
     public var isServingsEntryPresented = false
     public var servingsEntryText = ""
+    /// Bumps on every saved rating so the view can play haptic feedback (15.5).
+    public private(set) var ratingFeedbackTrigger = 0
+    public private(set) var heritage: RecipeHeritage?
 
     public init(environment: AppEnvironment, recipeID: Recipe.ID, versionNumber: Int? = nil) {
         self.environment = environment
@@ -81,6 +84,7 @@ public final class RecipeDetailViewModel {
             detail = try versionNumber.map { try book.recipes.detail(recipeID, version: $0) } ?? (try book.recipes.detail(recipeID))
             isMissing = detail == nil
             folderName = try detail?.recipe.folderID.flatMap { try book.folders.folder($0) }?.name
+            heritage = try book.recipes.heritage(recipeID)
             if servings == nil, let base = detail?.version.servings {
                 // Settings › default servings opens scaled (Requirement 18.2).
                 servings = environment.preferences.defaultServings ?? base
@@ -101,12 +105,29 @@ public final class RecipeDetailViewModel {
             clearRating()
         } else {
             perform { try $0.recipes.rate(recipeID, value: value) }
+            ratingFeedbackTrigger += 1
         }
     }
 
     public func clearRating() {
         perform { try $0.recipes.clearRating(recipeID) }
+        ratingFeedbackTrigger += 1
     }
+
+    /// Restore this past version as a new current version (2.5).
+    @discardableResult
+    public func restoreThisVersion() -> Bool {
+        guard let number = versionNumber else { return false }
+        do {
+            _ = try environment.book.recipes.restore(recipeID, toVersion: number)
+            return true
+        } catch {
+            self.error = "\(error)"
+            return false
+        }
+    }
+
+    public var hasLineage: Bool { heritage.map { $0.parent != nil || !$0.children.isEmpty } ?? false }
 
     public func archive() {
         perform { try $0.recipes.archive(recipeID) }

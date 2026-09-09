@@ -1,5 +1,6 @@
 import Foundation
 import KitchenCore
+import KitchenPersistence
 import Observation
 
 /// Navigation state: the stack path and the one presented sheet. Screens
@@ -20,6 +21,8 @@ public final class Router {
         case moveRecipes([Recipe.ID])
         case photoViewer(Recipe.ID, index: Int)
         case importURL(URL?)
+        case importFile(URL?)
+        case share(ExportOptions.Scope, backup: Bool)
 
         public var id: String {
             switch self {
@@ -35,6 +38,8 @@ public final class Router {
             case .moveRecipes(let ids): return "moverecipes-\(ids.map(\.rawValue).joined(separator: ","))"
             case .photoViewer(let id, let index): return "viewer-\(id)-\(index)"
             case .importURL(let url): return "import-\(url?.absoluteString ?? "")"
+            case .importFile(let url): return "importfile-\(url?.lastPathComponent ?? "")"
+            case .share(let scope, let backup): return "share-\(scope)-\(backup)"
             }
         }
     }

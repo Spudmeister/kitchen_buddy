@@ -301,6 +301,27 @@ final class RecipeFlowUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts.containing(NSPredicate(format: "label CONTAINS 'example.com'")).firstMatch.exists, "source link kept")
     }
 
+    /// Requirements 14.2–14.4: the review sheet previews counts and flags
+    /// existing recipes; importing as copies adds them.
+    func testImportFileReviewAndCopies() {
+        let app = XCUIApplication()
+        app.launchArguments = ["--uitest-reset", "--seed", "demo", "--open-import-file"]
+        app.launch()
+        XCTAssertTrue(app.staticTexts["Import"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Already in your book"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts.containing(NSPredicate(format: "label CONTAINS '34'")).firstMatch.exists)
+        app.buttons["Import as copies"].tap()
+        app.buttons["confirmImport"].tap()
+        XCTAssertTrue(app.staticTexts.containing(NSPredicate(format: "label BEGINSWITH 'Imported 34 recipes'")).firstMatch.waitForExistence(timeout: 20))
+        app.buttons["Done"].tap()
+        XCTAssertTrue(app.staticTexts["68 recipes"].waitForExistence(timeout: 10) || scrollToBottom(app, "68 recipes"))
+    }
+
+    private func scrollToBottom(_ app: XCUIApplication, _ text: String) -> Bool {
+        for _ in 0..<12 where !app.staticTexts[text].exists { app.swipeUp() }
+        return app.staticTexts[text].exists
+    }
+
     /// Requirement 17.5: a damaged database is renamed aside, the newest
     /// verified snapshot restored, and a non-dismissable notice shown.
     func testCorruptDatabaseShowsRecoveryNoticeAndRestores() {

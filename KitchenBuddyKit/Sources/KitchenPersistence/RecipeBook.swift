@@ -17,6 +17,8 @@ public final class RecipeBook: Sendable {
     public let preferences: PreferencesStore
     public let photos: PhotoStore
     public let backups: BackupManager
+    public let exporter: Exporter
+    public let importer: Importer
     public let launchReport: LaunchReport
     /// False for in-memory books, which skip the pre-import snapshot.
     public let isPersistent: Bool
@@ -40,6 +42,9 @@ public final class RecipeBook: Sendable {
         try Self.rebuildIndexIfStale(handle.writer)
         // After housekeeping, so its change baseline excludes the rebuild.
         backups = BackupManager(layout: layout, handle: handle, clock: clock)
+        let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "0"
+        exporter = Exporter(handle: handle, photos: photos, clock: clock, appBuild: build)
+        importer = Importer(handle: handle, photos: photos, backups: backups, clock: clock, isPersistent: isPersistent)
     }
 
     /// Opens (creating if needed) the on-disk database in `layout`:

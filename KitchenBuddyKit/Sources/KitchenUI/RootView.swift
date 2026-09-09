@@ -94,6 +94,10 @@ public struct RootView: View {
             PhotoViewerView(environment: environment, recipeID: id, index: index)
         case .importURL(let url):
             ImportURLView(environment: environment, prefill: url)
+        case .importFile(let url):
+            ImportFileView(environment: environment, url: url)
+        case .share(let scope, let backup):
+            ShareView(environment: environment, scope: scope, backup: backup, pdfInput: nil)
         }
     }
 }

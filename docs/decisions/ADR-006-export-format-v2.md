@@ -1,6 +1,6 @@
 # ADR-006: Export format v2 (`.kbrecipes`)
 
-**Status:** Proposed — finalized in M7
+**Status:** Accepted (finalized 2026-09-08, M8)
 **Date:** 2026-09-07
 
 ## Context
@@ -22,6 +22,25 @@ read the old files (P23).
   tools) and `quantityFraction` ("1/3"); readers prefer the fraction.
 - A `LegacyV1Reader` lifts v1 files into the v2 shape in memory.
 
+## Final shape (M8)
+
+- Records: `folders[]` (id, name, parentId, timestamps, deletedAt) and
+  `recipes[]` (id, currentVersion, folderId, parentRecipeId, archivedAt,
+  timestamps, tags, versions[], ratings[], ratingClears[], notes[],
+  photos[]). Versions carry ingredients (`quantity` + `quantityFraction`,
+  unit and category raw values) and instructions; photos carry dimensions,
+  caption, order and optional base64 `data`.
+- Presets: *share* = current version only, no notes/ratings/history,
+  a single recipe drops its folder; *backup* = everything including archived
+  recipes and soft-deleted folders. Photos optional in both.
+- Import: skip-existing keeps ids (a restore of a backup reproduces the
+  rows); copy-as-new remaps every id; folders match by id and are created
+  parents-first; a missing parent recipe clears the link; snapshot before,
+  one transaction, orphaned photo files removed on rollback.
+- v1 (`"1.0"` / `"1.0.0"` envelopes, arrays, the fixture dictionary) is
+  lifted to v2 with fresh ids and one version per recipe.
+
 ## Consequences
 
 - Committed sample files for every format version decode forever (iron rule 5).
+- `.kbrecipes` is the App's exported UTType (`net.puddleglum.kitchenbuddy.recipes`, conforms to JSON); `.json` opens too.

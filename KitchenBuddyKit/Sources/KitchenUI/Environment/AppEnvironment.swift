@@ -31,6 +31,9 @@ public final class AppEnvironment {
     public var urlImporter = RecipeURLImporter()
     /// The Share Extension's queue.
     public var shareInbox = ShareInbox()
+    /// Set by the Detail overflow "Share…" item; the Detail view presents
+    /// the share sheet with its current scale and units.
+    public var detailShareRequest: Recipe.ID?
 
     public init(book: RecipeBook, cloud: CloudMirror, sampleRecipes: Data? = nil) {
         self.book = book
@@ -97,8 +100,13 @@ public final class AppEnvironment {
         router.present(.importURL(url))
     }
 
-    /// `kitchenbuddy://recipe/<id>` and `kitchenbuddy://import?url=…` (19.4).
+    /// `kitchenbuddy://recipe/<id>`, `kitchenbuddy://import?url=…`, and
+    /// `.kbrecipes` / `.json` files opened from Files, AirDrop, Mail (19.4).
     public func open(_ url: URL) {
+        if url.isFileURL {
+            router.present(.importFile(url))
+            return
+        }
         guard url.scheme == "kitchenbuddy" else { return }
         switch url.host {
         case "recipe":

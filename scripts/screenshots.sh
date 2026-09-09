@@ -38,6 +38,8 @@ SHOTS=(
   "recipe-photos|3|--seed demo --seed-photos --open-recipe 'BBQ Ribs'"
   "gallery|3|--seed demo --seed-photos --open-recipe 'BBQ Ribs' --open photos"
   "import|3|--seed demo --open-import https://example.com/lemon-tart --stub-import"
+  "import-file|3|--seed demo --open-import-file"
+  "share-backup|4|--seed demo --open-share"
   "history|3|--seed demo --open-recipe Bruschetta --open history"
   "notes|3|--seed demo --open-recipe Bruschetta --open notes"
   "folders|3|--seed demo --open folders"

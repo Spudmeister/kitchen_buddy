@@ -109,12 +109,13 @@ Order matters: 4.0–4.3 first, so the next TestFlight build has no dead Setting
 
 ## M8 — Export / import / PDF → tag `v0.3.0`
 
-- [ ] 8.1 `ExportDocumentV2` + `LegacyV1Reader` + ADR-006 finalized — _Req 13.4, 14.1_
-- [ ] 8.2 `Exporter` scopes/presets, photo embedding, `Transferable` file; Share screen; **adds "Share" to the Detail overflow (10.3) and "Export full backup" to Settings (18.4) here** — _Req 13.1, 13.3, 13.5_
-- [ ] 8.3 `PDFRenderer` (ImageRenderer + paginated CGContext PDF) — _Req 13.2_
-- [ ] 8.4 `.kbrecipes` handling: `fileImporter`, `.onOpenURL`, Import Review sheet, skip/copy policy, pre-import snapshot; **adds "Import from file" to Settings (18.4) and "Import File" to the Library `+` menu here** — _Req 14.1–14.5, 19.4_
-- [ ] 8.5 P21–P24; PDF golden test (page count, text extraction)
-- [ ] 8.6 Control walk (Settings import/export rows, Share screen, `.kbrecipes` Open In)
+- [x] 8.1 `ExportDocumentV2` + `LegacyV1Reader` + ADR-006 finalized — _Req 13.4, 14.1_
+- [x] 8.2 `Exporter` scopes/presets, photo embedding, `Transferable` file; Share screen; **adds "Share" to the Detail overflow (10.3) and "Export full backup" to Settings (18.4) here** — _Req 13.1, 13.3, 13.5_
+- [x] 8.3 `PDFRenderer` (ImageRenderer + paginated CGContext PDF) — _Req 13.2_
+- [x] 8.4 `.kbrecipes` handling: `fileImporter`, `.onOpenURL`, Import Review sheet, skip/copy policy, pre-import snapshot; **adds "Import from file" to Settings (18.4) and "Import File" to the Library `+` menu here** — _Req 14.1–14.5, 19.4_
+- [x] 8.5 P21–P24; PDF golden test (page count, text extraction)
+- [x] 8.6 Control walk (Settings import/export rows, Share screen, `.kbrecipes` Open In)
+- **Notes (2026-09-08):** `ImportDocument.read` detects v2 vs v1 and lifts v1 to v2 records; import keeps ids under skip-existing (so a backup restores byte-for-byte rows) and remaps everything under copy-as-new; a parent absent from both the book and the file is cleared; photo files written for a rolled-back import are removed; the PDF is SwiftUI pages drawn into one CGContext, paginated by an estimated line budget; `--open-import-file` / `--open-share` drive the screens without the Files picker. AirDrop/Open In needs a device check.
 - [ ] 8.7 Release: tag `v0.3.0`
 - **What to test:** AirDrop a `.kbrecipes` between two phones, print a PDF from Files, export a full backup, delete-and-reinstall (TestFlight only), import the backup.
 

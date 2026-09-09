@@ -26,6 +26,13 @@ public struct RecipeEditorView: View {
     public var body: some View {
         NavigationStack {
             Form {
+                if let source = model.reviewSource {
+                    Section {
+                        Label("Imported from \(source.host ?? source.absoluteString). Check it over, then Save.", systemImage: "square.and.arrow.down")
+                            .font(.subheadline)
+                            .accessibilityIdentifier("reviewBanner")
+                    }
+                }
                 Section {
                     TextField("Title", text: $model.title)
                         .font(.headline)
@@ -48,6 +55,12 @@ public struct RecipeEditorView: View {
                         .accessibilityIdentifier("addIngredient")
                         .deleteDisabled(true)
                         .moveDisabled(true)
+                    PasteButton(payloadType: String.self) { strings in
+                        if let text = strings.first { model.pasteIngredients(text) }
+                    }
+                    .labelStyle(.titleAndIcon)
+                    .deleteDisabled(true)
+                    .moveDisabled(true)
                 } header: {
                     HStack { Text("Ingredients"); Spacer(); reorderToggle("reorderIngredients") }
                 } footer: {

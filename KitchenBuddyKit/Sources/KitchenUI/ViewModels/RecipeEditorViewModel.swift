@@ -10,7 +10,7 @@ import Observation
 ///
 /// Requirements: kitchen-buddy-ios 1.1–1.6, 2.1, 2.2
 @MainActor @Observable
-public final class RecipeEditorViewModel {
+public final class RecipeEditorViewModel: Identifiable {
     public struct IngredientRow: Identifiable, Hashable {
         public let id: UUID
         public var name: String
@@ -81,6 +81,10 @@ public final class RecipeEditorViewModel {
     public var error: String?
     public var isDiscardConfirmationPresented = false
     private let original: RecipeDraft?
+    /// Set when the draft came from a URL import: the editor shows a review
+    /// banner and nothing is saved until the user taps Save (12.3).
+    public let reviewSource: URL?
+    public let id = UUID()
 
     /// A new recipe, optionally in a folder.
     public init(environment: AppEnvironment, newIn folderID: Folder.ID? = nil) {
@@ -88,6 +92,25 @@ public final class RecipeEditorViewModel {
         self.editingID = nil
         self.folderID = folderID
         self.original = nil
+        self.reviewSource = nil
+    }
+
+    /// A new recipe prefilled from an import (URL or pasted text).
+    public init(environment: AppEnvironment, draft: RecipeDraft, reviewSource: URL?) {
+        self.environment = environment
+        self.editingID = nil
+        self.original = nil
+        self.reviewSource = reviewSource
+        title = draft.content.title
+        descriptionText = draft.content.description ?? ""
+        ingredients = draft.content.ingredients.isEmpty ? [IngredientRow()] : draft.content.ingredients.map(IngredientRow.init)
+        steps = draft.content.instructions.isEmpty ? [StepRow()] : draft.content.instructions.map(StepRow.init)
+        prepText = draft.content.prepMinutes.map(String.init) ?? ""
+        cookText = draft.content.cookMinutes.map(String.init) ?? ""
+        servingsText = draft.content.servings.map(String.init) ?? ""
+        sourceText = draft.content.sourceURL?.absoluteString ?? ""
+        tags = draft.tags
+        folderID = draft.folderID
     }
 
     /// Editing an existing recipe from its current version.
@@ -106,6 +129,7 @@ public final class RecipeEditorViewModel {
         tags = draft.tags
         folderID = draft.folderID
         original = draft.normalized()
+        reviewSource = nil
     }
 
     /// Loads the recipe to edit; nil when it no longer exists.
@@ -115,7 +139,15 @@ public final class RecipeEditorViewModel {
     }
 
     public var isNew: Bool { editingID == nil }
-    public var navigationTitle: String { isNew ? "New Recipe" : "Edit Recipe" }
+    public var navigationTitle: String { reviewSource != nil ? "Review Import" : (isNew ? "New Recipe" : "Edit Recipe") }
+
+    /// Splits pasted multi-line text into ingredient rows (12.2).
+    public func pasteIngredients(_ text: String) {
+        let parsed = IngredientNormalizer.lines(fromPasted: text).map { IngredientRow(IngredientNormalizer.parse($0)) }
+        guard !parsed.isEmpty else { return }
+        ingredients.removeAll { $0.name.isEmpty && $0.quantityText.isEmpty }
+        ingredients += parsed
+    }
 
     // MARK: Draft and validation
 

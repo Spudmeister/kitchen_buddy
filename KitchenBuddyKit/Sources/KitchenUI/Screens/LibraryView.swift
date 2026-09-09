@@ -37,6 +37,10 @@ public struct LibraryView: View {
                             Label("New Recipe", systemImage: "doc.badge.plus")
                         }
                         .accessibilityIdentifier("newRecipeMenuItem")
+                        Button { environment.router.present(.importURL(nil)) } label: {
+                            Label("Import from URL", systemImage: "link")
+                        }
+                        .accessibilityIdentifier("importURLMenuItem")
                         Button { environment.router.present(.newFolder(parentID: nil)) } label: {
                             Label("New Folder", systemImage: "folder.badge.plus")
                         }

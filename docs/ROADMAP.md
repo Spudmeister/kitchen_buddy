@@ -14,7 +14,10 @@ restore, Lineage, Notes with undo, rating history + haptics, Folder browser
 Release step: tag **v0.2.0** on the merge. M6 on `m6/photos`: PhotoStore
 (ImageIO ingest, thumbnails, soft removal + 30-day trash), Library
 thumbnails, Detail header, gallery, viewer; P26 + memory test; gallery
-XCUITest.
+XCUITest. M7 on `m7/url-import`: schema.org extraction (JSON-LD, @graph,
+HowToSection, microdata), ingredient normaliser with P31 round trip, URL
+importer with injectable fetch, Import-from-URL sheet + editor review mode +
+Enter Manually, share-inbox drain, `kitchenbuddy://` links.
 
 Milestones and tasks: `.kiro/specs/kitchen-buddy-ios/tasks.md`. Tags:
 v0.1.0 at M3 (usable recipe book), v0.2.0 at M5, v0.3.0 at M8, v0.4.0 at M9.
@@ -28,13 +31,14 @@ v0.1.0 at M3 (usable recipe book), v0.2.0 at M5, v0.3.0 at M8, v0.4.0 at M9.
 | M4 Scaling, units, tags, search polish | | done |
 | M5 Versions, lineage, notes, ratings, folders → **v0.2.0** | | done, tag on merge |
 | M6 Photos | | done |
-| M7 URL import + Share Extension | | next |
-| M8 Export / import / PDF → **v0.3.0** | | |
+| M7 URL import + Share Extension | | done |
+| M8 Export / import / PDF → **v0.3.0** | | next |
 | M9 Polish, accessibility, Spotlight, beta → **v0.4.0** | | |
 
 ## Human steps remaining (Andrew)
 
 - After M3 ships: create ten recipes by hand on the phone, edit, reorder, search, archive and unarchive, at the largest text size. Report anything that loses data.
+- After M7 ships: share five recipe pages from Safari (a big site, a paywall, a blog, a non-recipe page) and report what each did; import one by pasting a URL.
 - Internal testers must accept the TestFlight invitation email (Admin role alone shows nothing); a stale link can be re-issued from the API (`betaTesterInvitations`).
 
 ## Open items

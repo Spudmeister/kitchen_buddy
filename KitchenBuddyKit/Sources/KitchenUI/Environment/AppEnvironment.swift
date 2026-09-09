@@ -27,6 +27,10 @@ public final class AppEnvironment {
     public let router = Router()
     /// Search text to start the Library with (screenshots, UI tests).
     public var initialSearchText: String?
+    /// URL import; the host may swap the fetcher (UI tests use a stub).
+    public var urlImporter = RecipeURLImporter()
+    /// The Share Extension's queue.
+    public var shareInbox = ShareInbox()
 
     public init(book: RecipeBook, cloud: CloudMirror, sampleRecipes: Data? = nil) {
         self.book = book
@@ -84,6 +88,28 @@ public final class AppEnvironment {
 
     public func sceneDidBecomeActive() {
         runMaintenance(.daily)
+        drainShareInbox()
+    }
+
+    /// Opens the import sheet for the next URL the Share Extension queued (12.5).
+    public func drainShareInbox() {
+        guard router.presented == nil, let url = shareInbox.takeNext() else { return }
+        router.present(.importURL(url))
+    }
+
+    /// `kitchenbuddy://recipe/<id>` and `kitchenbuddy://import?url=…` (19.4).
+    public func open(_ url: URL) {
+        guard url.scheme == "kitchenbuddy" else { return }
+        switch url.host {
+        case "recipe":
+            let id = url.lastPathComponent
+            if !id.isEmpty, (try? book.recipes.detail(Recipe.ID(id))) != nil { router.showRecipe(Recipe.ID(id)) }
+        case "import":
+            let target = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "url" }?.value.flatMap(URL.init(string:))
+            router.present(.importURL(target))
+        default:
+            break
+        }
     }
 
     /// Snapshot if due, then mirror the newest verified snapshot to iCloud

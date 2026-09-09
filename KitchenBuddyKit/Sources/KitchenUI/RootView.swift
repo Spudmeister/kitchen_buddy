@@ -40,6 +40,7 @@ public struct RootView: View {
             }
         }
         .onChange(of: router.path) { storedPath = router.encodedPath }
+        .onOpenURL { environment.open($0) }
     }
 
     @ViewBuilder
@@ -91,6 +92,8 @@ public struct RootView: View {
             MoveRecipesView(environment: environment, recipeIDs: ids)
         case .photoViewer(let id, let index):
             PhotoViewerView(environment: environment, recipeID: id, index: index)
+        case .importURL(let url):
+            ImportURLView(environment: environment, prefill: url)
         }
     }
 }

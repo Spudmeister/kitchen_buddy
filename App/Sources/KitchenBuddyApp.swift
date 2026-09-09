@@ -16,6 +16,8 @@ import SwiftUI
 ///   its editor); `--search <text>` — start the Library with a search
 /// - `--units original|us|metric`, `--default-servings <n>` — write those
 ///   preferences before the first screen (screenshots of settings in effect)
+/// - `--stub-import` — URL import answers every fetch with an embedded
+///   recipe page (UI test for the import flow, no network)
 /// - `--corrupt-db` — seed, snapshot, then damage the database so launch
 ///   recovery runs (UI test for the recovery notice)
 @main
@@ -43,6 +45,14 @@ struct KitchenBuddyApp: App {
             }
             if arguments.contains("--seed-photos") {
                 DemoPhotos.seed(into: environment.book)
+            }
+            if arguments.contains("--stub-import") {
+                environment.urlImporter = RecipeURLImporter { _ in
+                    RecipeURLImporter.Page(data: Data(Self.stubRecipePage.utf8), status: 200, mimeType: "text/html", textEncodingName: "utf-8")
+                }
+            }
+            if let importURL = Self.argumentValue("--open-import", in: arguments).flatMap(URL.init(string:)) {
+                environment.router.present(.importURL(importURL))
             }
             environment.initialSearchText = Self.argumentValue("--search", in: arguments)
             let units = Self.argumentValue("--units", in: arguments).flatMap(UnitPreference.init(rawValue:))
@@ -91,6 +101,15 @@ struct KitchenBuddyApp: App {
             }
         }
     }
+
+    /// A tiny schema.org page for the stubbed import.
+    nonisolated private static let stubRecipePage = """
+    <html><head><script type="application/ld+json">{"@type":"Recipe","name":"Stubbed Lemon Tart",
+    "recipeYield":"8","prepTime":"PT30M","cookTime":"PT45M",
+    "recipeIngredient":["1 1/2 cups flour","½ cup butter, cold","3 lemons, juiced","¾ cup sugar"],
+    "recipeInstructions":[{"@type":"HowToStep","text":"Make the pastry."},{"@type":"HowToStep","text":"Fill and bake."}],
+    "recipeCategory":"Dessert"}</script></head><body></body></html>
+    """
 
     private static var sampleRecipes: Data? {
         Bundle.main.url(forResource: "DemoRecipes", withExtension: "json").flatMap { try? Data(contentsOf: $0) }

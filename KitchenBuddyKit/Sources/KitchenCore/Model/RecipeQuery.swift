@@ -20,18 +20,22 @@ public struct RecipeQuery: Hashable, Codable, Sendable {
     /// Restrict to this folder and its subfolders.
     public var folderID: Folder.ID?
     public var includeArchived: Bool
+    /// Only recipes whose band for each of these profiles is low (Requirement 21.8).
+    public var friendlyProfiles: Set<HealthProfile>
     public var sort: Sort
     public var direction: Direction
 
     public init(text: String = "", tags: [String] = [], minimumRating: Int? = nil,
                 maximumTotalMinutes: Int? = nil, folderID: Folder.ID? = nil,
-                includeArchived: Bool = false, sort: Sort = .name, direction: Direction = .ascending) {
+                includeArchived: Bool = false, friendlyProfiles: Set<HealthProfile> = [],
+                sort: Sort = .name, direction: Direction = .ascending) {
         self.text = text
         self.tags = tags
         self.minimumRating = minimumRating
         self.maximumTotalMinutes = maximumTotalMinutes
         self.folderID = folderID
         self.includeArchived = includeArchived
+        self.friendlyProfiles = friendlyProfiles
         self.sort = sort
         self.direction = direction
     }
@@ -40,5 +44,6 @@ public struct RecipeQuery: Hashable, Codable, Sendable {
 
     public var hasFilters: Bool {
         !tags.isEmpty || minimumRating != nil || maximumTotalMinutes != nil || folderID != nil || includeArchived
+            || !friendlyProfiles.isEmpty
     }
 }

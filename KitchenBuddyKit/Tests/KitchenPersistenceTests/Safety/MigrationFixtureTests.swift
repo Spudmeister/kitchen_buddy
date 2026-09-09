@@ -57,6 +57,40 @@ import KitchenTesting
         try book.close()
     }
 
+    /// The v2 fixture (written 2026-09-09, before `v3-health`) opens, migrates
+    /// to v3 and keeps its rating clear; the new tables start empty and the
+    /// health projection is built for every recipe.
+    @Test func schemaV2FixtureOpensAndMigrates() throws {
+        let fixture = try #require(Bundle.module.url(forResource: "kb-schema-v2", withExtension: "sqlite", subdirectory: "fixtures"))
+        let layout = TestDatabase.temporaryLayout()
+        defer { TestDatabase.remove(layout) }
+        try FileManager.default.createDirectory(at: layout.root, withIntermediateDirectories: true)
+        try FileManager.default.copyItem(at: fixture, to: layout.databaseURL)
+
+        let book = try RecipeBook.open(layout, clock: .system)
+        #expect(try book.writer.read { db in try String.fetchOne(db, sql: "PRAGMA integrity_check") } == "ok")
+        #expect(try book.writer.read { db in try DatabaseStack.migrator.appliedMigrations(db) } == Migrations.identifiers)
+        guard case .migrated(let preMigration?) = book.launchReport else {
+            Issue.record("a v2 file must be snapshotted before v3 migrates it: \(book.launchReport)")
+            return
+        }
+        #expect(preMigration.reason == .preMigration && preMigration.isVerified)
+        #expect(try book.recipes.count(includeArchived: true) == Self.fixtureRecipeCount)
+
+        let cleared = try #require(try book.recipes.summaries(RecipeQuery(includeArchived: true)).first { summary in
+            try book.recipes.ratingEvents(summary.id).contains { if case .cleared = $0 { return true } else { return false } }
+        })
+        #expect(try book.recipes.detail(cleared.id)?.currentRating == nil, "the v2 clear still counts")
+
+        #expect(try book.healthRows().count == Self.fixtureRecipeCount, "every recipe gets a health row at open")
+        let bruschetta = try #require(try book.recipes.summaries(RecipeQuery(text: "bruschetta")).first)
+        #expect(bruschetta.health != nil)
+        #expect(try book.recipes.servingReports(bruschetta.id).isEmpty && (try book.recipes.foodOverrides(bruschetta.id)).isEmpty)
+        try book.recipes.reportServings(bruschetta.id, servings: 2, note: "just us")
+        #expect(try book.recipes.detail(bruschetta.id)?.effectiveServings == 2)
+        try book.close()
+    }
+
     /// Fixture generator, gated by an environment variable so it never runs
     /// in CI. Populates a fresh database at the *current* schema with a
     /// little of everything; run it once, just before a new migration lands,

@@ -290,6 +290,69 @@ public final class RecipeStore: RecipeStoring {
         }
     }
 
+    // MARK: Servings you get and health (M11)
+
+    @discardableResult
+    public func reportServings(_ id: Recipe.ID, servings: Int?, note: String?) throws -> ServingReport {
+        if let servings, !(1...999).contains(servings) { throw StoreError.invalidServings(servings) }
+        return try writer.write { db in
+            try RecipeSQL.requireRecipe(id, db)
+            let now = clock.now()
+            let trimmed = note?.trimmingCharacters(in: .whitespacesAndNewlines)
+            let report = ServingReport(recipeID: id, servings: servings,
+                                       note: trimmed?.isEmpty == false ? trimmed : nil, reportedAt: now)
+            try db.execute(sql: """
+                INSERT INTO serving_reports (id, recipe_id, servings, note, reported_at) VALUES (?, ?, ?, ?, ?)
+                """, arguments: [report.id.rawValue, id.rawValue, servings, report.note, now.sql])
+            try SearchIndex.refresh(id, db)
+            return report
+        }
+    }
+
+    public func servingReports(_ id: Recipe.ID) throws -> [ServingReport] {
+        try writer.read { db in try RecipeSQL.servingReports(id, db) }
+    }
+
+    @discardableResult
+    public func setFoodOverride(_ id: Recipe.ID, ingredientName: String, foodID: Food.ID?) throws -> FoodOverride {
+        if let foodID, FoodTable.food(id: foodID) == nil { throw StoreError.unknownFood(foodID) }
+        return try writer.write { db in
+            try self.appendOverride(id, key: FoodMatcher.normalize(ingredientName), foodID: foodID, marker: false, db)
+        }
+    }
+
+    public func clearFoodOverride(_ id: Recipe.ID, ingredientName: String) throws {
+        try writer.write { db in
+            _ = try self.appendOverride(id, key: FoodMatcher.normalize(ingredientName), foodID: nil, marker: true, db)
+        }
+    }
+
+    /// `marker` writes the "automatic again" sentinel: a row whose food id
+    /// is the empty string, which `FoodOverride.effective` treats as absent.
+    private func appendOverride(_ id: Recipe.ID, key: String, foodID: Food.ID?, marker: Bool, _ db: Database) throws -> FoodOverride {
+        try RecipeSQL.requireRecipe(id, db)
+        let now = clock.now()
+        let override = FoodOverride(recipeID: id, ingredientKey: key, foodID: marker ? FoodOverride.automaticMarker : foodID, createdAt: now)
+        try db.execute(sql: """
+            INSERT INTO food_overrides (id, recipe_id, ingredient_key, food_id, created_at) VALUES (?, ?, ?, ?, ?)
+            """, arguments: [override.id.rawValue, id.rawValue, key, override.foodID, now.sql])
+        try SearchIndex.refresh(id, db)
+        return override
+    }
+
+    public func foodOverrides(_ id: Recipe.ID) throws -> [FoodOverride] {
+        try writer.read { db in try RecipeSQL.foodOverrides(id, db) }
+    }
+
+    public func nutrition(_ id: Recipe.ID) throws -> RecipeNutrition? {
+        try writer.read { db in
+            guard let detail = try RecipeSQL.detail(id, db) else { return nil }
+            let overrides = FoodOverride.effective(try RecipeSQL.foodOverrides(id, db))
+            return NutritionEstimator.estimate(ingredients: detail.version.ingredients,
+                                               servings: detail.effectiveServings, overrides: overrides)
+        }
+    }
+
     public func notes(_ id: Recipe.ID, includeDeleted: Bool = false) throws -> [RecipeNote] {
         try writer.read { db in try RecipeSQL.notes(id, includeDeleted: includeDeleted, db) }
     }

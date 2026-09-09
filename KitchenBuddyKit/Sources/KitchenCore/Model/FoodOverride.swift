@@ -24,11 +24,22 @@ public struct FoodOverride: Identifiable, Hashable, Codable, Sendable {
         self.createdAt = createdAt
     }
 
-    /// Latest-wins map for the estimator.
+    /// A food id that means "back to automatic matching": the row exists
+    /// (append-only history) but `effective` drops the key.
+    public static let automaticMarker = ""
+
+    public var isAutomaticMarker: Bool { foodID == Self.automaticMarker }
+
+    /// Latest-wins map for the estimator: key → food id, or nil for "don't
+    /// count"; keys whose latest row is the automatic marker are absent.
     public static func effective(_ overrides: [FoodOverride]) -> [String: Food.ID?] {
         var map: [String: Food.ID?] = [:]
         for override in overrides.sorted(by: { ($0.createdAt, $0.id.rawValue) < ($1.createdAt, $1.id.rawValue) }) {
-            map[override.ingredientKey] = override.foodID
+            if override.isAutomaticMarker {
+                map.removeValue(forKey: override.ingredientKey)
+            } else {
+                map[override.ingredientKey] = override.foodID
+            }
         }
         return map
     }

@@ -9,6 +9,8 @@ public enum StoreError: Error, Hashable, Sendable {
     case noteNotFound(RecipeNote.ID)
     case invalidDraft([RecipeDraft.ValidationError])
     case invalidRating(Int)
+    case invalidServings(Int)
+    case unknownFood(String)
     case emptyFolderName
     /// Moving a folder into itself or one of its descendants.
     case folderCycle

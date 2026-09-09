@@ -2,12 +2,9 @@
 
 **Status (2026-09-08):** M0–M2 merged (PRs #5, #6, #7); TestFlight build
 **0.1.0 (41)** verified on Andrew's phone: iCloud Drive available, daily
-snapshot mirrored and visible in Files. Gate 2.6.1 closed. M3 built on `m3/library-detail-editor`: Library
-(search tokens, sort, folder sections, swipe/context actions, empty states),
-Recipe Detail, Editor (reorder, fraction entry, validation, discard
-confirmation), tag/folder pickers, Archived screen, scene restoration; 96
-package tests + 4 XCUITests green; screenshots reviewed at default and
-accessibility XXL sizes. Release step: tag **v0.1.0** on the merge.
+snapshot mirrored and visible in Files. Gate 2.6.1 closed. **M3 merged (PR #8) and tagged v0.1.0**: TestFlight
+build **0.1.0 (43)** is the first usable recipe book — Library, Detail,
+Editor, pickers, Archived, on top of the M2 safety net. Next: M4.
 
 Milestones and tasks: `.kiro/specs/kitchen-buddy-ios/tasks.md`. Tags:
 v0.1.0 at M3 (usable recipe book), v0.2.0 at M5, v0.3.0 at M8, v0.4.0 at M9.
@@ -17,7 +14,7 @@ v0.1.0 at M3 (usable recipe book), v0.2.0 at M5, v0.3.0 at M8, v0.4.0 at M9.
 | M0 Bootstrap | TS teardown, KitchenBuddyKit, App shell, CI, docs | done, build 32 on TestFlight |
 | M1 Domain + persistence | Fraction/units/scaling/rounding/tags, schema v1 + guards + FTS5, stores, properties | done, PR #5 |
 | M2 Data safety | verified snapshots, integrity check + recovery, iCloud mirror, Settings › Backups — **before any build can hold a recipe** | done, build 41 |
-| M3 Library + Detail + Editor | usable recipe book → **v0.1.0** | done, tag on merge |
+| M3 Library + Detail + Editor | usable recipe book → **v0.1.0** | done, build 43 |
 | M4 Scaling, units, tags, search polish | | next |
 | M5 Versions, lineage, notes, ratings, folders → **v0.2.0** | | |
 | M6 Photos | | |

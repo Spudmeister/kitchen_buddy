@@ -51,7 +51,7 @@ each milestone ends with a "What to test" note for the TestFlight build.
 - [x] 3.6 Archived screen and archived-mode Detail — _Req 3.2–3.4_
 - [x] 3.7 Dynamic Type + VoiceOver baseline; XCUITest create → edit → search → archive → unarchive — _Req 19.1, 19.2_
 - **Notes (2026-09-08):** rating stars are tappable already (store existed; haptics + history come with 5.4); a minimal folder screen (subfolders + scoped list) ships here, the full browser is 5.5; search tokens cover tags, folders, include-archived (rating/time tokens and `#tag`/`in:` shorthand are 4.4/4.5); on iOS 26 secondary toolbar items collapse into the system "More" overflow, so detail actions are flat items, not a nested menu; the ingredient editor row stacks at accessibility sizes (checked with `-UIPreferredContentSizeCategoryName` screenshots).
-- [ ] 3.8 Release: tag `v0.1.0`
+- [x] 3.8 Release: tag `v0.1.0` (2026-09-08, build 43, PR #8)
 - **What to test:** create 10 recipes by hand, edit, reorder ingredients, search, sort, archive/unarchive, largest text size. Report anything that loses data.
 
 ## M4 — Scaling, units, tags, search polish

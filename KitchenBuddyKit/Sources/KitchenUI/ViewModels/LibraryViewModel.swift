@@ -112,9 +112,11 @@ public final class LibraryViewModel {
 
     /// (Re)starts the observation for the current query and refreshes the
     /// folder and token side data. Call on appear and whenever the query
-    /// changes.
+    /// changes. The first results are fetched synchronously so the list
+    /// paints at once; the observation then keeps them live.
     public func start() {
         refreshSideData()
+        refreshResults()
         observation?.cancel()
         let stream = environment.book.recipes.observeSummaries(query)
         observation = Task { [weak self] in
@@ -135,6 +137,18 @@ public final class LibraryViewModel {
     public func stop() {
         observation?.cancel()
         observation = nil
+    }
+
+    /// Synchronous fetch of the current query (also used by tests, which
+    /// cannot rely on main-queue delivery while other suites hog it).
+    public func refreshResults() {
+        do {
+            results = try environment.book.recipes.summaries(query)
+            hasLoaded = true
+        } catch {
+            self.error = "\(error)"
+            hasLoaded = true
+        }
     }
 
     public func refreshSideData() {

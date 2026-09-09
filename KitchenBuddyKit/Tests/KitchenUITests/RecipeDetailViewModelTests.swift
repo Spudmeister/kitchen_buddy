@@ -75,10 +75,15 @@ import KitchenTesting
     /// P11 at the view-model level: every convertible ingredient displays in
     /// the chosen system, everything else passes through, for random recipes
     /// and factors; the unrounded scaled value is exactly q × t/b (P7).
-    @Test(arguments: 0..<100) @MainActor
-    func unitPreferenceAndScalingHoldForRandomRecipes(seed: UInt64) throws {
-        var rng = SeededRandomSource(seed: seed)
+    @Test @MainActor
+    func unitPreferenceAndScalingHoldForRandomRecipes() throws {
         let environment = try Self.environment()
+        for seed in UInt64(0)..<100 { try Self.checkRandomRecipe(seed: seed, in: environment) }
+    }
+
+    @MainActor
+    static func checkRandomRecipe(seed: UInt64, in environment: AppEnvironment) throws {
+        var rng = SeededRandomSource(seed: seed)
         let created = try environment.book.recipes.create(RecipeGen.draft.run(&rng))
         let model = RecipeDetailViewModel(environment: environment, recipeID: created.id)
         model.load()

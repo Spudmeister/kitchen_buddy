@@ -150,6 +150,7 @@ struct PhotoViewerView: View {
 
 struct ZoomableImage: View {
     let url: URL
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var scale: CGFloat = 1
     @State private var lastScale: CGFloat = 1
     @State private var offset: CGSize = .zero
@@ -173,7 +174,7 @@ struct ZoomableImage: View {
                     .onEnded { _ in lastOffset = offset }
             )
             .onTapGesture(count: 2) {
-                withAnimation { scale = 1; lastScale = 1; offset = .zero; lastOffset = .zero }
+                withAnimation(reduceMotion ? nil : .default) { scale = 1; lastScale = 1; offset = .zero; lastOffset = .zero }
             }
             .accessibilityLabel("Photo")
             .accessibilityHint("Pinch to zoom, double-tap to reset")

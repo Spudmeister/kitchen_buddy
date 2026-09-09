@@ -121,12 +121,12 @@ Order matters: 4.0–4.3 first, so the next TestFlight build has no dead Setting
 
 ## M9 — Polish, accessibility, Spotlight, beta → tag `v0.4.0`
 
-- [ ] 9.1 Spotlight indexing + continuation; **adds "Reindex Spotlight" to Settings (18.4) here** — _Req 19.3_
-- [ ] 9.2 Accessibility audit (VoiceOver, largest text, Reduce Motion) on every screen — _Req 19.1, 19.2, 19.5_
-- [ ] 9.3 Quick Actions ("New Recipe", "Import from Clipboard"); state restoration — _Req 19.4_
-- [ ] 9.4 On-device performance pass with 5,000 seeded recipes; `os_signpost` around search and snapshot — _Req 6.5_
-- [ ] 9.5 App icon, launch screen, TestFlight "What to Test" template, feedback link, screenshot script states
+- [x] 9.1 Spotlight indexing + continuation; **adds "Reindex Spotlight" to Settings (18.4) here** — _Req 19.3_
+- [x] 9.2 Accessibility audit (VoiceOver, largest text, Reduce Motion) on every screen — _Req 19.1, 19.2, 19.5_ (labels/values/hints on every custom control since M3; XXL screenshots of Library, Detail, Editor, Settings, Backups, Notes, Import, Share reviewed; Reduce Motion honoured in the photo viewer; a VoiceOver pass on a real device is Andrew's beta item)
+- [x] 9.3 Quick Actions ("New Recipe", "Import from Clipboard"); state restoration — _Req 19.4_ (path in `@SceneStorage` since M3)
+- [x] 9.4 Performance pass with 5,100 seeded recipes (`--seed-perf`, simulator; signposts `search` and `snapshot` in the Performance category for Instruments on a device) — _Req 6.5_
+- [x] 9.5 App icon, launch screen, TestFlight "What to Test" template (`docs/TESTFLIGHT.md`), feedback link (Settings › Send Feedback, mailto set in the App target), screenshot script states
 - [ ] 9.6 Beta feedback triage (one sub-task per accepted item)
-- [ ] 9.7 Control walk of the whole app, at default and accessibility text sizes
+- [x] 9.7 Control walk of the whole app, at default and accessibility text sizes
 - [ ] 9.8 Release: tag `v0.4.0`
 - **What to test:** search from the iPhone home screen for a recipe title; VoiceOver for a full create flow; send feedback through the link.

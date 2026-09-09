@@ -52,6 +52,17 @@ public struct SettingsView: View {
                     .accessibilityIdentifier("exportFullBackup")
                 Button("Rebuild Search Index") { Task { await model.rebuildSearchIndex() } }
                     .disabled(model.isBusy)
+                Button("Reindex Spotlight") { Task { await model.reindexSpotlight() } }
+                    .disabled(model.isBusy)
+                    .accessibilityIdentifier("reindexSpotlight")
+            }
+
+            if let feedback = model.feedbackURL {
+                Section {
+                    Link(destination: feedback) { Label("Send Feedback", systemImage: "envelope") }
+                } footer: {
+                    Text("TestFlight testers can also take a screenshot and use its Share sheet to send feedback with the picture attached.")
+                }
             }
 
             if model.showsDeveloperOptions {

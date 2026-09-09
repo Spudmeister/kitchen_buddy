@@ -41,6 +41,7 @@ public struct RootView: View {
         }
         .onChange(of: router.path) { storedPath = router.encodedPath }
         .onOpenURL { environment.open($0) }
+        .onContinueUserActivity("com.apple.corespotlightitem") { environment.continueActivity($0) }
     }
 
     @ViewBuilder

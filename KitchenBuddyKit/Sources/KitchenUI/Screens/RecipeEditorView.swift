@@ -34,7 +34,8 @@ public struct RecipeEditorView: View {
                     }
                 }
                 Section {
-                    TextField("Title", text: $model.title)
+                    TextField("Title", text: $model.title, axis: .vertical)
+                        .lineLimit(1...3)
                         .font(.headline)
                         .accessibilityIdentifier("titleField")
                     TextField("Description (optional)", text: $model.descriptionText, axis: .vertical)

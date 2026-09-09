@@ -58,6 +58,21 @@ public final class SettingsViewModel {
         await perform("Search index rebuilt.") { book in try book.rebuildSearchIndex() }
     }
 
+    public func reindexSpotlight() async {
+        isBusy = true
+        defer { isBusy = false }
+        let spotlight = environment.spotlight
+        do {
+            let count = try await spotlight.reindexAll(force: true)
+            message = SpotlightIndexer.isAvailable ? "\(count) recipes indexed for Spotlight." : "Spotlight indexing isn't available on this device."
+        } catch {
+            message = "\(error)"
+        }
+    }
+
+    /// Where beta feedback goes. Set by the host app; nil hides the row.
+    public var feedbackURL: URL? { environment.feedbackURL }
+
     public func loadSampleRecipes() async {
         guard let data = environment.sampleRecipes else { return }
         await perform("Sample recipes loaded.") { book in

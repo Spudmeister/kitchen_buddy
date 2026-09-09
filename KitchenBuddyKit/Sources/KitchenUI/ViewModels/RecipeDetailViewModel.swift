@@ -131,10 +131,12 @@ public final class RecipeDetailViewModel {
 
     public func archive() {
         perform { try $0.recipes.archive(recipeID) }
+        environment.spotlightUpdate(recipeID)
     }
 
     public func unarchive() {
         perform { try $0.recipes.unarchive(recipeID) }
+        environment.spotlightUpdate(recipeID)
     }
 
     @discardableResult

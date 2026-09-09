@@ -86,6 +86,10 @@ public final class BackupManager: @unchecked Sendable {
     /// alone.
     @discardableResult
     public func snapshot(reason: Snapshot.Reason) throws -> Snapshot {
+        try Signpost.measure("snapshot") { try makeSnapshot(reason: reason) }
+    }
+
+    private func makeSnapshot(reason: Snapshot.Reason) throws -> Snapshot {
         try DatabaseStack.prepareDirectory(layout.backupsURL)
         let now = clock.now()
         var url = layout.backupsURL.appendingPathComponent(Snapshot.fileName(createdAt: now, reason: reason))

@@ -80,11 +80,36 @@
 			<string>Any</string>
 		</dict>
 	</dict>
+	<key>NSUserActivityTypes</key>
+	<array>
+		<string>com.apple.corespotlightitem</string>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
 		<false/>
 	</dict>
+	<key>UIApplicationShortcutItems</key>
+	<array>
+		<dict>
+			<key>UIApplicationShortcutItemIconSymbolName</key>
+			<string>doc.badge.plus</string>
+			<key>UIApplicationShortcutItemTitle</key>
+			<string>New Recipe</string>
+			<key>UIApplicationShortcutItemType</key>
+			<string>net.puddleglum.kitchenbuddy.new</string>
+		</dict>
+		<dict>
+			<key>UIApplicationShortcutItemIconSymbolName</key>
+			<string>link</string>
+			<key>UIApplicationShortcutItemSubtitle</key>
+			<string>Uses the link you copied</string>
+			<key>UIApplicationShortcutItemTitle</key>
+			<string>Import from Clipboard</string>
+			<key>UIApplicationShortcutItemType</key>
+			<string>net.puddleglum.kitchenbuddy.import-clipboard</string>
+		</dict>
+	</array>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UIRequiresFullScreen</key>

@@ -173,10 +173,12 @@ public final class LibraryViewModel {
 
     public func archive(_ id: Recipe.ID) {
         perform { try $0.recipes.archive(id) }
+        environment.spotlightUpdate(id)
     }
 
     public func unarchive(_ id: Recipe.ID) {
         perform { try $0.recipes.unarchive(id) }
+        environment.spotlightUpdate(id)
     }
 
     @discardableResult

@@ -45,6 +45,14 @@ SHOTS=(
   "folders|3|--seed demo --open folders"
   "editor-suggestions|4|--seed demo --open-recipe Bruschetta --edit"
   "recipe-xxl|3|--seed demo --open-recipe Bruschetta -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXL"
+  "library-xxl|3|--seed demo --seed-photos -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXL"
+  "settings-xxl|3|--seed demo --open settings -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXL"
+  "backups-xxl|4|--seed demo --open backups -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXL"
+  "notes-xxl|3|--seed demo --open-recipe Bruschetta --open notes -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXL"
+  "import-xxl|3|--seed demo --open-import https://example.com/lemon-tart --stub-import -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXL"
+  "share-xxl|4|--seed demo --open-share -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXL"
+  "perf-library|25|--seed demo --seed-perf --search chick"
+  "quick-new|3|--seed demo --quick-action net.puddleglum.kitchenbuddy.new"
   "editor-xxl|4|--seed demo --open-recipe Bruschetta --edit -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXL"
 )
 

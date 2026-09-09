@@ -113,7 +113,7 @@ public final class RecipeStore: RecipeStoring {
     }
 
     public func summaries(_ query: RecipeQuery) throws -> [RecipeSummary] {
-        try writer.read { db in try SearchIndex.summaries(query, db) }
+        try Signpost.measure("search") { try writer.read { db in try SearchIndex.summaries(query, db) } }
     }
 
     public func observeSummaries(_ query: RecipeQuery) -> AsyncThrowingStream<[RecipeSummary], Error> {

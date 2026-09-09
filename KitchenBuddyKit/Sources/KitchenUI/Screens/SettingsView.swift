@@ -50,11 +50,18 @@ public struct SettingsView: View {
                     .accessibilityIdentifier("importFromFile")
                 Button("Export Full Backup…") { model.environment.router.present(.share(.all, backup: true)) }
                     .accessibilityIdentifier("exportFullBackup")
+            }
+
+            Section {
                 Button("Rebuild Search Index") { Task { await model.rebuildSearchIndex() } }
                     .disabled(model.isBusy)
                 Button("Reindex Spotlight") { Task { await model.reindexSpotlight() } }
                     .disabled(model.isBusy)
                     .accessibilityIdentifier("reindexSpotlight")
+            } header: {
+                Text("Search")
+            } footer: {
+                Text("In-app search runs on an index built from your recipes and kept up to date as you edit. Rebuild it if results ever look stale or a recipe is missing from search; it takes a moment and changes nothing else. Spotlight is the iPhone's Home-screen search — reindex if your recipes stop showing up there.")
             }
 
             if let feedback = model.feedbackURL {

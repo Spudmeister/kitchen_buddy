@@ -5,7 +5,8 @@
 v0.2.0 (51, M5), v0.3.0 (59, M8), v0.4.0 (M9). Open: 9.6 beta feedback
 triage (tracked as M10, rolling), and the device checks listed under
 "Human steps". First M10 items shipped 2026-09-09: dry ingredients convert
-by weight (ADR-008); no product name but Kitchen Buddy in the UI. The recipe book
+by weight (ADR-008); no product name but Kitchen Buddy in the UI; the index
+buttons explained; a front-page filter chip bar with a Filters sheet. The recipe book
 is feature-complete against the spec; what follows is feedback-driven.
 
 History: M0–M2 merged (PRs #5, #6, #7); TestFlight build

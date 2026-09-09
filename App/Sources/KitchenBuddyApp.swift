@@ -75,6 +75,7 @@ struct KitchenBuddyApp: App {
             }
             environment.feedbackURL = URL(string: "mailto:ace@puddleglum.net?subject=Kitchen%20Buddy%20feedback")
             environment.initialSearchText = Self.argumentValue("--search", in: arguments)
+            if arguments.contains("--filter-demo") { environment.initialTokens = [.tag("chicken"), .maximumMinutes(45)] }
             let units = Self.argumentValue("--units", in: arguments).flatMap(UnitPreference.init(rawValue:))
             let servings = Self.argumentValue("--default-servings", in: arguments).flatMap(Int.init)
             if units != nil || servings != nil {

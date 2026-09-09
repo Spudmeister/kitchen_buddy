@@ -169,6 +169,56 @@ public final class LibraryViewModel {
         tokens = []
     }
 
+    // MARK: Filter chips
+
+    public var activeFilterCount: Int { tokens.count }
+
+    public func isActive(_ token: SearchToken) -> Bool { tokens.contains { $0.id == token.id } }
+
+    /// Toggles a tag / archived token; rating and time tokens replace their kind.
+    public func toggle(_ token: SearchToken) {
+        if isActive(token) {
+            tokens.removeAll { $0.id == token.id }
+            return
+        }
+        switch token {
+        case .minimumRating: tokens.removeAll { if case .minimumRating = $0 { return true } else { return false } }
+        case .maximumMinutes: tokens.removeAll { if case .maximumMinutes = $0 { return true } else { return false } }
+        case .folder: tokens.removeAll { if case .folder = $0 { return true } else { return false } }
+        default: break
+        }
+        tokens.append(token)
+    }
+
+    public var maximumMinutes: Int? {
+        for token in tokens { if case .maximumMinutes(let minutes) = token { return minutes } }
+        return nil
+    }
+
+    public var minimumRating: Int? {
+        for token in tokens { if case .minimumRating(let value) = token { return value } }
+        return nil
+    }
+
+    public func setMaximumMinutes(_ minutes: Int?) {
+        tokens.removeAll { if case .maximumMinutes = $0 { return true } else { return false } }
+        if let minutes { tokens.append(.maximumMinutes(minutes)) }
+    }
+
+    public func setMinimumRating(_ value: Int?) {
+        tokens.removeAll { if case .minimumRating = $0 { return true } else { return false } }
+        if let value { tokens.append(.minimumRating(value)) }
+    }
+
+    /// Tags in use, most used first (the chip bar shows the first few).
+    public var tagChips: [SearchToken] {
+        availableTokens.filter { if case .tag = $0 { return true } else { return false } }
+    }
+
+    public var activeTags: [String] {
+        tokens.compactMap { if case .tag(let name) = $0 { return name } else { return nil } }
+    }
+
     // MARK: Row actions
 
     public func archive(_ id: Recipe.ID) {

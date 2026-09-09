@@ -33,6 +33,11 @@ v0.1.0 at M3 (usable recipe book), v0.2.0 at M5, v0.3.0 at M8, v0.4.0 at M9.
 
 ## Standing constraints
 
+- No dead controls: a setting or menu item ships with its consumer, and every
+  milestone ends with a control walk before its tag (tasks.md, CLAUDE.md).
+  Build 43 has three Settings rows (Units, default servings, dietary
+  suggestions) that 4.1–4.3 make real; that is M4's first job.
+
 - Losing the recipe database is unacceptable (CLAUDE.md iron rules 1–4). Data-safety features ship before data-entry features, always.
 - Search < 100 ms with 5,000 recipes on an iPhone.
 - Recipe book only: no cooking mode, shopping, menus, or AI in this app until

@@ -117,7 +117,7 @@ the share inbox, `.kbrecipes` Open In, and quick actions resolve to a Route.
 | Import from URL | URL field + `PasteButton`; progress; success → editor review; failure reasons + Enter Manually |
 | Export / Share | PDF or `.kbrecipes`; Share vs Backup preset; photos toggle with size; `ShareLink` over `Transferable` |
 | Import from file | `fileImporter` + `.onOpenURL`; review sheet with counts, titles, Skip/Copy, destination folder; snapshot → transaction |
-| Settings / Backups | preferences; Backups list with verification badges, Back Up Now, Restore…, Share snapshot; iCloud status; Damaged Databases (share only); Recovery full-screen cover at launch |
+| Settings / Backups | preferences; Backups list with verification badges, Back Up Now, Restore…, Share snapshot; iCloud status; Damaged Databases (share only); Recovery full-screen cover at launch. Each preference row appears only once something reads it (tasks.md "No dead controls") |
 | Archived, Tag Picker, Move to Folder | as named |
 
 ## Export format v2

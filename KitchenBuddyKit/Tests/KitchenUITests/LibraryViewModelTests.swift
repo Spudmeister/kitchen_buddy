@@ -163,11 +163,18 @@ import KitchenTesting
 }
 
 @MainActor
+/// Polls on the main actor. The budget is counted in polls, not wall-clock
+/// time: on CI the rest of the suite can hog the main actor for minutes,
+/// and a wall-clock deadline would expire before this test ever ran
+/// (PR #18, observationDeliversExternalWrites at 210 s).
 func waitUntil(timeout: TimeInterval = 30, _ condition: @MainActor () -> Bool) async throws {
-    let deadline = Date().addingTimeInterval(timeout)
+    let interval: Duration = .milliseconds(20)
+    var polls = 0
+    let budget = Int(timeout / 0.02)
     while !condition() {
-        guard Date() < deadline else { throw WaitTimeout() }
-        try await Task.sleep(for: .milliseconds(20))
+        guard polls < budget else { throw WaitTimeout() }
+        polls += 1
+        try await Task.sleep(for: interval)
     }
 }
 

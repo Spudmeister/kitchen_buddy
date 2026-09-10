@@ -6,10 +6,14 @@ import Foundation
 /// written twice (`quantity` double for other tools, `quantityFraction`
 /// exact); readers prefer the fraction. Dates are ISO-8601.
 ///
-/// Requirements: kitchen-buddy-ios 13.4, 14.1
+/// **2.1 (M11):** recipes also carry `servingReports[]` and `foodOverrides[]`;
+/// both are optional on read so 2.0 files decode unchanged, and 2.0 readers
+/// ignore them.
+///
+/// Requirements: kitchen-buddy-ios 13.4, 14.1, 20.4, 21.10
 public struct ExportDocumentV2: Codable, Hashable, Sendable {
     public static let formatName = "kitchenbuddy-export"
-    public static let currentVersion = "2.0"
+    public static let currentVersion = "2.1"
 
     public var format: String = ExportDocumentV2.formatName
     public var version: String = ExportDocumentV2.currentVersion
@@ -53,13 +57,65 @@ public struct ExportDocumentV2: Codable, Hashable, Sendable {
         public var ratingClears: [ClearRecord]
         public var notes: [NoteRecord]
         public var photos: [PhotoRecord]
+        /// 2.1: "servings you get" history, oldest first.
+        public var servingReports: [ServingReportRecord]
+        /// 2.1: worksheet corrections, oldest first.
+        public var foodOverrides: [FoodOverrideRecord]
 
         public init(id: Recipe.ID, currentVersion: Int, folderId: Folder.ID?, parentRecipeId: Recipe.ID?, archivedAt: Date?,
                     createdAt: Date, updatedAt: Date, tags: [String], versions: [VersionRecord], ratings: [RatingRecord],
-                    ratingClears: [ClearRecord], notes: [NoteRecord], photos: [PhotoRecord]) {
+                    ratingClears: [ClearRecord], notes: [NoteRecord], photos: [PhotoRecord],
+                    servingReports: [ServingReportRecord] = [], foodOverrides: [FoodOverrideRecord] = []) {
             self.id = id; self.currentVersion = currentVersion; self.folderId = folderId; self.parentRecipeId = parentRecipeId
             self.archivedAt = archivedAt; self.createdAt = createdAt; self.updatedAt = updatedAt; self.tags = tags
             self.versions = versions; self.ratings = ratings; self.ratingClears = ratingClears; self.notes = notes; self.photos = photos
+            self.servingReports = servingReports; self.foodOverrides = foodOverrides
+        }
+
+        enum CodingKeys: String, CodingKey {
+            case id, currentVersion, folderId, parentRecipeId, archivedAt, createdAt, updatedAt, tags, versions, ratings,
+                 ratingClears, notes, photos, servingReports, foodOverrides
+        }
+
+        /// 2.0 files have no `servingReports` / `foodOverrides` keys.
+        public init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            id = try c.decode(Recipe.ID.self, forKey: .id)
+            currentVersion = try c.decode(Int.self, forKey: .currentVersion)
+            folderId = try c.decodeIfPresent(Folder.ID.self, forKey: .folderId)
+            parentRecipeId = try c.decodeIfPresent(Recipe.ID.self, forKey: .parentRecipeId)
+            archivedAt = try c.decodeIfPresent(Date.self, forKey: .archivedAt)
+            createdAt = try c.decode(Date.self, forKey: .createdAt)
+            updatedAt = try c.decode(Date.self, forKey: .updatedAt)
+            tags = try c.decode([String].self, forKey: .tags)
+            versions = try c.decode([VersionRecord].self, forKey: .versions)
+            ratings = try c.decode([RatingRecord].self, forKey: .ratings)
+            ratingClears = try c.decode([ClearRecord].self, forKey: .ratingClears)
+            notes = try c.decode([NoteRecord].self, forKey: .notes)
+            photos = try c.decode([PhotoRecord].self, forKey: .photos)
+            servingReports = try c.decodeIfPresent([ServingReportRecord].self, forKey: .servingReports) ?? []
+            foodOverrides = try c.decodeIfPresent([FoodOverrideRecord].self, forKey: .foodOverrides) ?? []
+        }
+    }
+
+    public struct ServingReportRecord: Codable, Hashable, Sendable {
+        public var id: ServingReport.ID
+        public var servings: Int?
+        public var note: String?
+        public var reportedAt: Date
+        public init(_ report: ServingReport) {
+            id = report.id; servings = report.servings; note = report.note; reportedAt = report.reportedAt
+        }
+    }
+
+    public struct FoodOverrideRecord: Codable, Hashable, Sendable {
+        public var id: FoodOverride.ID
+        public var ingredientKey: String
+        /// nil = don't count; "" = back to automatic (the stored marker).
+        public var foodId: Food.ID?
+        public var createdAt: Date
+        public init(_ override: FoodOverride) {
+            id = override.id; ingredientKey = override.ingredientKey; foodId = override.foodID; createdAt = override.createdAt
         }
     }
 

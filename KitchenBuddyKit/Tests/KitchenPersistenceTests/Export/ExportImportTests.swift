@@ -19,8 +19,16 @@ import KitchenTesting
         try BookDriver(book: source).apply(BookOperation.sequence(length: 5...30).run(&rng))
         if let first = try source.recipes.summaries(RecipeQuery(includeArchived: true)).first {
             try source.photos.add(ImageGen.image(width: 300, height: 200, seed: seed), to: first.id, caption: "c")
+            try source.recipes.reportServings(first.id, servings: 4, note: "us")
+            try source.recipes.reportServings(first.id, servings: nil, note: nil)
+            if let name = try source.recipes.detail(first.id)?.version.ingredients.first?.name {
+                try source.recipes.setFoodOverride(first.id, ingredientName: name, foodID: "flour-white")
+                try source.recipes.setFoodOverride(first.id, ingredientName: name, foodID: nil)
+                try source.recipes.clearFoodOverride(first.id, ingredientName: name)
+            }
         }
         let document = try source.exporter.export(.fullBackup)
+        #expect(document.version == "2.1", "seed \(seed)")
         let data = try document.encoded()
         let expected = try BookFingerprint.of(source)
 
@@ -43,6 +51,9 @@ import KitchenTesting
         #expect(actual.rows["ratings"] == expected.rows["ratings"], "seed \(seed): ratings")
         #expect(actual.rows["rating_clears"] == expected.rows["rating_clears"], "seed \(seed): clears")
         #expect(actual.rows["recipe_notes"] == expected.rows["recipe_notes"], "seed \(seed): notes")
+        #expect(actual.rows["serving_reports"] == expected.rows["serving_reports"], "seed \(seed): serving reports (P37)")
+        #expect(actual.rows["food_overrides"] == expected.rows["food_overrides"], "seed \(seed): food overrides (P37)")
+        #expect(actual.rows["recipe_health"] == expected.rows["recipe_health"], "seed \(seed): health projection")
         #expect(actual.rows["folders"] == expected.rows["folders"], "seed \(seed): folders")
         #expect(actual.rows["recipe_tags"]?.count == expected.rows["recipe_tags"]?.count, "seed \(seed): tag links")
         #expect(actual.rows["photos"]?.count == expected.rows["photos"]?.count, "seed \(seed): photos")
@@ -89,6 +100,45 @@ import KitchenTesting
 
     /// P23: every v1 fixture recipe imports with counts preserved, into an
     /// empty book and again as copies.
+    /// P37: a 2.0 file (no `servingReports` / `foodOverrides` keys) still
+    /// imports, and an override naming a food this build doesn't know
+    /// lands as "automatic".
+    @Test func version20FilesStillImportAndUnknownFoodsBecomeAutomatic() throws {
+        let (source, layoutA) = try TestDatabase.onDisk()
+        defer { TestDatabase.remove(layoutA) }
+        let created = try source.recipes.create(RecipeDraft(title: "Toast", ingredients: [IngredientDraft(name: "bread", quantity: Fraction(2), unit: .piece)],
+                                                            instructions: [InstructionDraft(text: "Toast.")], servings: 2))
+        try source.recipes.setFoodOverride(created.id, ingredientName: "bread", foodID: "bread-white")
+        var json = try JSONSerialization.jsonObject(with: try source.exporter.export(.fullBackup).encoded()) as! [String: Any]
+        var recipes = json["recipes"] as! [[String: Any]]
+        var overrides = recipes[0]["foodOverrides"] as! [[String: Any]]
+        overrides[0]["foodId"] = "food-from-the-future"
+        recipes[0]["foodOverrides"] = overrides
+        json["recipes"] = recipes
+        let future = try JSONSerialization.data(withJSONObject: json)
+
+        var twoPointZero = json
+        twoPointZero["version"] = "2.0"
+        recipes[0].removeValue(forKey: "foodOverrides")
+        recipes[0].removeValue(forKey: "servingReports")
+        twoPointZero["recipes"] = recipes
+        let old = try JSONSerialization.data(withJSONObject: twoPointZero)
+
+        let (target, layoutB) = try TestDatabase.onDisk()
+        defer { TestDatabase.remove(layoutB) }
+        let oldReading = try ImportDocument.read(old)
+        #expect(oldReading.document.recipes[0].foodOverrides.isEmpty && oldReading.document.recipes[0].servingReports.isEmpty)
+        #expect(try target.importer.perform(oldReading, policy: .skipExisting).imported == 1)
+
+        let (target2, layoutC) = try TestDatabase.onDisk()
+        defer { TestDatabase.remove(layoutC) }
+        #expect(try target2.importer.perform(try ImportDocument.read(future), policy: .skipExisting).imported == 1)
+        let stored = try target2.recipes.foodOverrides(created.id)
+        #expect(stored.count == 1 && stored[0].isAutomaticMarker)
+        #expect(FoodOverride.effective(stored).isEmpty)
+        try source.close(); try target.close(); try target2.close()
+    }
+
     @Test func legacyV1FileImports() throws {
         let book = try TestDatabase.inMemory()
         let reading = try ImportDocument.read(try LegacyFixtures.recipesV1Data())

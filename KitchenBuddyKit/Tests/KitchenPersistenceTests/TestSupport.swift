@@ -32,6 +32,18 @@ struct TableCounts: Equatable, CustomStringConvertible {
 
 extension RecipeBook {
     /// Every `recipe_search` row keyed by recipe id, as raw database values.
+    func healthRows() throws -> [String: [String: DatabaseValue]] {
+        try writer.read { db in
+            var result: [String: [String: DatabaseValue]] = [:]
+            for row in try Row.fetchAll(db, sql: "SELECT * FROM recipe_health") {
+                var values: [String: DatabaseValue] = [:]
+                for (column, value) in row where column != "computed_at" { values[column] = value }
+                result[row["recipe_id"]] = values
+            }
+            return result
+        }
+    }
+
     func searchRows() throws -> [String: [String: DatabaseValue]] {
         try writer.read { db in
             var result: [String: [String: DatabaseValue]] = [:]

@@ -31,6 +31,9 @@ struct FilterBar: View {
                     chip(.maximumMinutes(minutes), label: "Under \(minutes) min", identifier: "chip-time-\(minutes)")
                 }
                 chip(.minimumRating(4), label: "4+ stars", identifier: "chip-rating-4")
+                ForEach(model.healthChips) { token in
+                    chip(token, label: token.label, identifier: "chip-\(token.id)")
+                }
                 ForEach(model.tagChips.prefix(8)) { token in
                     chip(token, label: token.label, identifier: "chip-tag-\(token.label)")
                 }
@@ -103,6 +106,20 @@ struct FilterSheet: View {
                                     onClear: { model.setMinimumRating(nil) })
                         Spacer()
                         Text(model.minimumRating.map { "\($0)+ stars" } ?? "Any").foregroundStyle(.secondary)
+                    }
+                }
+                if !model.healthChips.isEmpty {
+                    Section {
+                        ForEach(model.healthChips) { token in
+                            Toggle(isOn: Binding(get: { model.isActive(token) }, set: { _ in model.toggle(token) })) {
+                                Label(token.label, systemImage: token.systemImage)
+                            }
+                            .accessibilityIdentifier("filter-\(token.id)")
+                        }
+                    } header: {
+                        Text("Health")
+                    } footer: {
+                        Text("Only recipes whose per-serving estimate is in the low band. Estimates from typical ingredients, not medical advice.")
                     }
                 }
                 Section("Tags") {

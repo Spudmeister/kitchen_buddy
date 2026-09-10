@@ -145,6 +145,33 @@ enum RecipeSQL {
                    deletedAt: row.optionalTimestamp("deleted_at"))
     }
 
+    // MARK: Serving reports and food overrides (M11)
+
+    /// Chronological.
+    static func servingReports(_ recipeID: Recipe.ID, _ db: Database) throws -> [ServingReport] {
+        try Row.fetchAll(db, sql: "SELECT * FROM serving_reports WHERE recipe_id = ? ORDER BY reported_at, rowid",
+                         arguments: [recipeID.rawValue]).map(servingReport(from:))
+    }
+
+    static func latestServingReport(_ recipeID: Recipe.ID, _ db: Database) throws -> ServingReport? {
+        try Row.fetchOne(db, sql: "SELECT * FROM serving_reports WHERE recipe_id = ? ORDER BY reported_at DESC, rowid DESC LIMIT 1",
+                         arguments: [recipeID.rawValue]).map(servingReport(from:))
+    }
+
+    static func servingReport(from row: Row) -> ServingReport {
+        ServingReport(id: row.id("id"), recipeID: row.id("recipe_id"), servings: row["servings"],
+                      note: row["note"], reportedAt: row.timestamp("reported_at"))
+    }
+
+    /// Chronological; `FoodOverride.effective` reduces to the latest per key.
+    static func foodOverrides(_ recipeID: Recipe.ID, _ db: Database) throws -> [FoodOverride] {
+        try Row.fetchAll(db, sql: "SELECT * FROM food_overrides WHERE recipe_id = ? ORDER BY created_at, rowid",
+                         arguments: [recipeID.rawValue]).map { row in
+            FoodOverride(id: row.id("id"), recipeID: row.id("recipe_id"), ingredientKey: row["ingredient_key"],
+                         foodID: row["food_id"], createdAt: row.timestamp("created_at"))
+        }
+    }
+
     static func detail(_ id: Recipe.ID, version number: Int? = nil, _ db: Database) throws -> RecipeDetail? {
         guard let recipe = try recipe(id, db),
               let version = try version(id, number: number ?? recipe.currentVersion, db) else { return nil }
@@ -153,7 +180,8 @@ enum RecipeSQL {
                             tags: try tags(id, db),
                             currentRating: try latestRating(id, db),
                             photos: try photos(id, db),
-                            notes: try notes(id, includeDeleted: false, db))
+                            notes: try notes(id, includeDeleted: false, db),
+                            latestServingReport: try latestServingReport(id, db))
     }
 
     @discardableResult

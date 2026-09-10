@@ -22,6 +22,9 @@ public enum SearchIndex {
     // MARK: Maintenance
 
     static func refresh(_ recipeID: Recipe.ID, _ db: Database) throws {
+        // The health projection rides on the same hook so every existing
+        // write path keeps both derived tables current (Requirement 21.9).
+        try HealthIndex.refresh(recipeID, db)
         guard let row = try Row.fetchOne(db, sql: """
             SELECT r.folder_id, r.archived_at, r.created_at, r.updated_at,
                    v.id AS version_id, v.title, v.description, v.prep_minutes, v.cook_minutes
@@ -90,12 +93,15 @@ public enum SearchIndex {
         for id in ids { try refresh(Recipe.ID(id), db) }
         try db.execute(sql: "INSERT INTO recipes_fts(recipes_fts) VALUES ('rebuild')")
         try PreferencesStore.setValue(String(currentVersion), forKey: PreferencesStore.searchIndexVersionKey, db)
+        try HealthIndex.markCurrent(db)
     }
 
-    /// True when the stored projection version is older than this build's.
+    /// True when either derived table's stored version is older than this
+    /// build's (food table, thresholds or derivation changed).
     static func isStale(_ db: Database) throws -> Bool {
         let stored = try PreferencesStore.value(forKey: PreferencesStore.searchIndexVersionKey, db).flatMap(Int.init)
-        return stored != currentVersion
+        if stored != currentVersion { return true }
+        return try HealthIndex.isStale(db)
     }
 
     /// Case- and diacritic-folded key for ordering by name.
@@ -123,6 +129,9 @@ public enum SearchIndex {
             arguments.append(pattern)
         } else {
             sql = "SELECT rs.* FROM recipe_search rs WHERE 1"
+        }
+        for profile in query.friendlyProfiles.sorted(by: { $0.rawValue < $1.rawValue }) {
+            sql += " AND EXISTS (SELECT 1 FROM recipe_health rh WHERE rh.recipe_id = rs.recipe_id AND rh.\(HealthIndex.bandColumn(profile)) = 0)"
         }
 
         if !query.includeArchived { sql += " AND rs.archived_at IS NULL" }
@@ -155,7 +164,10 @@ public enum SearchIndex {
         }
         sql += " LIMIT \(resultLimit)"
 
-        return try Row.fetchAll(db, sql: sql, arguments: StatementArguments(arguments)).map(summary(from:))
+        // Health rides in a second lookup over the returned page only: a
+        // join over every candidate row cost ~6 ms at 5,000 recipes.
+        let summaries = try Row.fetchAll(db, sql: sql, arguments: StatementArguments(arguments)).map(summary(from:))
+        return try HealthIndex.attach(to: summaries, db)
     }
 
     static func orderClause(_ query: RecipeQuery) -> String {
@@ -170,8 +182,9 @@ public enum SearchIndex {
     }
 
     static func summary(_ recipeID: Recipe.ID, _ db: Database) throws -> RecipeSummary? {
-        try Row.fetchOne(db, sql: "SELECT * FROM recipe_search WHERE recipe_id = ?",
-                         arguments: [recipeID.rawValue]).map(summary(from:))
+        guard let summary = try Row.fetchOne(db, sql: "SELECT * FROM recipe_search WHERE recipe_id = ?",
+                                             arguments: [recipeID.rawValue]).map(summary(from:)) else { return nil }
+        return try HealthIndex.attach(to: [summary], db).first
     }
 
     static func summary(from row: Row) -> RecipeSummary {

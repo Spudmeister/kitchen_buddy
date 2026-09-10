@@ -8,6 +8,12 @@ triage (tracked as M10, rolling), and the device checks listed under
 by weight (ADR-008); no product name but Kitchen Buddy in the UI; the index
 buttons explained; a front-page filter chip bar with a Filters sheet. The recipe book
 is feature-complete against the spec; what follows is feedback-driven.
+**M11 (branch `m11/health`, ADR-009, PR #17):** health profiles
+(diabetes / blood pressure / heart health) estimated from a bundled food
+table (254 foods, USDA nutrients + International GI Tables) with an
+auditable per-line worksheet and per-line corrections, Library badges and
+"-friendly" filters, "servings you actually get" reports that drive scaling
+and every per-serving figure, schema v3, export 2.1; tag **v0.5.0**.
 
 History: M0–M2 merged (PRs #5, #6, #7); TestFlight build
 **0.1.0 (41)** verified on Andrew's phone: iCloud Drive available, daily
@@ -36,7 +42,7 @@ signposts, 5,100-recipe perf seed, XXL accessibility pass. Release step:
 tag **v0.4.0** on the merge. After that: beta feedback triage (9.6).
 
 Milestones and tasks: `.kiro/specs/kitchen-buddy-ios/tasks.md`. Tags:
-v0.1.0 at M3 (usable recipe book), v0.2.0 at M5, v0.3.0 at M8, v0.4.0 at M9.
+v0.1.0 at M3 (usable recipe book), v0.2.0 at M5, v0.3.0 at M8, v0.4.0 at M9, v0.5.0 at M11.
 
 | Milestone | What lands | State |
 |---|---|---|
@@ -50,11 +56,14 @@ v0.1.0 at M3 (usable recipe book), v0.2.0 at M5, v0.3.0 at M8, v0.4.0 at M9.
 | M7 URL import + Share Extension | | done, build 57 |
 | M8 Export / import / PDF → **v0.3.0** | | done, build 59 |
 | M9 Polish, accessibility, Spotlight, beta → **v0.4.0** | | done, tagged; 9.6 triage open |
+| M10 Beta feedback (rolling) | densities, no Sous Chef, index explained, filter chips | shipping as it lands (build 67) |
+| M11 Health profiles + actual servings → **v0.5.0** | food table, estimator, worksheet, badges/filters, serving reports, schema v3, export 2.1 | done, PR #17 |
 
 ## Human steps remaining (Andrew)
 
 - After M3 ships: create ten recipes by hand on the phone, edit, reorder, search, archive and unarchive, at the largest text size. Report anything that loses data.
 - After M8 ships: AirDrop a `.kbrecipes` between two phones, open a PDF from Files, export a full backup, then delete-and-reinstall (TestFlight only) and import the backup.
+- After M11 ships: open a chili, a pasta and a salad; read the worksheet line by line and report any ingredient matched to the wrong food or left uncounted; report "servings you get" on one recipe and confirm the badge and scaling follow.
 - After M7 ships: share five recipe pages from Safari (a big site, a paywall, a blog, a non-recipe page) and report what each did; import one by pasting a URL.
 - Internal testers must accept the TestFlight invitation email (Admin role alone shows nothing); a stale link can be re-issued from the API (`betaTesterInvitations`).
 

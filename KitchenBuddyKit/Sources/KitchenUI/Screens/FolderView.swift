@@ -96,7 +96,7 @@ public struct FolderView: View {
 
     private var selectionList: some View {
         List(model.results, selection: $selected) { recipe in
-            RecipeRow(recipe: recipe).tag(recipe.id)
+            RecipeRow(recipe: recipe, healthProfiles: model.environment.preferences.healthProfiles).tag(recipe.id)
         }
         .insetGroupedList()
         .reorderMode(active: true)

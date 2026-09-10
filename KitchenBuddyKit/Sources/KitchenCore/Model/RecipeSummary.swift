@@ -15,10 +15,13 @@ public struct RecipeSummary: Identifiable, Hashable, Codable, Sendable {
     public var tags: [String]
     public var createdAt: Date
     public var updatedAt: Date
+    /// Per-serving health figures from `recipe_health` (Requirement 21.6).
+    public var health: RecipeHealth?
 
     public init(id: Recipe.ID, title: String, description: String? = nil, folderID: Folder.ID? = nil,
                 archivedAt: Date? = nil, latestRating: Int? = nil, totalMinutes: Int? = nil,
-                thumbnailPhotoID: Photo.ID? = nil, tags: [String] = [], createdAt: Date, updatedAt: Date) {
+                thumbnailPhotoID: Photo.ID? = nil, tags: [String] = [], createdAt: Date, updatedAt: Date,
+                health: RecipeHealth? = nil) {
         self.id = id
         self.title = title
         self.description = description
@@ -30,6 +33,7 @@ public struct RecipeSummary: Identifiable, Hashable, Codable, Sendable {
         self.tags = tags
         self.createdAt = createdAt
         self.updatedAt = updatedAt
+        self.health = health
     }
 
     public var isArchived: Bool { archivedAt != nil }

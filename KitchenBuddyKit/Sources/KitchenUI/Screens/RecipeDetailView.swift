@@ -130,6 +130,10 @@ public struct RecipeDetailView: View {
                     Label(folderName, systemImage: "folder").font(.subheadline).foregroundStyle(.secondary)
                 }
 
+                if !model.isPastVersion, !model.healthScores.isEmpty {
+                    healthSection(detail)
+                }
+
                 Section {
                     section("Ingredients") {
                         ForEach(model.displayedIngredients) { ingredient in
@@ -262,8 +266,55 @@ public struct RecipeDetailView: View {
             if let total = detail.version.totalMinutes, detail.version.prepMinutes != nil, detail.version.cookMinutes != nil {
                 chip("Total \(DurationText.minutes(total))", "clock")
             }
-            if let servings = detail.version.servings { chip("\(servings) servings", "person.2") }
+            if let text = model.servingsChipText {
+                if model.isReadOnly {
+                    chip(text, "person.2")
+                } else {
+                    Button { environment.router.present(.servingsReport(detail.id)) } label: { chip(text, "person.2") }
+                        .buttonStyle(.plain)
+                        .accessibilityIdentifier("servingsChip")
+                        .accessibilityHint("Report how many servings you really get")
+                }
+            } else if !model.isReadOnly {
+                Button { environment.router.present(.servingsReport(detail.id)) } label: { chip("Add servings you get", "person.2") }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("servingsChip")
+            }
         }
+    }
+
+    /// One row per enabled profile; every row opens the worksheet
+    /// (Requirements 21.6, 21.7).
+    private func healthSection(_ detail: RecipeDetail) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            NavigationLink(value: Route.health(detail.id)) {
+                VStack(alignment: .leading, spacing: 8) {
+                    ForEach(model.healthScores, id: \.profile) { score in
+                        HStack(spacing: 10) {
+                            HealthBadge(score: score, compact: false)
+                            Spacer(minLength: 0)
+                            Image(systemName: "chevron.right").font(.footnote).foregroundStyle(.tertiary)
+                        }
+                    }
+                    Text(healthFootnote(detail))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(12)
+                .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 12))
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("healthSection")
+        }
+    }
+
+    private func healthFootnote(_ detail: RecipeDetail) -> String {
+        guard let servings = detail.effectiveServings else {
+            return "Add a servings count to score this recipe. Estimates from typical ingredients, not medical advice."
+        }
+        let basis = detail.latestServingReport?.servings != nil && detail.latestServingReport?.servings != detail.version.servings
+            ? "per serving, at the \(servings) you get" : "per serving of \(servings)"
+        return "Estimated \(basis). Tap for the worksheet. Not medical advice."
     }
 
     private func chip(_ text: String, _ symbol: String) -> some View {

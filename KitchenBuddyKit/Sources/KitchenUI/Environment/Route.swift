@@ -14,4 +14,8 @@ public enum Route: Hashable, Codable, Sendable {
     case archived
     case settings
     case backups
+    /// The health worksheet for a recipe (M11).
+    case health(Recipe.ID)
+    /// Settings › Health › Sources & thresholds (M11).
+    case healthSources
 }

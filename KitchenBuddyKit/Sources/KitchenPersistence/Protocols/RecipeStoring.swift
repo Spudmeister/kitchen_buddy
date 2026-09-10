@@ -21,6 +21,8 @@ public protocol RecipeStoring: Sendable {
     func versions(_ id: Recipe.ID) throws -> [RecipeVersion]
     func heritage(_ id: Recipe.ID) throws -> RecipeHeritage?
     func summaries(_ query: RecipeQuery) throws -> [RecipeSummary]
+    /// One Library row, archived or not, with its health projection.
+    func summary(_ id: Recipe.ID) throws -> RecipeSummary?
     func observeSummaries(_ query: RecipeQuery) -> AsyncThrowingStream<[RecipeSummary], Error>
     func count(includeArchived: Bool) throws -> Int
 
@@ -52,4 +54,20 @@ public protocol RecipeStoring: Sendable {
     func undeleteNote(_ noteID: RecipeNote.ID) throws
     /// Pinned first, then newest first.
     func notes(_ id: Recipe.ID, includeDeleted: Bool) throws -> [RecipeNote]
+
+    // MARK: Servings you get and health (M11)
+
+    /// Appends a report; nil servings means "back to the recipe's count".
+    @discardableResult func reportServings(_ id: Recipe.ID, servings: Int?, note: String?) throws -> ServingReport
+    /// Chronological.
+    func servingReports(_ id: Recipe.ID) throws -> [ServingReport]
+    /// Appends an override for the ingredient name; nil food means "don't count".
+    @discardableResult func setFoodOverride(_ id: Recipe.ID, ingredientName: String, foodID: Food.ID?) throws -> FoodOverride
+    /// Appends a "back to automatic" marker for the ingredient name.
+    func clearFoodOverride(_ id: Recipe.ID, ingredientName: String) throws
+    /// Chronological, every row.
+    func foodOverrides(_ id: Recipe.ID) throws -> [FoodOverride]
+    /// The worksheet: the current version estimated with the effective
+    /// servings and overrides. nil when the recipe is missing.
+    func nutrition(_ id: Recipe.ID) throws -> RecipeNutrition?
 }

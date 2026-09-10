@@ -29,6 +29,7 @@ public final class RecipeDetailViewModel {
     /// Bumps on every saved rating so the view can play haptic feedback (15.5).
     public private(set) var ratingFeedbackTrigger = 0
     public private(set) var heritage: RecipeHeritage?
+    private var loadedBase: Int?
 
     public init(environment: AppEnvironment, recipeID: Recipe.ID, versionNumber: Int? = nil) {
         self.environment = environment
@@ -39,7 +40,27 @@ public final class RecipeDetailViewModel {
 
     // MARK: Scaling and units
 
-    public var baseServings: Int? { detail?.version.servings }
+    /// The scaling base: the latest "servings you get" report, else the
+    /// recipe's own count (Requirement 20.3).
+    public var baseServings: Int? { detail?.effectiveServings }
+    /// Enabled profiles with the stored per-serving score (Requirement 21.6).
+    public var healthScores: [HealthScore] {
+        guard let health = summaryHealth else { return [] }
+        return environment.preferences.healthProfiles.map(health.score(for:))
+    }
+    public private(set) var summaryHealth: RecipeHealth?
+    /// "Recipe says 8 · you get 4" when a report differs from the recipe.
+    public var servingsChipText: String? {
+        guard let detail else { return nil }
+        let own = detail.version.servings
+        let effective = detail.effectiveServings
+        switch (own, effective) {
+        case (nil, nil): return nil
+        case (let own?, let got?) where own != got: return "Recipe says \(own) · you get \(got)"
+        case (_, let got?): return "\(got) \(got == 1 ? "serving" : "servings")"
+        default: return nil
+        }
+    }
     /// Scaling needs a servings value on the recipe (Requirement 8.4).
     public var canScale: Bool { baseServings != nil }
     public var scaleFactor: Fraction {
@@ -85,11 +106,15 @@ public final class RecipeDetailViewModel {
             isMissing = detail == nil
             folderName = try detail?.recipe.folderID.flatMap { try book.folders.folder($0) }?.name
             heritage = try book.recipes.heritage(recipeID)
-            if servings == nil, let base = detail?.version.servings {
+            summaryHealth = try book.recipes.summary(recipeID)?.health
+            let base = detail?.effectiveServings
+            if servings == nil, let base {
                 // Settings › default servings opens scaled (Requirement 18.2).
                 servings = environment.preferences.defaultServings ?? base
             }
-            if let base = detail?.version.servings, servings != nil, versionNumber == nil, base != detail?.version.servings { servings = base }
+            // A new serving report moves the base; follow it unless the user has scaled.
+            if let base, let previous = loadedBase, previous != base, servings == previous { servings = base }
+            loadedBase = base
         } catch {
             self.error = "\(error)"
         }

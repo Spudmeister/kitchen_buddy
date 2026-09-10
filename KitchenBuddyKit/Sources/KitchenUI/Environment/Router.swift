@@ -23,6 +23,10 @@ public final class Router {
         case importURL(URL?)
         case importFile(URL?)
         case share(ExportOptions.Scope, backup: Bool)
+        /// "Servings you get" (M11, Requirement 20).
+        case servingsReport(Recipe.ID)
+        /// Pick the food for a worksheet line (M11, Requirement 21.6).
+        case foodPicker(Recipe.ID, ingredientName: String)
 
         public var id: String {
             switch self {
@@ -40,6 +44,8 @@ public final class Router {
             case .importURL(let url): return "import-\(url?.absoluteString ?? "")"
             case .importFile(let url): return "importfile-\(url?.lastPathComponent ?? "")"
             case .share(let scope, let backup): return "share-\(scope)-\(backup)"
+            case .servingsReport(let id): return "servings-\(id)"
+            case .foodPicker(let id, let name): return "food-\(id)-\(name)"
             }
         }
     }

@@ -72,6 +72,7 @@ public final class LibraryViewModel {
             case .minimumRating(let value): query.minimumRating = max(query.minimumRating ?? 0, value)
             case .maximumMinutes(let minutes): query.maximumTotalMinutes = min(query.maximumTotalMinutes ?? .max, minutes)
             case .includeArchived: query.includeArchived = true
+            case .friendly(let profile): query.friendlyProfiles.insert(profile)
             }
         }
         return query
@@ -214,6 +215,9 @@ public final class LibraryViewModel {
     public var tagChips: [SearchToken] {
         availableTokens.filter { if case .tag = $0 { return true } else { return false } }
     }
+
+    /// One chip per profile enabled in Settings (Requirement 21.8).
+    public var healthChips: [SearchToken] { environment.preferences.healthProfiles.map(SearchToken.friendly) }
 
     public var activeTags: [String] {
         tokens.compactMap { if case .tag(let name) = $0 { return name } else { return nil } }

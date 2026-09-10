@@ -11,6 +11,8 @@ public enum SearchToken: Identifiable, Hashable, Sendable {
     case minimumRating(Int)
     case maximumMinutes(Int)
     case includeArchived
+    /// Band is low for this profile (Requirement 21.8).
+    case friendly(HealthProfile)
 
     public var id: String {
         switch self {
@@ -19,6 +21,7 @@ public enum SearchToken: Identifiable, Hashable, Sendable {
         case .minimumRating(let value): return "rating:\(value)"
         case .maximumMinutes(let minutes): return "time:\(minutes)"
         case .includeArchived: return "archived"
+        case .friendly(let profile): return "friendly:\(profile.rawValue)"
         }
     }
 
@@ -29,6 +32,7 @@ public enum SearchToken: Identifiable, Hashable, Sendable {
         case .minimumRating(let value): return "\(value)+ stars"
         case .maximumMinutes(let minutes): return "Under \(DurationText.minutes(minutes))"
         case .includeArchived: return "Include archived"
+        case .friendly(let profile): return profile.friendlyLabel
         }
     }
 
@@ -39,6 +43,7 @@ public enum SearchToken: Identifiable, Hashable, Sendable {
         case .minimumRating: return "star"
         case .maximumMinutes: return "clock"
         case .includeArchived: return "archivebox"
+        case .friendly(let profile): return profile.symbolName
         }
     }
 }

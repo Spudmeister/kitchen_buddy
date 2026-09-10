@@ -34,12 +34,15 @@ public enum BookOperation: Hashable, Sendable {
     case savePreferences(Preferences)
     case snapshot(Snapshot.Reason)
     case prune
+    case reportServings(recipe: Int, servings: Int?)
+    case overrideFood(recipe: Int, ingredient: Int, food: String?)
+    case clearOverride(recipe: Int, ingredient: Int)
 
     public static var gen: Gen<BookOperation> {
         Gen<BookOperation> { rng in
             let index = Gen<Int>.int(in: 0...1_000)
             let maybeIndex = index.optional(probability: 0.8)
-            switch Int.random(in: 0..<24, using: &rng) {
+            switch Int.random(in: 0..<27, using: &rng) {
             case 0, 1, 2: return .create(RecipeGen.draft.run(&rng))
             case 3: return .editContent(recipe: index.run(&rng))
             case 4: return .saveUnchanged(recipe: index.run(&rng))
@@ -63,6 +66,13 @@ public enum BookOperation: Hashable, Sendable {
                 return .snapshot(Gen<Snapshot.Reason>.element(of: [.manual, .background, .daily, .preImport]).run(&rng))
             case 23:
                 return .prune
+            case 24:
+                return .reportServings(recipe: index.run(&rng), servings: Gen<Int>.int(in: 1...16).optional(probability: 0.8).run(&rng))
+            case 25:
+                return .overrideFood(recipe: index.run(&rng), ingredient: index.run(&rng),
+                                     food: Gen<String>.element(of: FoodTable.foods.map(\.id)).optional(probability: 0.7).run(&rng))
+            case 26:
+                return .clearOverride(recipe: index.run(&rng), ingredient: index.run(&rng))
             default:
                 return .savePreferences(Preferences(
                     unitPreference: Gen<UnitPreference>.element(of: UnitPreference.allCases).run(&rng),
@@ -172,6 +182,19 @@ public final class BookDriver {
             try book.preferences.save(preferences)
         case .snapshot(let reason):
             try book.backups.snapshot(reason: reason)
+        case .reportServings(let index, let servings):
+            guard let id = recipe(index) else { return }
+            try book.recipes.reportServings(id, servings: servings, note: nil)
+        case .overrideFood(let index, let ingredientIndex, let food):
+            guard let id = recipe(index), let detail = try book.recipes.detail(id),
+                  !detail.version.ingredients.isEmpty else { return }
+            let name = detail.version.ingredients[ingredientIndex % detail.version.ingredients.count].name
+            try book.recipes.setFoodOverride(id, ingredientName: name, foodID: food)
+        case .clearOverride(let index, let ingredientIndex):
+            guard let id = recipe(index), let detail = try book.recipes.detail(id),
+                  !detail.version.ingredients.isEmpty else { return }
+            let name = detail.version.ingredients[ingredientIndex % detail.version.ingredients.count].name
+            try book.recipes.clearFoodOverride(id, ingredientName: name)
         case .prune:
             try book.backups.prune()
         }

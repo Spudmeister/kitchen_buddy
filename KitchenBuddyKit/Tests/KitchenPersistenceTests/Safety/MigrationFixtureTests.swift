@@ -6,7 +6,7 @@ import KitchenTesting
 @testable import KitchenPersistence
 
 /// Feature: kitchen-buddy-ios, every committed schema fixture opens forever.
-/// `kb-schema-v1.sqlite` was written by `writeSchemaV1Fixture` (run with
+/// `kb-schema-v1.sqlite` and later fixtures were written by `writeSchemaFixture` (run with
 /// `KB_WRITE_SCHEMA_FIXTURE=<path>`; see scripts/make-schema-fixture.sh)
 /// and must never be regenerated once a later schema version exists.
 /// Validates: iron rule 2 (ADR-003)
@@ -57,10 +57,46 @@ import KitchenTesting
         try book.close()
     }
 
+    /// The v2 fixture (written 2026-09-09, before `v3-health`) opens, migrates
+    /// to v3 and keeps its rating clear; the new tables start empty and the
+    /// health projection is built for every recipe.
+    @Test func schemaV2FixtureOpensAndMigrates() throws {
+        let fixture = try #require(Bundle.module.url(forResource: "kb-schema-v2", withExtension: "sqlite", subdirectory: "fixtures"))
+        let layout = TestDatabase.temporaryLayout()
+        defer { TestDatabase.remove(layout) }
+        try FileManager.default.createDirectory(at: layout.root, withIntermediateDirectories: true)
+        try FileManager.default.copyItem(at: fixture, to: layout.databaseURL)
+
+        let book = try RecipeBook.open(layout, clock: .system)
+        #expect(try book.writer.read { db in try String.fetchOne(db, sql: "PRAGMA integrity_check") } == "ok")
+        #expect(try book.writer.read { db in try DatabaseStack.migrator.appliedMigrations(db) } == Migrations.identifiers)
+        guard case .migrated(let preMigration?) = book.launchReport else {
+            Issue.record("a v2 file must be snapshotted before v3 migrates it: \(book.launchReport)")
+            return
+        }
+        #expect(preMigration.reason == .preMigration && preMigration.isVerified)
+        #expect(try book.recipes.count(includeArchived: true) == Self.fixtureRecipeCount)
+
+        let cleared = try #require(try book.recipes.summaries(RecipeQuery(includeArchived: true)).first { summary in
+            try book.recipes.ratingEvents(summary.id).contains { if case .cleared = $0 { return true } else { return false } }
+        })
+        #expect(try book.recipes.detail(cleared.id)?.currentRating == nil, "the v2 clear still counts")
+
+        #expect(try book.healthRows().count == Self.fixtureRecipeCount, "every recipe gets a health row at open")
+        let bruschetta = try #require(try book.recipes.summaries(RecipeQuery(text: "bruschetta")).first)
+        #expect(bruschetta.health != nil)
+        #expect(try book.recipes.servingReports(bruschetta.id).isEmpty && (try book.recipes.foodOverrides(bruschetta.id)).isEmpty)
+        try book.recipes.reportServings(bruschetta.id, servings: 2, note: "just us")
+        #expect(try book.recipes.detail(bruschetta.id)?.effectiveServings == 2)
+        try book.close()
+    }
+
     /// Fixture generator, gated by an environment variable so it never runs
-    /// in CI. Populates a fresh v1 database with a little of everything.
+    /// in CI. Populates a fresh database at the *current* schema with a
+    /// little of everything; run it once, just before a new migration lands,
+    /// naming the file after the schema version it holds.
     @Test(.enabled(if: ProcessInfo.processInfo.environment["KB_WRITE_SCHEMA_FIXTURE"] != nil))
-    func writeSchemaV1Fixture() throws {
+    func writeSchemaFixture() throws {
         let output = try #require(ProcessInfo.processInfo.environment["KB_WRITE_SCHEMA_FIXTURE"])
         let layout = TestDatabase.temporaryLayout()
         defer { TestDatabase.remove(layout) }
@@ -74,6 +110,11 @@ import KitchenTesting
         try book.recipes.move(bruschetta.id, toFolder: bread.id)
         try book.recipes.rate(bruschetta.id, value: 4)
         try book.recipes.rate(bruschetta.id, value: 5)
+        if Migrations.identifiers.contains("v2-rating-clears") {
+            // v2 fixtures carry a clear so v3+ keeps honouring rating_clears.
+            try book.recipes.rate(imported[3].id, value: 3)
+            try book.recipes.clearRating(imported[3].id)
+        }
         try book.recipes.addNote(to: bruschetta.id, body: "Use ripe tomatoes.", cookedOn: nil)
         var draft = bruschetta.draft
         draft.content.description = "Italian tomato appetizer, v2"

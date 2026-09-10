@@ -45,6 +45,30 @@ public struct SettingsView: View {
                 Text("Kitchen Buddy snapshots your recipe book automatically and verifies every copy. Backups also ride along in your device backup.")
             }
 
+            Section {
+                ForEach(HealthProfile.allCases, id: \.self) { profile in
+                    Toggle(isOn: Binding(get: { model.preferences.enabledHealthProfiles.contains(profile) },
+                                         set: { on in
+                                             if on { model.preferences.enabledHealthProfiles.insert(profile) }
+                                             else { model.preferences.enabledHealthProfiles.remove(profile) }
+                                         })) {
+                        Label {
+                            VStack(alignment: .leading) {
+                                Text(profile.title)
+                                Text(profile.measureName + " per serving").font(.caption).foregroundStyle(.secondary)
+                            }
+                        } icon: { Image(systemName: profile.symbolName) }
+                    }
+                    .accessibilityIdentifier("healthToggle-\(profile.rawValue)")
+                }
+                NavigationLink(value: Route.healthSources) { Text("Sources & thresholds") }
+                    .accessibilityIdentifier("healthSources")
+            } header: {
+                Text("Health")
+            } footer: {
+                Text("Each profile adds a badge to recipes, a filter chip to the Library, and a line-by-line worksheet on the recipe. Figures are estimates from typical ingredients in a bundled food table, per serving, using the servings you say you get. They are not medical advice.")
+            }
+
             Section("Library") {
                 Button("Import from File…") { model.environment.router.present(.importFile(nil)) }
                     .accessibilityIdentifier("importFromFile")
@@ -88,6 +112,7 @@ public struct SettingsView: View {
             Section("About") {
                 LabeledContent("Version", value: model.versionText)
                 LabeledContent("Export format", value: model.formatVersion)
+                LabeledContent("Food table", value: "v\(FoodTable.version) · \(FoodTable.foods.count) foods")
                 LabeledContent("Recipes", value: "\(model.recipeCount)")
             }
         }

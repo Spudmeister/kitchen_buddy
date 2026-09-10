@@ -12,7 +12,7 @@ import KitchenCore
 enum HealthIndex {
     static let versionKey = "health_index_version"
     /// Bumped when the derivation itself changes.
-    static let derivationVersion = 1
+    static let derivationVersion = 2
 
     static var currentVersion: String {
         "\(FoodTable.version).\(HealthProfile.thresholdsVersion).\(derivationVersion)"
@@ -32,7 +32,8 @@ enum HealthIndex {
         guard let recipe = try RecipeSQL.recipe(recipeID, db),
               let version = try RecipeSQL.version(recipeID, number: recipe.currentVersion, db) else { return }
         let report = try RecipeSQL.latestServingReport(recipeID, db)
-        let overrides = FoodOverride.effective(try RecipeSQL.foodOverrides(recipeID, db))
+        let overrides = FoodMapping.merge(mappings: FoodMapping.effective(try RecipeSQL.foodMappings(db)),
+                                          overrides: FoodOverride.effective(try RecipeSQL.foodOverrides(recipeID, db)))
         let nutrition = NutritionEstimator.estimate(ingredients: version.ingredients,
                                                     servings: report?.servings ?? version.servings,
                                                     overrides: overrides)

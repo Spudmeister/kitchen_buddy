@@ -51,9 +51,11 @@ public final class Exporter: Sendable {
         try handle.writer.read { db in
             let (recipeIDs, folders) = try Self.selection(options.scope, db)
             let records = try recipeIDs.map { id in try self.record(id, options: options, db) }
+            // Book-wide mappings travel with the backup preset only (they are personal).
+            let mappings = options.includeHistory ? try RecipeSQL.foodMappings(db).map(ExportDocumentV2.FoodMappingRecord.init) : nil
             return ExportDocumentV2(exportedAt: clock.now(), appBuild: appBuild,
                                     folders: folders.map(ExportDocumentV2.FolderRecord.init),
-                                    recipes: records)
+                                    recipes: records, foodMappings: mappings)
         }
     }
 

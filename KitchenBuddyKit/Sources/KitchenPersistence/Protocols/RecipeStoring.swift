@@ -67,6 +67,14 @@ public protocol RecipeStoring: Sendable {
     func clearFoodOverride(_ id: Recipe.ID, ingredientName: String) throws
     /// Chronological, every row.
     func foodOverrides(_ id: Recipe.ID) throws -> [FoodOverride]
+    /// Book-wide: every recipe with this ingredient name uses the food (nil = don't count).
+    @discardableResult func setFoodMapping(ingredientName: String, foodID: Food.ID?) throws -> FoodMapping
+    /// Book-wide "back to automatic" for the ingredient name.
+    func clearFoodMapping(ingredientName: String) throws
+    /// Chronological, every row.
+    func foodMappings() throws -> [FoodMapping]
+    /// Recipe overrides layered over book-wide mappings, for the worksheet.
+    func effectiveFoodChoices(_ id: Recipe.ID) throws -> [String: Food.ID?]
     /// The worksheet: the current version estimated with the effective
     /// servings and overrides. nil when the recipe is missing.
     func nutrition(_ id: Recipe.ID) throws -> RecipeNutrition?

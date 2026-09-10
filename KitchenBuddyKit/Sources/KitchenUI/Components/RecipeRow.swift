@@ -41,11 +41,7 @@ struct RecipeRow: View {
                 }
                 if let health = recipe.health {
                     let known = healthProfiles.map(health.score(for:)).filter { $0.band != .unknown }
-                    if !known.isEmpty {
-                        HStack(spacing: 6) {
-                            ForEach(known, id: \.profile) { HealthBadge(score: $0, compact: true) }
-                        }
-                    }
+                    if !known.isEmpty { HealthStrip(scores: known) }
                 }
             }
         }

@@ -1,5 +1,5 @@
 {
- "version": 1,
+ "version": 2,
  "nutrientSource": "USDA FoodData Central (SR Legacy and Foundation Foods), per 100 g edible portion; a few branded averages where USDA has no generic entry",
  "glycemicIndexSource": "Atkinson FS, Foster-Powell K, Brand-Miller JC. International Tables of Glycemic Index and Glycemic Load Values: 2008. Diabetes Care 2008;31(12):2281–2283; and the 2021 update, Am J Clin Nutr 2021;114(5):1625–1632",
  "foods": [
@@ -1701,6 +1701,39 @@
    "giBasis": "assumed: coconut, little carbohydrate",
    "unitGrams": 400,
    "cupGrams": 227
+  },
+  {
+   "id": "cream-of-coconut",
+   "name": "Cream of coconut, sweetened",
+   "keywords": [
+    "cream of coconut",
+    "coconut cream sweetened"
+   ],
+   "usda": "Cream of coconut, canned, sweetened (branded average)",
+   "carbs": 55.0,
+   "fiber": 0.0,
+   "sodium": 30,
+   "satFat": 14.0,
+   "gi": 55,
+   "giBasis": "assumed: sweetened coconut",
+   "unitGrams": 425,
+   "cupGrams": 300
+  },
+  {
+   "id": "coconut-water",
+   "name": "Coconut water",
+   "keywords": [
+    "coconut water"
+   ],
+   "usda": "Nuts, coconut water (liquid from coconuts)",
+   "carbs": 3.7,
+   "fiber": 1.1,
+   "sodium": 105,
+   "satFat": 0.2,
+   "gi": 40,
+   "giBasis": "assumed: mildly sweet drink",
+   "unitGrams": null,
+   "cupGrams": 240
   },
   {
    "id": "eggs",

@@ -60,6 +60,7 @@ public struct RootView: View {
         case .backups: BackupsView(environment: environment)
         case .health(let id): HealthWorksheetView(environment: environment, recipeID: id)
         case .healthSources: HealthSourcesView()
+        case .foodMappings: FoodMappingsView(environment: environment)
         }
     }
 

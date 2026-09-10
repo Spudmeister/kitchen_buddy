@@ -13,7 +13,7 @@ import Foundation
 /// Requirements: kitchen-buddy-ios 13.4, 14.1, 20.4, 21.10
 public struct ExportDocumentV2: Codable, Hashable, Sendable {
     public static let formatName = "kitchenbuddy-export"
-    public static let currentVersion = "2.1"
+    public static let currentVersion = "2.2"
 
     public var format: String = ExportDocumentV2.formatName
     public var version: String = ExportDocumentV2.currentVersion
@@ -21,12 +21,26 @@ public struct ExportDocumentV2: Codable, Hashable, Sendable {
     public var appBuild: String
     public var folders: [FolderRecord]
     public var recipes: [RecipeRecord]
+    /// 2.2: book-wide food mappings, oldest first; absent in older files.
+    public var foodMappings: [FoodMappingRecord]?
 
-    public init(exportedAt: Date, appBuild: String, folders: [FolderRecord], recipes: [RecipeRecord]) {
+    public init(exportedAt: Date, appBuild: String, folders: [FolderRecord], recipes: [RecipeRecord],
+                foodMappings: [FoodMappingRecord]? = nil) {
         self.exportedAt = exportedAt
         self.appBuild = appBuild
         self.folders = folders
         self.recipes = recipes
+        self.foodMappings = foodMappings
+    }
+
+    public struct FoodMappingRecord: Codable, Hashable, Sendable {
+        public var id: FoodMapping.ID
+        public var ingredientKey: String
+        public var foodId: Food.ID?
+        public var createdAt: Date
+        public init(_ mapping: FoodMapping) {
+            id = mapping.id; ingredientKey = mapping.ingredientKey; foodId = mapping.foodID; createdAt = mapping.createdAt
+        }
     }
 
     public struct FolderRecord: Codable, Hashable, Sendable {

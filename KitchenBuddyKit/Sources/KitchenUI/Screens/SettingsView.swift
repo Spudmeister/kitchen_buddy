@@ -61,6 +61,10 @@ public struct SettingsView: View {
                     }
                     .accessibilityIdentifier("healthToggle-\(profile.rawValue)")
                 }
+                NavigationLink(value: Route.foodMappings) {
+                    LabeledContent("Your food mappings", value: "\(model.foodMappingCount)")
+                }
+                .accessibilityIdentifier("foodMappings")
                 NavigationLink(value: Route.healthSources) { Text("Sources & thresholds") }
                     .accessibilityIdentifier("healthSources")
             } header: {

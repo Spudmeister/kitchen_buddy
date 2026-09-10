@@ -18,4 +18,6 @@ public enum Route: Hashable, Codable, Sendable {
     case health(Recipe.ID)
     /// Settings › Health › Sources & thresholds (M11).
     case healthSources
+    /// Settings › Health › Your food mappings (M10.8).
+    case foodMappings
 }

@@ -27,6 +27,11 @@ import KitchenCore
         ("extra-virgin olive oil", "oil-olive"), ("fresh basil leaves", "herbs-fresh"),
         ("salt and pepper", "salt"), ("black pepper", "spices"),
         ("guanciale", "bacon"), ("pecorino romano", "cheese-parmesan"),
+        // Head noun wins over a longer modifier phrase (Andrew, 2026-09-10: "coconut milk matched coconut").
+        ("unsweetened coconut milk", "coconut-milk"), ("sweetened coconut milk", "coconut-milk"),
+        ("light coconut milk, canned", "coconut-milk"), ("cream of coconut", "cream-of-coconut"),
+        ("brown rice flour", "flour-rice"), ("whole wheat bread crumbs", "breadcrumbs"),
+        ("garlic butter", "butter"), ("2 cloves garlic, minced", "garlic"), ("lemon zest", "lemon"),
     ]) func matchesTheLongestKeyword(name: String, expected: String) {
         #expect(FoodMatcher.match(name)?.food.id == expected, "\(name)")
     }
@@ -36,6 +41,15 @@ import KitchenCore
         #expect(FoodMatcher.match("Ingredient 1") == nil)
         #expect(FoodMatcher.match("") == nil)
         #expect(FoodMatcher.match("tamarind paste")?.food.id == "tamarind")
+    }
+
+    @Test func closeMatchesLeadWithTheAutomaticChoice() {
+        let coconut = FoodMatcher.candidates("unsweetened coconut milk").map(\.id)
+        #expect(coconut.first == "coconut-milk")
+        #expect(coconut.contains("coconut-shredded") && coconut.contains("milk-whole"), "\(coconut)")
+        #expect(FoodMatcher.candidates("Ingredient 1").isEmpty)
+        #expect(FoodMatcher.candidates("2 cloves garlic, minced").first == FoodMatcher.match("2 cloves garlic, minced")?.food)
+        #expect(FoodMatcher.candidates("cheese").count <= 12)
     }
 
     @Test func reportsTheKeyword() {

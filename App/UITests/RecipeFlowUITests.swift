@@ -400,10 +400,14 @@ final class RecipeFlowUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["coverageText"].label.contains("100%"), app.staticTexts["coverageText"].label)
 
         // Exclude a line → it moves to "Not counted"
+        // The per-serving card and totals push the ingredient lines below the fold of a lazy List.
         let firstCounted = app.buttons["countedLine"].firstMatch
+        for _ in 0..<8 where !firstCounted.exists { app.swipeUp(velocity: .slow) }
         XCTAssertTrue(firstCounted.waitForExistence(timeout: 5))
-        firstCounted.tap()
+        tapWhenHittable(firstCounted)
         XCTAssertTrue(app.buttons["foodDontCount"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Close matches"].exists, "the picker leads with close matches")
+        XCTAssertTrue(app.switches["onlyThisRecipe"].exists)
         app.buttons["foodDontCount"].tap()
         XCTAssertTrue(app.staticTexts["coverageText"].waitForExistence(timeout: 5))
         let deadline = Date().addingTimeInterval(5)

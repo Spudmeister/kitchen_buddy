@@ -96,7 +96,8 @@ import Testing
         #expect(HealthProfile.bloodPressure.band(for: 140) == .low && HealthProfile.bloodPressure.band(for: 601) == .high)
         #expect(HealthProfile.heartHealth.band(for: 4) == .low && HealthProfile.heartHealth.band(for: 8.1) == .high)
         #expect(HealthProfile.diabetes.band(for: nil) == .unknown)
-        #expect(HealthProfile.diabetes.format(8.4) == "GL 8" && HealthProfile.heartHealth.format(6.25) == "6.2 g")
+        #expect(HealthProfile.diabetes.format(8.4) == "GL 8" && HealthProfile.heartHealth.format(6.25) == "Sat fat 6.2 g")
+        #expect(HealthProfile.bloodPressure.format(320) == "Salt 320 mg" && HealthProfile.bloodPressure.formatValue(320) == "320 mg")
         #expect(HealthBand(storageValue: nil) == .unknown && HealthBand.high.storageValue == 2)
     }
 

@@ -217,6 +217,19 @@ public final class Importer: Sendable {
                     summary.imported += 1
                     summary.importedIDs.append(newID)
                 }
+                // Book-wide mappings (2.2): append rows not already present, then
+                // refresh every recipe touched by a changed key.
+                let existing = Set(try RecipeSQL.foodMappings(db).map(\.id))
+                var touchedKeys = Set<String>()
+                for mapping in document.foodMappings ?? [] where !existing.contains(mapping.id) {
+                    let foodID = mapping.foodId.map { FoodTable.food(id: $0) == nil && $0 != FoodOverride.automaticMarker ? FoodOverride.automaticMarker : $0 }
+                    try db.execute(sql: "INSERT INTO food_mappings (id, ingredient_key, food_id, created_at) VALUES (?, ?, ?, ?)",
+                                   arguments: [mapping.id.rawValue, mapping.ingredientKey, foodID, Timestamp.normalize(mapping.createdAt).sql])
+                    touchedKeys.insert(mapping.ingredientKey)
+                }
+                for key in touchedKeys {
+                    for id in try RecipeSQL.recipeIDs(withIngredientKey: key, db) { try HealthIndex.refresh(id, db) }
+                }
                 return summary
             }
             return summary

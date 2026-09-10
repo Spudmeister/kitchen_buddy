@@ -63,8 +63,11 @@ minimal, types Sendable-clean.
   keywords, fdcID?, per100g {carbohydrate, fiber, sodiumMg, saturatedFat},
   glycemicIndex? {value, source, basis}, unitWeightGrams?, gramsPerCup?}` loaded
   from the bundled `foods.json` (`FoodTable.version`, `FoodTable.foods`).
-  `FoodMatcher.match(name:)` = longest keyword contained in the lowercased,
-  diacritic-stripped name (same rule as `IngredientDensity`). `FoodOverride
+  `FoodMatcher.match(name:)` = among keywords present as whole-word runs in
+  the normalized name, the one ending closest to the end of the name (the
+  head noun: "unsweetened coconut milk" → coconut milk), longest on a tie
+  ("brown sugar" over "sugar"). `IngredientDensity` still uses plain
+  longest-match. `FoodOverride
   {id, recipeID, ingredientKey, foodID?, createdAt}` is append-only; latest per
   (recipe, key) wins; `foodID == nil` means "don't count".
   `NutritionEstimator.estimate(ingredients:servings:overrides:)` →
@@ -136,6 +139,15 @@ thresholds version) is stale. Library summaries LEFT JOIN `recipe_health`;
 the `friendly(profile)` filter is `<band> = 0`. Fixture:
 `kb-schema-v2.sqlite`, written before the migration landed.
 
+### Schema (migration `v4-food-mappings`, M10.8)
+
+`food_mappings` (id, ingredient_key, food_id NULL, created_at): book-wide,
+append-only with guard triggers. Effective choices for a recipe =
+`FoodMapping.effective(all)` overlaid by `FoodOverride.effective(recipe)`;
+`HealthIndex.refresh` uses the merge, and appending a mapping refreshes
+every recipe whose current version has that ingredient name. Fixture:
+`kb-schema-v3.sqlite`.
+
 ## Data safety
 
 See ADR-003 for the full design: Application Support location included in
@@ -180,6 +192,7 @@ tags, ratings, notes, photos (base64 optional), lineage, archive state.
 `LegacyV1Reader` lifts `"1.0"`/`"1.0.0"` files. **2.1 (M11)** adds optional
 `servingReports[]` and `foodOverrides[]` per recipe; 2.0 readers ignore them,
 the 2.1 reader defaults them to empty, and any `"2."` version is accepted.
+**2.2 (M10.8)** adds an optional document-level `foodMappings[]`.
 
 ## Correctness Properties
 

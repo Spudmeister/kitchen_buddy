@@ -35,6 +35,37 @@ import KitchenTesting
         }
     }
 
+    /// Book-wide mappings apply to every recipe with the ingredient name,
+    /// including ones created later; a recipe override still wins for its
+    /// recipe; "back to automatic" clears it everywhere; history only grows.
+    @Test(arguments: 0..<60)
+    func mappingsApplyEverywhereAndOverridesWin(seed: UInt64) throws {
+        var rng = SeededRandomSource(seed: seed)
+        let book = try TestDatabase.inMemory()
+        let name = Gen<String>.element(of: ["Unsweetened coconut milk", "flour", "cheddar", "mystery powder"]).run(&rng)
+        func recipe() throws -> Recipe.ID {
+            try book.recipes.create(RecipeDraft(title: "R", ingredients: [IngredientDraft(name: name, quantity: Fraction(1), unit: .cup)],
+                                                instructions: [InstructionDraft(text: "x")], servings: 2)).id
+        }
+        let a = try recipe()
+        let food = Gen<String>.element(of: ["sugar", "butter", "rice-white"]).run(&rng)
+        try book.recipes.setFoodMapping(ingredientName: name, foodID: food)
+        let b = try recipe()
+        for id in [a, b] {
+            let line = try #require(try book.recipes.nutrition(id)?.lines.first)
+            #expect(line.match?.food.id == food && line.match?.source == .override, "seed \(seed)")
+            #expect(try book.recipes.summary(id)?.health?.glycemicLoad == (try book.recipes.nutrition(id)?.perServingGlycemicLoad), "seed \(seed): projection refreshed")
+        }
+        try book.recipes.setFoodOverride(a, ingredientName: name, foodID: nil)
+        #expect(try book.recipes.nutrition(a)?.lines.first?.status == .excluded, "seed \(seed)")
+        #expect(try book.recipes.nutrition(b)?.lines.first?.match?.food.id == food, "seed \(seed): b keeps the mapping")
+        try book.recipes.clearFoodMapping(ingredientName: name)
+        let automatic = FoodMatcher.match(name)?.food.id
+        #expect(try book.recipes.nutrition(b)?.lines.first?.match?.food.id == automatic, "seed \(seed)")
+        #expect(try book.recipes.foodMappings().count == 2, "seed \(seed): history kept")
+        #expect(throws: (any Error).self) { try book.writer.write { db in try db.execute(sql: "DELETE FROM food_mappings") } }
+    }
+
     @Test(arguments: 0..<100)
     func overridesLatestPerKey(seed: UInt64) throws {
         var rng = SeededRandomSource(seed: seed)

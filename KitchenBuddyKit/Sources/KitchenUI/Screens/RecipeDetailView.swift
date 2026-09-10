@@ -289,16 +289,15 @@ public struct RecipeDetailView: View {
         VStack(alignment: .leading, spacing: 8) {
             NavigationLink(value: Route.health(detail.id)) {
                 VStack(alignment: .leading, spacing: 8) {
-                    ForEach(model.healthScores, id: \.profile) { score in
-                        HStack(spacing: 10) {
-                            HealthBadge(score: score, compact: false)
-                            Spacer(minLength: 0)
-                            Image(systemName: "chevron.right").font(.footnote).foregroundStyle(.tertiary)
-                        }
+                    HealthRows(scores: model.healthScores)
+                    Divider()
+                    HStack {
+                        Text(healthFootnote(detail))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Spacer(minLength: 8)
+                        Image(systemName: "chevron.right").font(.footnote).foregroundStyle(.tertiary)
                     }
-                    Text(healthFootnote(detail))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
                 }
                 .padding(12)
                 .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 12))

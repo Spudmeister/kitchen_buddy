@@ -18,9 +18,11 @@ public struct FoodMatch: Hashable, Sendable {
     }
 }
 
-/// Maps ingredient names to foods: the longest keyword that appears as
-/// whole words in the normalized name wins, the same rule
-/// `IngredientDensity` uses. Deterministic and pure.
+/// Maps ingredient names to foods. Among the keywords that appear as whole
+/// words in the normalized name, the one that ends closest to the end of
+/// the name wins — English ingredient names end in the head noun, so
+/// "unsweetened coconut milk" is coconut milk, not coconut — and length
+/// breaks ties ("brown sugar" over "sugar"). Deterministic and pure.
 ///
 /// Requirements: kitchen-buddy-ios 21.2
 public enum FoodMatcher {
@@ -51,11 +53,61 @@ public enum FoodMatcher {
     }()
 
     public static func match(_ name: String) -> FoodMatch? {
-        let padded = " " + normalize(name) + " "
-        guard padded.count > 2 else { return nil }
-        for (keyword, foodID) in orderedKeywords where padded.contains(" " + keyword + " ") {
-            guard let food = FoodTable.food(id: foodID) else { continue }
-            return FoodMatch(food: food, source: .keyword(keyword))
+        let words = normalize(name).split(separator: " ").map(String.init)
+        guard !words.isEmpty else { return nil }
+        var best: (end: Int, length: Int, keyword: String, foodID: Food.ID)?
+        for (keyword, foodID) in orderedKeywords {
+            let parts = keyword.split(separator: " ").map(String.init)
+            guard parts.count <= words.count, let end = lastEnd(of: parts, in: words) else { continue }
+            // Longest first in `orderedKeywords`, so on an equal end the first hit stays.
+            if best == nil || end > best!.end { best = (end, parts.count, keyword, foodID) }
+        }
+        guard let best, let food = FoodTable.food(id: best.foodID) else { return nil }
+        return FoodMatch(food: food, source: .keyword(best.keyword))
+    }
+
+    /// Every food with a keyword in the name, best first (the automatic
+    /// match), then foods sharing a word with the name — what the picker
+    /// shows as "Close matches". Never empty when `match` isn't.
+    public static func candidates(_ name: String, limit: Int = 12) -> [Food] {
+        let words = normalize(name).split(separator: " ").map(String.init)
+        guard !words.isEmpty else { return [] }
+        var hits: [(end: Int, length: Int, order: Int, foodID: Food.ID)] = []
+        for (order, (keyword, foodID)) in orderedKeywords.enumerated() {
+            let parts = keyword.split(separator: " ").map(String.init)
+            guard parts.count <= words.count, let end = lastEnd(of: parts, in: words) else { continue }
+            hits.append((end, parts.count, order, foodID))
+        }
+        hits.sort { lhs, rhs in
+            if lhs.end != rhs.end { return lhs.end > rhs.end }
+            return lhs.order < rhs.order
+        }
+        var seen = Set<Food.ID>()
+        var result: [Food] = []
+        for hit in hits where seen.insert(hit.foodID).inserted {
+            if let food = FoodTable.food(id: hit.foodID) { result.append(food) }
+        }
+        let meaningful = Set(words.filter { $0.count > 2 && !stopWords.contains($0) })
+        if !meaningful.isEmpty {
+            for food in FoodTable.foods where !seen.contains(food.id) && result.count < limit {
+                let shares = food.keywords.contains { keyword in
+                    keyword.split(separator: " ").contains { meaningful.contains(String($0)) }
+                }
+                if shares { result.append(food); seen.insert(food.id) }
+            }
+        }
+        return Array(result.prefix(limit))
+    }
+
+    static let stopWords: Set<String> = ["and", "the", "for", "with", "fresh", "large", "small", "medium", "chopped", "diced",
+                                         "minced", "sliced", "ground", "whole", "cup", "cups", "can", "cans", "optional", "divided"]
+
+    /// Index just past the last occurrence of `parts` as a whole-word run.
+    static func lastEnd(of parts: [String], in words: [String]) -> Int? {
+        var start = words.count - parts.count
+        while start >= 0 {
+            if Array(words[start..<start + parts.count]) == parts { return start + parts.count }
+            start -= 1
         }
         return nil
     }

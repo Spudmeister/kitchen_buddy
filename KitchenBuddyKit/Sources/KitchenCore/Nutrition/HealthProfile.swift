@@ -86,14 +86,27 @@ public enum HealthProfile: String, Codable, Hashable, Sendable, CaseIterable {
         return .high
     }
 
-    /// How the value reads on a badge: "GL 8", "320 mg", "6 g".
-    public func format(_ value: Double) -> String {
+    /// The bare figure: "8", "320 mg", "6.2 g".
+    public func formatValue(_ value: Double) -> String {
         switch self {
-        case .diabetes: return "GL \(Int(value.rounded()))"
+        case .diabetes: return "\(Int(value.rounded()))"
         case .bloodPressure: return "\(Int(value.rounded())) mg"
         case .heartHealth: return value < 10 ? String(format: "%.1f g", value) : "\(Int(value.rounded())) g"
         }
     }
+
+    /// Short measure name for badges: "GL", "Salt", "Sat fat".
+    public var shortMeasureName: String {
+        switch self {
+        case .diabetes: return "GL"
+        case .bloodPressure: return "Salt"
+        case .heartHealth: return "Sat fat"
+        }
+    }
+
+    /// How the value reads on a badge, self-describing: "GL 8",
+    /// "Sodium 320 mg", "Sat fat 6.2 g".
+    public func format(_ value: Double) -> String { "\(shortMeasureName) \(formatValue(value))" }
 }
 
 /// One profile's result for a recipe.

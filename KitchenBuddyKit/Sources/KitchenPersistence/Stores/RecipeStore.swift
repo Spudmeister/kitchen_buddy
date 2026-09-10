@@ -348,12 +348,48 @@ public final class RecipeStore: RecipeStoring {
         try writer.read { db in try RecipeSQL.foodOverrides(id, db) }
     }
 
+    @discardableResult
+    public func setFoodMapping(ingredientName: String, foodID: Food.ID?) throws -> FoodMapping {
+        if let foodID, FoodTable.food(id: foodID) == nil { throw StoreError.unknownFood(foodID) }
+        return try writer.write { db in try self.appendMapping(key: FoodMatcher.normalize(ingredientName), foodID: foodID, db) }
+    }
+
+    public func clearFoodMapping(ingredientName: String) throws {
+        try writer.write { db in
+            _ = try self.appendMapping(key: FoodMatcher.normalize(ingredientName), foodID: FoodOverride.automaticMarker, db)
+        }
+    }
+
+    /// Appends the row, then refreshes the health projection of every
+    /// recipe that uses the ingredient name (Requirement 21.11).
+    private func appendMapping(key: String, foodID: Food.ID?, _ db: Database) throws -> FoodMapping {
+        let now = clock.now()
+        let mapping = FoodMapping(ingredientKey: key, foodID: foodID, createdAt: now)
+        try db.execute(sql: "INSERT INTO food_mappings (id, ingredient_key, food_id, created_at) VALUES (?, ?, ?, ?)",
+                       arguments: [mapping.id.rawValue, key, mapping.foodID, now.sql])
+        for id in try RecipeSQL.recipeIDs(withIngredientKey: key, db) { try HealthIndex.refresh(id, db) }
+        return mapping
+    }
+
+    public func foodMappings() throws -> [FoodMapping] {
+        try writer.read { db in try RecipeSQL.foodMappings(db) }
+    }
+
+    public func effectiveFoodChoices(_ id: Recipe.ID) throws -> [String: Food.ID?] {
+        try writer.read { db in try Self.effectiveFoodChoices(id, db) }
+    }
+
+    static func effectiveFoodChoices(_ id: Recipe.ID, _ db: Database) throws -> [String: Food.ID?] {
+        FoodMapping.merge(mappings: FoodMapping.effective(try RecipeSQL.foodMappings(db)),
+                          overrides: FoodOverride.effective(try RecipeSQL.foodOverrides(id, db)))
+    }
+
     public func nutrition(_ id: Recipe.ID) throws -> RecipeNutrition? {
         try writer.read { db in
             guard let detail = try RecipeSQL.detail(id, db) else { return nil }
-            let overrides = FoodOverride.effective(try RecipeSQL.foodOverrides(id, db))
             return NutritionEstimator.estimate(ingredients: detail.version.ingredients,
-                                               servings: detail.effectiveServings, overrides: overrides)
+                                               servings: detail.effectiveServings,
+                                               overrides: try Self.effectiveFoodChoices(id, db))
         }
     }
 

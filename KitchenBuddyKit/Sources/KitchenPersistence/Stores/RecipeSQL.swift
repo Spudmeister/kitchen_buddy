@@ -172,6 +172,32 @@ enum RecipeSQL {
         }
     }
 
+    /// Chronological, every row; `FoodMapping.effective` reduces it.
+    static func foodMappings(_ db: Database) throws -> [FoodMapping] {
+        try Row.fetchAll(db, sql: "SELECT * FROM food_mappings ORDER BY created_at, rowid").map { row in
+            FoodMapping(id: row.id("id"), ingredientKey: row["ingredient_key"], foodID: row["food_id"],
+                        createdAt: row.timestamp("created_at"))
+        }
+    }
+
+    /// Recipes whose current version has an ingredient with this normalized name.
+    static func recipeIDs(withIngredientKey key: String, _ db: Database) throws -> [Recipe.ID] {
+        var ids: [Recipe.ID] = []
+        let rows = try Row.fetchAll(db, sql: """
+            SELECT r.id AS recipe_id, i.name AS name FROM recipes r
+            JOIN recipe_versions v ON v.recipe_id = r.id AND v.version = r.current_version
+            JOIN ingredients i ON i.recipe_version_id = v.id
+            """)
+        var seen = Set<String>()
+        for row in rows {
+            let name: String = row["name"]
+            guard FoodMatcher.normalize(name) == key else { continue }
+            let id: String = row["recipe_id"]
+            if seen.insert(id).inserted { ids.append(Recipe.ID(id)) }
+        }
+        return ids
+    }
+
     static func detail(_ id: Recipe.ID, version number: Int? = nil, _ db: Database) throws -> RecipeDetail? {
         guard let recipe = try recipe(id, db),
               let version = try version(id, number: number ?? recipe.currentVersion, db) else { return nil }

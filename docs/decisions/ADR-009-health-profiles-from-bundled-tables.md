@@ -31,8 +31,9 @@ analytics; recipe data is never hard-deleted; migrations only add.
    the keyword mapping are ours. We do not scrape or bundle the University
    of Sydney database.
 2. **The estimate is a pure, auditable function.** `NutritionEstimator`
-   maps each ingredient line to a food by the longest keyword in its name
-   (the `IngredientDensity` rule), converts the quantity to grams (weight →
+   maps each ingredient line to a food by the keyword that ends closest to
+   the end of its name (the head noun; length breaks ties — amended
+   2026-09-10 after "unsweetened coconut milk" matched coconut), converts the quantity to grams (weight →
    grams; volume → ml × density; count → unit weight), and computes
    available carbohydrate (total − fibre), glycemic load (GI × available
    carbohydrate ÷ 100), sodium and saturated fat per line, per recipe and
@@ -46,8 +47,9 @@ analytics; recipe data is never hard-deleted; migrations only add.
    claim; ≤ 600 mg medium; above high). Heart health on saturated fat
    (≤ 4 g low, ≤ 8 g medium, above high; a third and two thirds of the
    13 g/day AHA guidance). Each band has a word and a symbol as well as a
-   colour. Diabetes is on by default; the others are switches in Settings ›
-   Health, each shipping with its badge, chip and token.
+   colour. All three are on by default (amended 2026-09-10: shipping two of them
+   off hid the feature); each is a switch in Settings › Health, each with
+   its badge, chip and token.
 4. **Corrections and serving counts are append-only annotations.** A food
    override (recipe + normalized ingredient name → food id or "don't
    count") and a serving report (count or "back to the recipe's") are new
@@ -55,6 +57,15 @@ analytics; recipe data is never hard-deleted; migrations only add.
    the immutable version; the detail shows "Recipe says 8 · you get 4" and
    the effective count is the base for scaling, the default-servings
    preference and every per-serving figure. Both travel in export 2.1.
+4a. **A wrong match is fixed everywhere (amended 2026-09-10).** The
+   picker's choice is a book-wide `food_mappings` row keyed on the
+   normalized ingredient name (schema v4, append-only, latest wins,
+   automatic marker clears); a recipe-level override remains available
+   as "Only this recipe" and takes precedence for that recipe. The picker
+   leads with close matches and offers "Report this match", which
+   pre-fills the feedback mail with the ingredient, the automatic match
+   and the table version, so user corrections feed the shipped table.
+   Mappings travel in export 2.2 at the document level.
 5. **Per-serving figures live in a derived table.** `recipe_health` is a
    rewritable projection like `recipe_search`, refreshed inside every write
    transaction and rebuilt when the food-table or threshold version

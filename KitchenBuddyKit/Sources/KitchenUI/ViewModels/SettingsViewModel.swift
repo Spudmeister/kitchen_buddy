@@ -12,6 +12,8 @@ public final class SettingsViewModel {
     public let environment: AppEnvironment
     public var preferences: Preferences
     public private(set) var recipeCount = 0
+    /// Book-wide food mappings currently in force.
+    public private(set) var foodMappingCount = 0
     public private(set) var lastBackup: Snapshot?
     public private(set) var cloudStatus: CloudMirror.Status?
     public private(set) var isBusy = false
@@ -36,6 +38,7 @@ public final class SettingsViewModel {
 
     public func refresh() {
         recipeCount = (try? environment.book.recipes.count(includeArchived: true)) ?? 0
+        foodMappingCount = FoodMapping.effective((try? environment.book.recipes.foodMappings()) ?? []).count
         lastBackup = try? environment.book.backups.snapshots().first { $0.isVerified }
         let cloud = environment.cloud
         Task {

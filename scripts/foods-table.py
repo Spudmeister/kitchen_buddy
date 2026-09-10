@@ -21,7 +21,7 @@ def normalize(text):
     folded = re.sub(r"\([^)]*\)", " ", folded)
     return " ".join(re.sub(r"[^a-z0-9']+", " ", folded).split())
 
-VERSION = 1
+VERSION = 2
 F = []
 def food(id, name, kw, usda, carbs, fiber, sodium, satfat, gi, basis, unit=None, cup=None):
     kw = list(dict.fromkeys(normalize(k) for k in kw))
@@ -123,6 +123,8 @@ food("milk-almond", "Almond milk, unsweetened", ["almond milk", "cashew milk", "
 food("milk-oat", "Oat milk", ["oat milk"], "Beverages, oat milk (branded average)", 6.7, 0.8, 42, 0.2, 69, f"{M}: oat drink 69", None, 240)
 food("milk-soy", "Soy milk", ["soy milk", "soya milk"], "Beverages, soy milk, unsweetened", 4.0, 0.5, 51, 0.2, 34, f"{M}: soy milk 34", None, 243)
 food("coconut-milk", "Coconut milk, canned", ["coconut milk", "coconut cream", "canned coconut milk"], "Nuts, coconut milk, canned", 2.8, 0.0, 13, 18.9, 41, f"{A}: coconut, little carbohydrate", 400, 227)
+food("cream-of-coconut", "Cream of coconut, sweetened", ["cream of coconut", "coconut cream sweetened"], "Cream of coconut, canned, sweetened (branded average)", 55.0, 0.0, 30, 14.0, 55, f"{A}: sweetened coconut", 425, 300)
+food("coconut-water", "Coconut water", ["coconut water"], "Nuts, coconut water (liquid from coconuts)", 3.7, 1.1, 105, 0.2, 40, f"{A}: mildly sweet drink", None, 240)
 food("eggs", "Egg, whole", ["egg", "eggs", "large eggs", "large egg", "whole eggs", "whole egg", "beaten egg", "beaten eggs"], "Egg, whole, raw, fresh", 0.7, 0.0, 142, 3.1, None, "negligible amounts", 50, 243)
 food("egg-yolk", "Egg yolk", ["egg yolk", "egg yolks", "yolks", "yolk"], "Egg, yolk, raw, fresh", 3.6, 0.0, 48, 9.6, 15, f"{A}: egg, little carbohydrate", 17, 243)
 food("egg-white", "Egg white", ["egg white", "egg whites", "whites"], "Egg, white, raw, fresh", 0.7, 0.0, 166, 0.0, None, "no carbohydrate", 33, 243)

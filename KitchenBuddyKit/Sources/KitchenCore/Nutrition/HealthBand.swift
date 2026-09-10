@@ -32,7 +32,7 @@ public enum HealthBand: Int, Codable, Hashable, Sendable, CaseIterable {
     public var symbolName: String {
         switch self {
         case .low: return "checkmark.circle.fill"
-        case .medium: return "minus.circle.fill"
+        case .medium: return "circle.lefthalf.filled"
         case .high: return "exclamationmark.triangle.fill"
         case .unknown: return "questionmark.circle"
         }

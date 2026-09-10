@@ -14,6 +14,18 @@ that is the bug we care about most: tell us exactly what you did.
 Feedback: Settings › Send Feedback, or take a screenshot and use its Share
 sheet → TestFlight to attach it.
 
+## 0.5.x (feedback: per-serving math, mappings everywhere)
+
+- Worksheet lines now read "GL 62.1 → 15.5 per serving" and there is a
+  "Recipe total → per serving" section; under each badge, "Recipe total
+  GL 67 ÷ 4 servings = 17".
+- Tap a wrong line: the picker leads with close matches; your choice
+  applies to every recipe with that ingredient name unless you switch on
+  "Only this recipe". "Report this match" mails us the details. Settings ›
+  Health › Your food mappings lists what you've changed.
+- All three profiles are on by default now; switch off the ones you don't
+  want in Settings › Health.
+
 ## 0.5.0 (M11 — health profiles, servings you get)
 
 - Open a chili, a pasta and a salad. Each shows a Diabetes badge (green /

@@ -10,7 +10,7 @@ import KitchenTesting
         let migrator = DatabaseStack.migrator
         #expect(migrator.eraseDatabaseOnSchemaChange == false)
         #expect(migrator.migrations == Migrations.identifiers)
-        #expect(Migrations.identifiers == ["v1-initial", "v2-rating-clears", "v3-health"])
+        #expect(Migrations.identifiers == ["v1-initial", "v2-rating-clears", "v3-health", "v4-food-mappings"])
 
         let book = try TestDatabase.inMemory()
         let applied = try book.writer.read { db in try migrator.appliedMigrations(db) }
@@ -24,9 +24,9 @@ import KitchenTesting
             try String.fetchAll(db, sql: "SELECT name FROM sqlite_master WHERE type = 'trigger' AND name LIKE 'guard_%'")
         }
         let expected = ["recipes", "recipe_versions", "ingredients", "instructions", "recipe_notes", "photos", "ratings", "rating_clears",
-                        "folders", "tags", "serving_reports", "food_overrides"]
+                        "folders", "tags", "serving_reports", "food_overrides", "food_mappings"]
             .map { "guard_\($0)_delete" }
-            + ["recipe_versions", "ingredients", "instructions", "ratings", "rating_clears", "serving_reports", "food_overrides"].map { "guard_\($0)_update" }
+            + ["recipe_versions", "ingredients", "instructions", "ratings", "rating_clears", "serving_reports", "food_overrides", "food_mappings"].map { "guard_\($0)_update" }
             + ["guard_recipes_parent_immutable"]
         #expect(Set(triggers) == Set(expected))
     }

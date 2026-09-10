@@ -91,6 +91,33 @@ import KitchenTesting
         try book.close()
     }
 
+    /// The v3 fixture (written 2026-09-10, before `v4-food-mappings`) opens,
+    /// migrates, keeps its serving report and recipe override, and starts
+    /// with no book-wide mappings.
+    @Test func schemaV3FixtureOpensAndMigrates() throws {
+        let fixture = try #require(Bundle.module.url(forResource: "kb-schema-v3", withExtension: "sqlite", subdirectory: "fixtures"))
+        let layout = TestDatabase.temporaryLayout()
+        defer { TestDatabase.remove(layout) }
+        try FileManager.default.createDirectory(at: layout.root, withIntermediateDirectories: true)
+        try FileManager.default.copyItem(at: fixture, to: layout.databaseURL)
+
+        let book = try RecipeBook.open(layout, clock: .system)
+        #expect(try book.writer.read { db in try String.fetchOne(db, sql: "PRAGMA integrity_check") } == "ok")
+        #expect(try book.writer.read { db in try DatabaseStack.migrator.appliedMigrations(db) } == Migrations.identifiers)
+        guard case .migrated(let preMigration?) = book.launchReport else {
+            Issue.record("a v3 file must be snapshotted before v4 migrates it: \(book.launchReport)")
+            return
+        }
+        #expect(preMigration.isVerified)
+        let bruschetta = try #require(try book.recipes.summaries(RecipeQuery(text: "bruschetta")).first)
+        #expect(try book.recipes.detail(bruschetta.id)?.effectiveServings == 4, "the v3 serving report still counts")
+        #expect(FoodOverride.effective(try book.recipes.foodOverrides(bruschetta.id))["baguette"] == .some("bread-sourdough"))
+        #expect(try book.recipes.foodMappings().isEmpty)
+        try book.recipes.setFoodMapping(ingredientName: "roma tomatoes", foodID: "tomatoes-canned")
+        #expect(try book.recipes.nutrition(bruschetta.id)?.lines.first { $0.ingredient.name == "roma tomatoes" }?.match?.food.id == "tomatoes-canned")
+        try book.close()
+    }
+
     /// Fixture generator, gated by an environment variable so it never runs
     /// in CI. Populates a fresh database at the *current* schema with a
     /// little of everything; run it once, just before a new migration lands,
@@ -116,6 +143,11 @@ import KitchenTesting
             try book.recipes.clearRating(imported[3].id)
         }
         try book.recipes.addNote(to: bruschetta.id, body: "Use ripe tomatoes.", cookedOn: nil)
+        if Migrations.identifiers.contains("v3-health") {
+            // v3 fixtures carry a serving report and a food override so v4+ keeps honouring them.
+            try book.recipes.reportServings(bruschetta.id, servings: 4, note: "just us")
+            try book.recipes.setFoodOverride(bruschetta.id, ingredientName: "baguette", foodID: "bread-sourdough")
+        }
         var draft = bruschetta.draft
         draft.content.description = "Italian tomato appetizer, v2"
         _ = try book.recipes.save(draft, for: bruschetta.id)

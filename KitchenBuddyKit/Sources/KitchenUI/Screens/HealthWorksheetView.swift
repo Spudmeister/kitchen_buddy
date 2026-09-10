@@ -23,6 +23,10 @@ public struct HealthWorksheetView: View {
                 ForEach(model.scores, id: \.profile) { score in
                     VStack(alignment: .leading, spacing: 4) {
                         HealthBadge(score: score, compact: false)
+                        if let step = model.totalToServingText(score.profile) {
+                            Text(step).font(.footnote).monospacedDigit()
+                                .accessibilityIdentifier("totalToServing-\(score.profile.rawValue)")
+                        }
                         Text(thresholdText(score.profile)).font(.caption).foregroundStyle(.secondary)
                     }
                 }
@@ -31,7 +35,27 @@ public struct HealthWorksheetView: View {
             } header: {
                 Text("Per serving")
             } footer: {
-                Text("Estimates from typical ingredients, not medical advice. Tap any line to correct what it was matched to.")
+                Text("Every ingredient line below is for the whole recipe; the per-serving figure is that line divided by the servings you get. Estimates from typical ingredients, not medical advice. Tap any line to correct what it was matched to.")
+            }
+
+            if !model.totalRows.isEmpty {
+                Section {
+                    ForEach(model.totalRows, id: \.label) { row in
+                        HStack {
+                            Text(row.label)
+                            Spacer()
+                            Text(row.total).foregroundStyle(.secondary).monospacedDigit()
+                            if let per = row.perServing {
+                                Text("→ \(per)").fontWeight(.medium).monospacedDigit()
+                            }
+                        }
+                        .font(.subheadline)
+                        .accessibilityElement(children: .combine)
+                        .accessibilityLabel("\(row.label): \(row.total) for the recipe" + (row.perServing.map { ", \($0) per serving" } ?? ""))
+                    }
+                } header: {
+                    Text("Recipe total → per serving")
+                }
             }
 
             if !model.countedLines.isEmpty {
@@ -101,22 +125,31 @@ public struct HealthWorksheetView: View {
             Text(model.matchText(line)).font(.subheadline).foregroundStyle(model.isOverridden(line) ? Color.accentColor : .secondary)
             if let basis = line.gramsBasis { Text("Grams: \(basis.description)").font(.caption).foregroundStyle(.tertiary) }
             if let n = line.nutrients {
-                Text(contribution(line, n)).font(.caption).foregroundStyle(.secondary).monospacedDigit()
+                ForEach(contributionLines(line, n), id: \.self) { text in
+                    Text(text).font(.caption).foregroundStyle(.secondary).monospacedDigit()
+                }
             }
         }
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
     }
 
-    private func contribution(_ line: LineEstimate, _ n: Food.Nutrients) -> String {
-        var parts: [String] = []
-        if model.profiles.contains(.diabetes) {
-            let gi = line.match?.food.glycemicIndex.map { "GI \($0.value) (\($0.basis))" } ?? "no GI: \(line.match?.food.glycemicIndexNote ?? "")"
-            parts.append(String(format: "Carbs %.1f g (available %.1f) · %@ · GL %.1f", n.carbohydrate, n.availableCarbohydrate, gi, line.glycemicLoad ?? 0))
+    /// One line per enabled profile: whole-recipe figure → per serving,
+    /// with the glycemic index and its basis for the diabetes line.
+    private func contributionLines(_ line: LineEstimate, _ n: Food.Nutrients) -> [String] {
+        func pair(_ label: String, _ total: Double, _ format: (Double) -> String) -> String {
+            guard let per = model.perServing(total) else { return "\(label) \(format(total))" }
+            return "\(label) \(format(total)) → \(format(per)) per serving"
         }
-        if model.profiles.contains(.bloodPressure) { parts.append("Sodium \(Int(n.sodium.rounded())) mg") }
-        if model.profiles.contains(.heartHealth) { parts.append(String(format: "Sat fat %.1f g", n.saturatedFat)) }
-        return parts.joined(separator: " · ")
+        var lines: [String] = []
+        if model.profiles.contains(.diabetes) {
+            let gi = line.match?.food.glycemicIndex.map { "GI \($0.value), \($0.basis)" } ?? "no GI (\(line.match?.food.glycemicIndexNote ?? ""))"
+            lines.append(pair("GL", line.glycemicLoad ?? 0) { String(format: "%.1f", $0) }
+                         + String(format: " — %.0f g carbs, %.0f g available, %@", n.carbohydrate, n.availableCarbohydrate, gi))
+        }
+        if model.profiles.contains(.bloodPressure) { lines.append(pair("Sodium", n.sodium) { "\(Int($0.rounded())) mg" }) }
+        if model.profiles.contains(.heartHealth) { lines.append(pair("Sat fat", n.saturatedFat) { String(format: "%.1f g", $0) }) }
+        return lines
     }
 
     private func uncountedRow(_ line: LineEstimate) -> some View {

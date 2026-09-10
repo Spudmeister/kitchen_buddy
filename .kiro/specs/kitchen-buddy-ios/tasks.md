@@ -125,7 +125,11 @@ Order matters: 4.0–4.3 first, so the next TestFlight build has no dead Setting
 - [x] 10.2 No product name but Kitchen Buddy in the UI: the older JSON shape is "Kitchen Buddy recipes (older JSON)", never "Sous Chef" — _Req 14.1_ (Andrew, 2026-09-09)
 - [x] 10.3 Explain the index buttons: Settings › Search section with a footer saying what Rebuild Search Index and Reindex Spotlight do and when to use them (Andrew, 2026-09-09)
 - [x] 10.4 Front-page filters: chip bar above the Library (Filters sheet, Clear, Under 30/45/60 min, 4+ stars, top tags) driving the same tokens as search; Filters sheet with a total-time slider, minimum rating, every tag, sort and direction, include archived — _Req 6.2, 6.3, 6.7_ (Andrew, 2026-09-09: "dinner recipes less than 45 minutes … bubbles, slides")
-- [ ] 10.5 Next feedback item…
+- [x] 10.5 Worksheet shows the per-serving math: each line's figure "→ per serving", a "Recipe total → per serving" section, and "Recipe total GL 67 ÷ 4 servings = 17" under every badge — _Req 21.3_ (Andrew, 2026-09-10: "it doesn't show the per person math")
+- [x] 10.6 Head-noun matching: the keyword ending closest to the end of the name wins, length breaks ties, so "unsweetened coconut milk" is coconut milk; cream of coconut and coconut water added; food table v2 + derivation v2 rebuild every health row at open — _Req 21.2_ (Andrew, 2026-09-10: "coconut milk seems to match on coconut")
+- [x] 10.7 All three health profiles on by default; badges say what they measure ("Sodium 357 mg", "Sat fat 7.9 g"); worksheet rows one line per profile (Andrew, 2026-09-10: "I don't see salt or saturated fat")
+- [x] 10.8 Book-wide food mappings (schema `v4-food-mappings`, v3 fixture, export 2.2): the picker leads with close matches, applies everywhere by default with "Only this recipe", "Report this match" pre-fills feedback; Settings › Health › Your food mappings — _Req 21.11_ (Andrew, 2026-09-10: "let them see other close matches and select one instead … this is a mapping data quality issue")
+- [ ] 10.9 Next feedback item…
 
 ## M9 — Polish, accessibility, Spotlight, beta → tag `v0.4.0`
 

@@ -27,8 +27,10 @@ import KitchenTesting
                 try source.recipes.clearFoodOverride(first.id, ingredientName: name)
             }
         }
+        try source.recipes.setFoodMapping(ingredientName: "coconut", foodID: "coconut-milk")
+        try source.recipes.setFoodMapping(ingredientName: "coconut", foodID: nil)
         let document = try source.exporter.export(.fullBackup)
-        #expect(document.version == "2.1", "seed \(seed)")
+        #expect(document.version == "2.2" && document.foodMappings?.count == 2, "seed \(seed)")
         let data = try document.encoded()
         let expected = try BookFingerprint.of(source)
 
@@ -53,6 +55,7 @@ import KitchenTesting
         #expect(actual.rows["recipe_notes"] == expected.rows["recipe_notes"], "seed \(seed): notes")
         #expect(actual.rows["serving_reports"] == expected.rows["serving_reports"], "seed \(seed): serving reports (P37)")
         #expect(actual.rows["food_overrides"] == expected.rows["food_overrides"], "seed \(seed): food overrides (P37)")
+        #expect(actual.rows["food_mappings"] == expected.rows["food_mappings"], "seed \(seed): food mappings (P37)")
         #expect(actual.rows["recipe_health"] == expected.rows["recipe_health"], "seed \(seed): health projection")
         #expect(actual.rows["folders"] == expected.rows["folders"], "seed \(seed): folders")
         #expect(actual.rows["recipe_tags"]?.count == expected.rows["recipe_tags"]?.count, "seed \(seed): tag links")
@@ -119,6 +122,7 @@ import KitchenTesting
 
         var twoPointZero = json
         twoPointZero["version"] = "2.0"
+        twoPointZero.removeValue(forKey: "foodMappings")
         recipes[0].removeValue(forKey: "foodOverrides")
         recipes[0].removeValue(forKey: "servingReports")
         twoPointZero["recipes"] = recipes
@@ -128,6 +132,7 @@ import KitchenTesting
         defer { TestDatabase.remove(layoutB) }
         let oldReading = try ImportDocument.read(old)
         #expect(oldReading.document.recipes[0].foodOverrides.isEmpty && oldReading.document.recipes[0].servingReports.isEmpty)
+        #expect(oldReading.document.foodMappings == nil)
         #expect(try target.importer.perform(oldReading, policy: .skipExisting).imported == 1)
 
         let (target2, layoutC) = try TestDatabase.onDisk()
